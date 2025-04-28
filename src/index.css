@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-accent: theme('colors.bronze.DEFAULT');
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    @apply bg-porcelain;
+  }
+  
+  body {
+    @apply font-sans text-carbon antialiased;
+    font-feature-settings: "ss06" on;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-normal tracking-tight;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+  
+  p {
+    @apply leading-relaxed;
+  }
+  
+  .char {
+    display: inline-block;
+    transform-origin: 50% 100%;
+  }
+  
+  .word {
+    display: inline-block;
+    margin-right: 0.25em;
+  }
+}
+
+@layer components {
+  .section {
+    @apply py-16 md:py-24 lg:py-32 px-4vw;
+  }
+  
+  .container-narrow {
+    @apply max-w-5xl mx-auto;
+  }
+  
+  .btn-primary {
+    @apply px-8 py-4 bg-bronze text-white hover:bg-bronze-dark transition-colors duration-500 ease-luxury inline-flex items-center;
+  }
+  
+  .masonry-grid {
+    @apply grid grid-cols-masonry gap-4vw;
+  }
+  
+  .masonry-item {
+    @apply transition-all duration-500 ease-luxury;
+  }
+  
+  .masonry-item:hover {
+    @apply transform -translate-y-2;
+  }
+}
+
+/* Animations */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-luxury, transform 0.8s ease-luxury;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Magnetic Button */
+.magnetic-btn {
+  @apply relative inline-block;
+}
+
+.magnetic-btn-content {
+  @apply relative transition-transform duration-500 ease-luxury;
+}
+
+/* Dark mode */
+.dark {
+  @apply bg-carbon text-porcelain;
+}
+
+.dark .bg-white {
+  @apply bg-carbon;
+}
+
+.dark .text-carbon {
+  @apply text-porcelain;
+}
+
+/* Adaptive theme */
+.bg-accent {
+  background-color: var(--color-accent);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.border-accent {
+  border-color: var(--color-accent);
+}
+
+/* Kinetic text animation */
+@keyframes drawText {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.kinetic-text path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawText 2s ease-luxury forwards;
+}
+
+/* Prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
