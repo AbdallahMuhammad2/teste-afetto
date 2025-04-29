@@ -40,6 +40,8 @@ export const translations = {
       values: 'Nossos Valores',
       quality: 'Qualidade',
       design: 'Design',
+      description: 'Descrição',
+      cta: 'Conheça Nossa Equipe',
       sustainability: 'Sustentabilidade',
       craftsmanship: 'Artesanato',
       team: 'Nossa Equipe',
@@ -48,13 +50,16 @@ export const translations = {
     contact: {
       title: 'Entre em Contato',
       subtitle: 'Estamos à disposição para atender suas necessidades',
+      description: 'Descripción',
+
       form: {
         name: 'Nome',
         email: 'E-mail',
         phone: 'Telefone',
         message: 'Mensagem',
         subject: 'Assunto',
-        send: 'Enviar Mensagem'
+        send: 'Enviar Mensagem',
+        submit: 'Enviar',
       },
       info: {
         title: 'Informações de Contato',
@@ -124,18 +129,23 @@ export const translations = {
       sustainability: 'Sostenibilidad',
       craftsmanship: 'Artesanía',
       team: 'Nuestro Equipo',
+      cta: 'Conozca a Nuestro Equipo',
+      description: 'Conozca a los talentosos profesionales detrás de cada proyecto.',
       teamDesc: 'Conozca a los talentosos profesionales detrás de cada proyecto.'
     },
     contact: {
       title: 'Contáctenos',
       subtitle: 'Estamos a su disposición para atender sus necesidades',
+      description: 'Descripción',
+
       form: {
         name: 'Nombre',
         email: 'Correo Electrónico',
         phone: 'Teléfono',
         message: 'Mensaje',
         subject: 'Asunto',
-        send: 'Enviar Mensaje'
+        send: 'Enviar Mensaje',
+        submit: 'Enviar',
       },
       info: {
         title: 'Información de Contacto',

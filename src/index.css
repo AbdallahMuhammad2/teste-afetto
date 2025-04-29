@@ -7,8 +7,22 @@
 @layer base {
   :root {
     --color-accent: theme('colors.bronze.DEFAULT');
+    /* Default values that will be updated by useTimeOfDay hook */
+  --color-accent-hue: 28;
+  --color-accent-rgb: 222, 109, 71;
+  --color-accent: hsl(var(--color-accent-hue), 65%, 55%);
   }
   
+/* Opacity variants */
+.bg-accent\/10 { background-color: rgba(var(--color-accent-rgb), 0.1); }
+.bg-accent\/20 { background-color: rgba(var(--color-accent-rgb), 0.2); }
+.bg-accent\/30 { background-color: rgba(var(--color-accent-rgb), 0.3); }
+.bg-accent\/40 { background-color: rgba(var(--color-accent-rgb), 0.4); }
+.bg-accent\/50 { background-color: rgba(var(--color-accent-rgb), 0.5); }
+.bg-accent\/60 { background-color: rgba(var(--color-accent-rgb), 0.6); }
+.bg-accent\/70 { background-color: rgba(var(--color-accent-rgb), 0.7); }
+.bg-accent\/80 { background-color: rgba(var(--color-accent-rgb), 0.8); }
+.bg-accent\/90 { background-color: rgba(var(--color-accent-rgb), 0.9); }
   html {
     scroll-behavior: smooth;
     @apply bg-porcelain;
