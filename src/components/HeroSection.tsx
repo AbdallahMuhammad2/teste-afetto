@@ -1,225 +1,259 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, useTransform, useScroll, useSpring } from 'framer-motion';
+import { ArrowDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-type HeroSectionProps = {
-  language: 'pt-br' | 'en' | 'es';
-  videoSrc?: string;
-  posterSrc?: string;
-  onCursorVariantChange?: (variant: string) => void;
+interface HeroSectionProps {
+  videoSrc: string;
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
+  onCtaHover: (hover: boolean) => void;
+  scrollToNextSection: () => void;
+  language: 'pt' | 'es';
 }
 
-// Text content localization
-const content = {
-  'pt-br': {
-    headline: ['Objetos', 'com', 'significado'],
-    subtitle: 'Criamos peças que transcendem a função para se tornarem expressões de identidade e estilo.',
-    cta: 'Explorar projetos',
-    ariaLabel: 'Explore nossos projetos de design',
-    scrollText: 'Rolar para explorar'
-  },
-  'en': {
-    headline: ['Objects', 'with', 'meaning'],
-    subtitle: 'We create pieces that transcend function to become expressions of identity and style.',
-    cta: 'Explore projects',
-    ariaLabel: 'Explore our design projects',
-    scrollText: 'Scroll to explore'
-  },
-  'es': {
-    headline: ['Objetos', 'con', 'significado'],
-    subtitle: 'Creamos piezas que trascienden la función para convertirse en expresiones de identidad y estilo.',
-    cta: 'Explorar proyectos',
-    ariaLabel: 'Explora nuestros proyectos de diseño',
-    scrollText: 'Desplázate para explorar'
-  }
-};
-
 const HeroSection: React.FC<HeroSectionProps> = ({
-  language = 'pt-br',
-  videoSrc = "/videos/luxury-interior-4k.mp4",
-  posterSrc = "/videos/poster-frame.jpg",
-  onCursorVariantChange
+  videoSrc,
+  title,
+  subtitle,
+  ctaText,
+  ctaLink,
+  onCtaHover,
+  scrollToNextSection,
+  language
 }) => {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  
+  // Refined scroll animations
   const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 400], [1, 0.95]);
+  const heroY = useTransform(scrollY, [0, 400], [0, 100]);
   
-  // Parallax effect for blurred furniture silhouettes
-  const parallaxY = useTransform(scrollY, [0, 500], [0, 75]);
+  // Smoother spring physics
+  const smoothHeroY = useSpring(heroY, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
   
-  // Get localized content
-  const headlineText = content[language]?.headline || content['en'].headline;
-  const subtitleText = content[language]?.subtitle || content['en'].subtitle;
-  
-  // Preload video and create poster for Largest Contentful Paint optimization
   useEffect(() => {
-    const preloadVideo = async () => {
-      if (videoRef.current) {
-        try {
-          // Set up poster frame from first 3 seconds for LCP
-          videoRef.current.currentTime = 0.1;
-          videoRef.current.muted = true;
-          
-          // When metadata is loaded we can access frame data
-          videoRef.current.onloadedmetadata = () => {
-            if (videoRef.current) {
-              // Capture first frame as poster if none provided
-              if (!posterSrc && videoRef.current.readyState >= 2) {
-                const canvas = document.createElement('canvas');
-                canvas.width = videoRef.current.videoWidth;
-                canvas.height = videoRef.current.videoHeight;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                  ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-                  const posterImage = canvas.toDataURL('image/jpeg', 0.9);
-                  videoRef.current.poster = posterImage;
-                }
-              }
-              videoRef.current.play().catch(() => {
-                // Auto-play prevented, manual interaction needed
-                console.log('Auto-play prevented, awaiting user interaction');
-              });
-            }
-          };
-          
-          // Set video as loaded when data actually loads
-          videoRef.current.oncanplay = () => {
-            setVideoLoaded(true);
-          };
-        } catch (error) {
-          console.error('Error preloading video:', error);
-        }
-      }
-    };
+    // Trigger animation after component mounts
+    const timer = setTimeout(() => {
+      setHasAnimated(true);
+    }, 500);
     
-    preloadVideo();
-    
-    return () => {
-      if (videoRef.current) {
-        videoRef.current.onloadedmetadata = null;
-        videoRef.current.oncanplay = null;
-      }
-    };
-  }, [posterSrc]);
+    return () => clearTimeout(timer);
+  }, []);
   
-  // Cursor handling for interactive elements
-  const handleMouseEnter = () => {
-    if (onCursorVariantChange) onCursorVariantChange('hero');
-  };
-  
-  const handleMouseLeave = () => {
-    if (onCursorVariantChange) onCursorVariantChange('default');
-  };
-
   return (
-    <motion.section
-      ref={heroRef}
-      className="relative h-screen w-full overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1.5, ease: [0.165, 0.84, 0.44, 1] }}
+    <motion.section 
+      className="relative h-screen w-full overflow-hidden bg-black"
+      style={{ 
+        opacity: heroOpacity,
+        y: smoothHeroY,
+        scale: heroScale
+      }}
     >
-      {/* Ultra-optimized 4K H.265 video with poster preload for LCP */}
+      {/* Premium video background with layered approach */}
       <div className="absolute inset-0 z-0">
-        <motion.div
-          initial={{ scale: 1.05 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 2.5, ease: [0.25, 0.1, 0.25, 1] }}
+        {/* Loading state with elegant animation */}
+        <motion.div 
+          className="absolute inset-0 z-50 bg-black flex items-center justify-center"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: videoLoaded ? 0 : 1 }}
+          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="object-cover h-full w-full"
-            poster={posterSrc}
-            preload="metadata"
+          <motion.div
+            className="relative w-24 h-24"
+            initial={{ opacity: 0.3 }}
+            animate={{ 
+              opacity: videoLoaded ? 0 : [0.3, 0.7, 0.3],
+              rotate: videoLoaded ? 45 : 0
+            }}
+            transition={{ 
+              opacity: { repeat: Infinity, duration: 2, ease: "easeInOut" },
+              rotate: { duration: 0.8, ease: [0.22, 1, 0.36, 1] }
+            }}
           >
-            {/* H.265/HEVC for modern browsers with fallback */}
-            <source src={videoSrc} type="video/mp4; codecs=hvc1" />
-            <source src={videoSrc} type="video/mp4" />
-          </video>
+            <motion.div className="absolute inset-0">
+              <svg width="100%" height="100%" viewBox="0 0 100 100">
+                <motion.circle 
+                  cx="50" cy="50" r="45" 
+                  stroke="rgba(var(--color-accent-rgb), 0.8)" 
+                  strokeWidth="1"
+                  fill="none"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: videoLoaded ? 0 : 1 }}
+                  transition={{ 
+                    duration: 2, 
+                    ease: "easeInOut", 
+                    repeat: Infinity
+                  }}
+                />
+              </svg>
+            </motion.div>
+            
+            <motion.div 
+              className="absolute inset-0 flex items-center justify-center text-accent text-xs uppercase tracking-widest"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: videoLoaded ? 0 : [0, 1, 0] }}
+              transition={{ 
+                duration: 2.5, 
+                ease: "easeInOut", 
+                repeat: Infinity,
+                delay: 0.5
+              }}
+            >
+              {language === 'pt' ? 'Carregando' : 'Cargando'}
+            </motion.div>
+          </motion.div>
         </motion.div>
         
-        {/* Dual overlay system for perfect text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(5,5,5,0.90)] via-[rgba(5,5,5,0.60)] to-[rgba(5,5,5,0.10)] z-[1]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,0,0,0.0)_0%,_rgba(0,0,0,0.85)_100%)] z-[2]"></div>
+        {/* Premium video treatment */}
+        <motion.div
+          className="w-full h-full"
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 3.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            onLoadedData={() => setVideoLoaded(true)}
+            className="w-full h-full object-cover"
+            poster="/images/hero-poster.webp"
+            preload="auto"
+          >
+            <source src={`${videoSrc}.webm`} type="video/webm" />
+            <source src={`${videoSrc}.mp4`} type="video/mp4" />
+          </video>
+          
+          {/* Sophisticated layered overlays for depth */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/75 to-black/60 mix-blend-multiply"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-transparent opacity-70"></div>
+          
+          {/* High-end film grain overlay */}
+          <div 
+            className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
+            style={{ 
+              backgroundImage: 'url(/images/film-grain-heavy.png)', 
+              backgroundSize: '400px' 
+            }}
+          ></div>
+          
+          {/* Premium vignette effect */}
+          <div className="absolute inset-0 rounded-[50%/10%] shadow-[inset_0_0_100px_rgba(0,0,0,0.8)] pointer-events-none"></div>
+        </motion.div>
       </div>
-
-      {/* Parallax furniture silhouettes for depth */}
-      <motion.div 
-        className="absolute inset-0 z-[1] opacity-20 pointer-events-none"
-        style={{ y: parallaxY }}
-        data-speed="-0.15"
-      >
-        <div className="absolute inset-0 filter blur-[40px]">
-          <img 
-            src="/images/furniture-silhouettes.png" 
-            alt="" 
-            className="h-full w-full object-cover opacity-30"
-            aria-hidden="true" 
-          />
+      
+      {/* Luxury accent elements */}
+      <div className="absolute inset-0 z-10">
+        {/* Elegant grid */}
+        <div className="grid grid-cols-12 h-full w-full">
+          {Array(12).fill(0).map((_, i) => (
+            <div key={`grid-col-${i}`} className="h-full border-l border-white/5 last:border-r"></div>
+          ))}
         </div>
-      </motion.div>
-
-      {/* Content container with sophisticated spacing */}
-      <div className="relative z-10 h-full w-full flex items-center">
-        <div className="container mx-auto px-6 md:px-12">
-          <div className="max-w-5xl">
-            {/* Split-word headline with staggered animation */}
-            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white tracking-tight leading-[1.1] mb-8">
-              {headlineText.map((word, index) => (
-                <div key={`headline-${index}`} className="inline-block mr-6 overflow-hidden relative">
-                  <motion.span
-                    className="inline-block"
-                    initial={{ y: 120, clipPath: "inset(0 0 100% 0)" }}
-                    whileInView={{ y: 0, clipPath: "inset(0 0 0% 0)" }}
-                    viewport={{ once: true, margin: "-10%" }}
-                    transition={{ 
-                      duration: 1.2, 
-                      delay: index * 0.12,
-                      ease: [0.25, 1, 0.5, 1] 
-                    }}
-                  >
-                    {word}
-                    {/* Underline effect for last word */}
-                    {index === headlineText.length - 1 && (
-                      <motion.span 
-                        className="absolute bottom-2 left-0 h-[3px] bg-[#F5B400] w-full"
-                        initial={{ scaleX: 0 }}
-                        whileInView={{ scaleX: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ 
-                          duration: 0.8, 
-                          delay: headlineText.length * 0.12 + 0.3,
-                          ease: [0.25, 1, 0.5, 1] 
-                        }}
-                        style={{ transformOrigin: 'left' }}
-                      />
-                    )}
-                  </motion.span>
-                </div>
-              ))}
-            </h1>
-
-            {/* Character-by-character subtitle animation */}
-            <div className="max-w-xl mb-12">
-              <p className="text-white/90 text-lg md:text-xl">
-                {subtitleText.split('').map((char, index) => (
+        
+        {/* Sophisticated vertical lines with animation */}
+        <motion.div 
+          className="absolute top-[15vh] left-[15%] w-px h-[40vh]"
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: hasAnimated ? 1 : 0 }}
+          transition={{ duration: 1.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          style={{ 
+            transformOrigin: 'top',
+            background: 'linear-gradient(to bottom, transparent, rgba(var(--color-accent-rgb), 0.5), transparent)'
+          }}
+        />
+        
+        <motion.div 
+          className="absolute bottom-[15vh] right-[15%] w-px h-[40vh]"
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: hasAnimated ? 1 : 0 }}
+          transition={{ duration: 1.8, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          style={{ 
+            transformOrigin: 'bottom',
+            background: 'linear-gradient(to top, transparent, rgba(var(--color-accent-rgb), 0.5), transparent)'
+          }}
+        />
+        
+        {/* Premium geometric decorative element */}
+        <motion.div 
+          className="absolute top-[10%] right-[10%] w-[250px] h-[250px] opacity-10 hidden lg:block pointer-events-none"
+          initial={{ opacity: 0, scale: 0.9, rotate: 45 }}
+          animate={{ opacity: 0.1, scale: 1, rotate: 0 }}
+          transition={{ duration: 2.5, delay: 1.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <svg viewBox="0 0 100 100" className="w-full h-full">
+            <motion.circle 
+              cx="50" cy="50" r="45" 
+              stroke="white" 
+              strokeWidth="0.15" 
+              fill="none"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: hasAnimated ? 1 : 0 }}
+              transition={{ duration: 3, delay: 1.8, ease: [0.22, 1, 0.36, 1] }}
+            />
+            <motion.path 
+              d="M15,50 H85 M50,15 V85" 
+              stroke="white" 
+              strokeWidth="0.15"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: hasAnimated ? 1 : 0 }}
+              transition={{ duration: 2.5, delay: 2.2, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </svg>
+        </motion.div>
+        
+        {/* Bottom geometric element */}
+        <motion.div 
+          className="absolute bottom-[8%] left-[10%] w-[350px] h-[1px] opacity-20 hidden lg:block pointer-events-none"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: hasAnimated ? 1 : 0 }}
+          transition={{ duration: 2, delay: 2, ease: [0.22, 1, 0.36, 1] }}
+          style={{ 
+            transformOrigin: 'left',
+            background: 'linear-gradient(to right, rgba(var(--color-accent-rgb), 0.8), transparent)'
+          }}
+        />
+      </div>
+      
+      {/* Content */}
+      <div className="absolute inset-0 z-20 flex items-center justify-center">
+        <div className="container mx-auto px-8 md:px-16">
+          <div className="max-w-5xl mx-auto">
+            {/* Refined typography with sophisticated animation */}
+            <div className="overflow-hidden mb-6">
+              <motion.p
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 1.2, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="font-light text-accent tracking-[0.25em] uppercase text-sm md:text-base mb-8"
+              >
+                {language === 'pt' ? 'Ateliê de Design' : 'Atelier de Diseño'}
+              </motion.p>
+              
+              {/* Premium character-by-character animation */}
+              <h1 className="font-serif text-5xl md:text-7xl xl:text-[7.5rem] leading-[0.95] tracking-[-0.02em] text-white max-w-[18ch]">
+                {title.split('').map((char, index) => (
                   <motion.span
                     key={`char-${index}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 0.3,
-                      delay: 0.8 + (index * 0.01),
-                      ease: [0.215, 0.61, 0.355, 1]
-                    }}
                     className="inline-block"
+                    initial={{ y: 150, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{
+                      duration: 1.5,
+                      delay: 0.8 + (index * 0.02),
+                      ease: [0.22, 1, 0.36, 1]
+                    }}
                     style={{ 
                       display: char === ' ' ? 'inline' : 'inline-block',
                       whiteSpace: char === ' ' ? 'pre' : 'normal'
@@ -228,79 +262,139 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     {char}
                   </motion.span>
                 ))}
-              </p>
+              </h1>
             </div>
-
-            {/* Magnetic CTA with accessibility and subtle hover effects */}
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 1.2 }}
+            
+            {/* Elegant subtitle with refined animation */}
+            <motion.div 
+              className="relative overflow-hidden mt-12 md:mt-16 max-w-2xl border-l-2 border-accent/30 pl-8"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1.2, delay: 1.5, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Link
-                to="/portfolio"
-                className="group inline-flex items-center relative overflow-hidden"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                aria-label={content[language].ariaLabel}
-              >
-                <span className="relative z-10 text-white text-lg tracking-wide px-10 py-4 border-2 border-[#F5B400]/80 flex items-center">
-                  <span className="mr-3">{content[language].cta}</span>
-                  <motion.div
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ 
-                      repeat: Infinity, 
-                      duration: 2, 
-                      ease: "easeInOut", 
-                      repeatDelay: 1 
+              <p className="text-white/80 text-lg md:text-xl lg:text-2xl leading-relaxed font-extralight tracking-wide">
+                {subtitle.split(' ').map((word, index) => (
+                  <motion.span
+                    key={index}
+                    className="inline-block mr-[0.25em]"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.8,
+                      delay: 1.8 + (index * 0.05),
+                      ease: [0.22, 1, 0.36, 1]
                     }}
                   >
-                    <ChevronRight size={18} />
+                    {word}
+                  </motion.span>
+                ))}
+              </p>
+            </motion.div>
+            
+            {/* Premium CTA with sophisticated hover effects */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 2.2, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-16 md:mt-20"
+            >
+              <Link 
+                to={ctaLink} 
+                className="group inline-block relative"
+                onMouseEnter={() => onCtaHover(true)}
+                onMouseLeave={() => onCtaHover(false)}
+              >
+                <div className="relative overflow-hidden border border-accent/40 pl-8 pr-20 py-6 flex items-center gap-x-8">
+                  {/* Elegant number design */}
+                  <span className="relative z-10 text-accent/80 font-serif text-xl tracking-widest group-hover:text-accent transition-colors duration-700">
+                    01
+                  </span>
+                  
+                  {/* Animated line separator */}
+                  <motion.div 
+                    className="h-[20px] w-[1px] bg-accent/30 group-hover:bg-accent/50"
+                    initial={{ scaleY: 0 }}
+                    animate={{ scaleY: 1 }}
+                    transition={{ duration: 1, delay: 2.4, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                  
+                  <span className="relative z-10 text-white/90 text-lg tracking-wide">
+                    {ctaText}
+                  </span>
+                  
+                  {/* Arrow with premium animation */}
+                  <motion.div 
+                    className="absolute right-8 z-10"
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 2.6, duration: 0.8 }}
+                  >
+                    <motion.div
+                      animate={{ x: [0, 8, 0] }}
+                      transition={{ 
+                        repeat: Infinity, 
+                        duration: 2.5, 
+                        ease: "easeInOut", 
+                        repeatDelay: 0.5 
+                      }}
+                      className="text-accent group-hover:translate-x-2 transition-transform duration-300"
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </motion.div>
                   </motion.div>
                   
-                  {/* Button hover backdrop with sophisticated reveal */}
+                  {/* Elegant hover backdrop */}
                   <motion.div 
-                    className="absolute inset-0 bg-[#F5B400]/20 z-[-1]"
+                    className="absolute inset-0 bg-accent/5 z-0"
                     initial={{ scaleX: 0, originX: 0 }}
                     whileHover={{ scaleX: 1, originX: 0 }}
-                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                   />
-                </span>
+                </div>
+                
+                {/* Premium corner accents */}
+                <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-accent/50 group-hover:border-accent/80 transition-colors duration-500"/>
+                <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-accent/50 group-hover:border-accent/80 transition-colors duration-500"/>
               </Link>
             </motion.div>
           </div>
         </div>
       </div>
-
-      {/* Scroll indicator with advanced animation */}
+      
+      {/* Premium scroll indicator */}
       <motion.div 
-        className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center gap-3"
+        className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 1.6 }}
+        transition={{ duration: 1, delay: 2.8 }}
       >
-        <div className="uppercase tracking-[0.25em] text-white/60 text-xs font-extralight">
-          {content[language].scrollText}
+        <div className="uppercase tracking-[0.3em] text-white/60 text-[10px] font-extralight mb-4">
+          {language === 'pt' ? 'Explore' : 'Explore'}
         </div>
-        <motion.div 
-          className="w-px h-16 relative overflow-hidden"
-          initial={{ scaleY: 0, originY: 0 }}
-          animate={{ scaleY: 1 }}
-          transition={{ duration: 1.5, delay: 1.8, ease: "easeOut" }}
+        <button 
+          onClick={scrollToNextSection}
+          className="relative group"
         >
           <motion.div 
-            className="absolute inset-0 bg-gradient-to-b from-white/60 via-[#F5B400] to-white/0"
-            animate={{ y: ["-100%", "100%"] }}
-            transition={{ 
-              duration: 2,
-              ease: "easeInOut",
-              repeat: Infinity,
-              repeatDelay: 0.5
-            }}
-          />
-        </motion.div>
+            className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center overflow-hidden"
+            whileHover={{ borderColor: 'rgba(var(--color-accent-rgb), 0.5)' }}
+          >
+            <motion.div
+              animate={{ y: [0, 12, 0] }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 2, 
+                ease: "easeInOut",
+                repeatDelay: 0.5
+              }}
+              className="text-white/70 group-hover:text-accent transition-colors duration-300"
+            >
+              <ArrowDown size={14} />
+            </motion.div>
+          </motion.div>
+        </button>
       </motion.div>
     </motion.section>
   );

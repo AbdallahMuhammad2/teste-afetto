@@ -152,7 +152,13 @@
   stroke-dashoffset: 1000;
   animation: drawText 2s ease-luxury forwards;
 }
-
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 /* Prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

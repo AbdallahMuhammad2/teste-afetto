@@ -39,7 +39,6 @@ function App() {
             </Routes>
           </AnimatePresence>
         </main>
-        <Footer />
       </div>
     </LanguageContext.Provider>
   );
