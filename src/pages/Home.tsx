@@ -13,6 +13,9 @@ import ProjectsGrid from '../components/ProjectsGrid';
 import { useLenis } from '@studio-freight/react-lenis';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { blendColor } from '../utils/color';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useGLTF, Environment, OrbitControls, ContactShadows } from '@react-three/drei';
+import * as THREE from 'three';
 
 // Enhanced parallax effect with variable intensity
 const useParallax = (value: MotionValue<number>, distance: number, reverse = false) => {
@@ -59,6 +62,94 @@ const premiumButtonHover = (event: MouseEvent) => {
   
   button.style.setProperty('--x', `${x}px`);
   button.style.setProperty('--y', `${y}px`);
+};
+
+const MaterialShowcase = ({ material, rotationSpeed = 0.003 }) => {
+  const { nodes } = useGLTF('/models/showcase-object.glb');
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += rotationSpeed;
+    }
+  });
+
+  return (
+    <group>
+      <mesh 
+        ref={meshRef} 
+        geometry={nodes.Object.geometry}
+        castShadow
+        receiveShadow
+      >
+        <meshPhysicalMaterial 
+          color={material.color}
+          metalness={material.metalness || 0.2}
+          roughness={material.roughness || 0.3}
+          clearcoat={material.clearcoat || 0.5}
+          clearcoatRoughness={0.2}
+          envMapIntensity={1.5}
+        />
+      </mesh>
+    </group>
+  );
+};
+
+const MagneticText = ({ children, sensitivity = 150, scale = 1.1 }) => {
+  const textRef = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  
+  const handleMouseMove = (e) => {
+    if (!textRef.current) return;
+    
+    const { clientX, clientY } = e;
+    const { left, top, width, height } = textRef.current.getBoundingClientRect();
+    
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+    
+    const distanceX = clientX - centerX;
+    const distanceY = clientY - centerY;
+    
+    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    
+    if (distance < sensitivity) {
+      const x = distanceX / sensitivity * 15;
+      const y = distanceY / sensitivity * 15;
+      setPosition({ x, y });
+    } else {
+      setPosition({ x: 0, y: 0 });
+    }
+  };
+  
+  const handleMouseLeave = () => {
+    setPosition({ x: 0, y: 0 });
+  };
+  
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+  
+  return (
+    <motion.div
+      ref={textRef}
+      animate={{
+        x: position.x,
+        y: position.y,
+        scale: position.x || position.y ? scale : 1,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 150,
+        damping: 15,
+        mass: 0.1
+      }}
+      onMouseLeave={handleMouseLeave}
+    >
+      {children}
+    </motion.div>
+  );
 };
 
 const Home: React.FC = () => {
@@ -1360,7 +1451,50 @@ const testimonials = [
             </Link>
           </div>
         </motion.section>
-      </motion.div>
+
+        <motion.div 
+          className="relative h-80 mb-24 overflow-hidden bg-white/5 backdrop-blur-sm rounded-lg"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.2 }}
+        >
+          <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
+            <ambientLight intensity={0.5} />
+            <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+            <ContactShadows 
+              position={[0, -1.5, 0]} 
+              opacity={0.6} 
+              scale={10} 
+              blur={2.5} 
+              far={4} 
+            />
+            <OrbitControls 
+              enableZoom={false} 
+              enablePan={false}
+              maxPolarAngle={Math.PI / 2} 
+              minPolarAngle={Math.PI / 4}
+            />
+            <MaterialShowcase material={{ 
+              color: '#D4B798', 
+              metalness: 0.3, 
+              roughness: 0.2,
+              clearcoat: 0.8 
+            }} />
+            <Environment preset="apartment" />
+          </Canvas>
+          
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+            <h3 className="text-white text-xl font-serif mb-2">
+              {language === 'pt' ? 'Experimente Materiais' : 'Experimente Materiales'}
+            </h3>
+            <p className="text-white/70 text-sm">
+              {language === 'pt' 
+                ? 'Interaja com os materiais usados em nossas criações'
+                : 'Interactúe con los materiales utilizados en nuestras creaciones'}
+            </p>
+          </div>
+        </motion.div>
       
       {/* About Section with Dynamic Parallax */}
       <motion.section 
@@ -1467,24 +1601,28 @@ const testimonials = [
                 
                 <h2 className="text-4xl md:text-5xl xl:text-6xl font-serif leading-[1.1] mb-8 tracking-tight text-white">
                   <div className="overflow-hidden">
-                    <motion.div
-                      initial={{ y: 80 }}
-                      whileInView={{ y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      {language === 'pt' ? 'Tradição encontra' : 'Tradición encuentra'}
-                    </motion.div>
+                    <MagneticText>
+                      <motion.div
+                        initial={{ y: 80 }}
+                        whileInView={{ y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        {language === 'pt' ? 'Tradição encontra' : 'Tradición encuentra'}
+                      </motion.div>
+                    </MagneticText>
                   </div>
                   <div className="overflow-hidden">
-                    <motion.div
-                      initial={{ y: 80 }}
-                      whileInView={{ y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      {language === 'pt' ? 'contemporaneidade' : 'contemporaneidad'}
-                    </motion.div>
+                    <MagneticText>
+                      <motion.div
+                        initial={{ y: 80 }}
+                        whileInView={{ y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        {language === 'pt' ? 'contemporaneidade' : 'contemporaneidad'}
+                      </motion.div>
+                    </MagneticText>
                   </div>
                 </h2>
                 
@@ -1974,7 +2112,7 @@ const testimonials = [
                           className="absolute inset-0 z-0"
                           initial={{ boxShadow: "0 0 0 rgba(212, 183, 152, 0)" }}
                           whileHover={{ 
-                            boxShadow: "0 0 20px rgba(212, 183, 152, 0.6)" 
+                          boxShadow: "0 0 20px rgba(212, 183, 152, 0.6)" 
                           }}
                           transition={{ duration: 0.3 }}
                         />
