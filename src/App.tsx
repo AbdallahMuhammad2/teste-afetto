@@ -1,47 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
+import { ReactLenis } from '@studio-freight/react-lenis';
 import Home from './pages/Home';
 import Portfolio from './pages/Portfolio';
-import Customization from './pages/Customization';
 import About from './pages/About';
 import Contact from './pages/Contact';
-import LanguageContext from './context/LanguageContext';
-import BackgroundShader from './components/effects/BackgroundShader';
-import AdaptiveTheme from './components/effects/AdaptiveTheme';
+import EntryPortal from './components/EntryPortal';
+import B2BHome from './pages/b2b/Home';
 
-function App() {
-  const location = useLocation();
-  const [language, setLanguage] = useState<'pt' | 'es'>('pt');
+const App: React.FC = () => {
+  // Track user's choice of B2C vs B2B
+  const [userType, setUserType] = useState<'b2c' | 'b2b' | null>(null);
   
-  // Scroll to top on route change
+  // Check if user has made a choice before
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+    const savedUserType = localStorage.getItem('afettoUserType');
+    if (savedUserType === 'b2c' || savedUserType === 'b2b') {
+      setUserType(savedUserType);
+    }
+  }, []);
+  
+  // Handle user's selection
+  const handleUserTypeSelect = (type: 'b2c' | 'b2b') => {
+    setUserType(type);
+    localStorage.setItem('afettoUserType', type);
+  };
+  
+  // Option to reset user's choice
+  const resetUserType = () => {
+    setUserType(null);
+    localStorage.removeItem('afettoUserType');
+  };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
-      <div className="min-h-screen flex flex-col">
-        <BackgroundShader />
-        <AdaptiveTheme />
-        <Header />
-        <main className="flex-grow">
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Home />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/customization" element={<Customization />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-            </Routes>
-          </AnimatePresence>
-        </main>
-      </div>
-    </LanguageContext.Provider>
+    <ReactLenis root options={{ lerp: 0.1, duration: 1.5 }}>
+      <AnimatePresence mode="wait">
+        {userType === null ? (
+          <EntryPortal onSelect={handleUserTypeSelect} />
+        ) : (
+          <Routes>
+            {/* Different home pages based on user type */}
+            <Route path="/" element={userType === 'b2c' ? <Home resetUserType={resetUserType} /> : <B2BHome resetUserType={resetUserType} />} />
+            
+            {/* Shared routes */}
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/sobre" element={<About />} />
+            <Route path="/contato" element={<Contact />} />
+            
+            {/* B2B specific routes */}
+            {userType === 'b2b' && (
+              <>
+                <Route path="/especificacoes-tecnicas" element={<TechnicalSpecs />} />
+                <Route path="/pedidos-atacado" element={<WholesaleOrders />} />
+              </>
+            )}
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        )}
+      </AnimatePresence>
+    </ReactLenis>
   );
-}
+};
+
+// Placeholder components for B2B specific pages
+const TechnicalSpecs = () => <div>Technical Specifications Page</div>;
+const WholesaleOrders = () => <div>Wholesale Orders Page</div>;
 
 export default App;
