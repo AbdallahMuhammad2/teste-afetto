@@ -9,6 +9,14 @@ import Contact from './pages/Contact';
 import EntryPortal from './components/EntryPortal';
 import B2BHome from './pages/b2b/Home';
 
+interface HomePageProps {
+  resetUserType: () => void;
+}
+
+interface B2BHomePageProps {
+  resetUserType: () => void;
+}
+
 const App: React.FC = () => {
   // Track user's choice of B2C vs B2B
   const [userType, setUserType] = useState<'b2c' | 'b2b' | null>(null);
@@ -34,7 +42,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <ReactLenis root options={{ lerp: 0.1, duration: 1.5 }}>
+    <ReactLenis root options={{ 
+      lerp: 0.07, // Lower value for smoother scrolling
+      duration: 1.2, 
+      smoothWheel: true,
+      orientation: "vertical",
+      // smoothTouch: false, // This option is not available in LenisOptions
+      infinite: false // Ensure this is false
+    }}>
       <AnimatePresence mode="wait">
         {userType === null ? (
           <EntryPortal onSelect={handleUserTypeSelect} />

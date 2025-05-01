@@ -14,8 +14,9 @@ import { useLenis } from '@studio-freight/react-lenis';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { blendColor } from '../utils/color';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, Environment, OrbitControls, ContactShadows } from '@react-three/drei';
+import { useGLTF, Environment, OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { Vector2 } from 'three';
 
 // Enhanced parallax effect with variable intensity
 const useParallax = (value: MotionValue<number>, distance: number, reverse = false) => {
@@ -64,91 +65,136 @@ const premiumButtonHover = (event: MouseEvent) => {
   button.style.setProperty('--y', `${y}px`);
 };
 
-const MaterialShowcase = ({ material, rotationSpeed = 0.003 }) => {
-  const { nodes } = useGLTF('/models/showcase-object.glb');
-  const meshRef = useRef();
+interface MaterialProps {
+  color: string;
+  metalness?: number;
+  roughness?: number;
+  clearcoat?: number;
+}
+
+const MaterialShowcase = ({ material }: { material: MaterialProps }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const [isSpinning, setIsSpinning] = useState(true);
+  const [showMode, setShowMode] = useState('material'); // 'material', 'furniture'
+  const [furniture, setFurniture] = useState('table'); // 'table', 'chair', 'cabinet'
   
+  // Auto-rotation
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += rotationSpeed;
+    if (meshRef.current && isSpinning) {
+      meshRef.current.rotation.y += 0.003;
     }
   });
 
-  return (
-    <group>
-      <mesh 
-        ref={meshRef} 
-        geometry={nodes.Object.geometry}
-        castShadow
-        receiveShadow
-      >
-        <meshPhysicalMaterial 
-          color={material.color}
-          metalness={material.metalness || 0.2}
-          roughness={material.roughness || 0.3}
-          clearcoat={material.clearcoat || 0.5}
-          clearcoatRoughness={0.2}
-          envMapIntensity={1.5}
-        />
-      </mesh>
-    </group>
-  );
-};
+  // Toggle between showing just material or furniture application
+  const toggleShowMode = () => {
+    setShowMode(showMode === 'material' ? 'furniture' : 'material');
+  };
 
-const MagneticText = ({ children, sensitivity = 150, scale = 1.1 }) => {
-  const textRef = useRef(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  
-  const handleMouseMove = (e) => {
-    if (!textRef.current) return;
-    
-    const { clientX, clientY } = e;
-    const { left, top, width, height } = textRef.current.getBoundingClientRect();
-    
-    const centerX = left + width / 2;
-    const centerY = top + height / 2;
-    
-    const distanceX = clientX - centerX;
-    const distanceY = clientY - centerY;
-    
-    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-    
-    if (distance < sensitivity) {
-      const x = distanceX / sensitivity * 15;
-      const y = distanceY / sensitivity * 15;
-      setPosition({ x, y });
-    } else {
-      setPosition({ x: 0, y: 0 });
-    }
+  // Cycle through furniture types
+  const cycleFurniture = () => {
+    const types = ['table', 'chair', 'cabinet'];
+    const currentIndex = types.indexOf(furniture);
+    const nextIndex = (currentIndex + 1) % types.length;
+    setFurniture(types[nextIndex]);
   };
-  
-  const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
-  };
-  
-  useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-  
-  return (
-    <motion.div
-      ref={textRef}
-      animate={{
-        x: position.x,
-        y: position.y,
-        scale: position.x || position.y ? scale : 1,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 150,
-        damping: 15,
-        mass: 0.1
-      }}
-      onMouseLeave={handleMouseLeave}
+
+  // Material showcase with simple shapes
+  const renderMaterial = () => (
+    <mesh 
+      ref={meshRef} 
+      castShadow
+      receiveShadow
+      onClick={() => setIsSpinning(!isSpinning)}
+      onDoubleClick={toggleShowMode}
     >
-      {children}
-    </motion.div>
+      {furniture === 'table' && <boxGeometry args={[3, 0.2, 1.5]} />}
+      {furniture === 'chair' && (
+        <group>
+          <mesh position={[0, -0.5, 0]} castShadow receiveShadow>
+            <boxGeometry args={[0.5, 0.05, 0.5]} /> {/* seat */}
+            <meshPhysicalMaterial {...getMaterialProps()} />
+          </mesh>
+          <mesh position={[0, 0, -0.25]} castShadow receiveShadow>
+            <boxGeometry args={[0.5, 1, 0.05]} /> {/* backrest */}
+            <meshPhysicalMaterial {...getMaterialProps()} />
+          </mesh>
+          <mesh position={[-0.225, -1, 0.225]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.03, 0.03, 1]} /> {/* leg */}
+            <meshStandardMaterial color="#5A3A22" />
+          </mesh>
+          <mesh position={[0.225, -1, 0.225]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.03, 0.03, 1]} /> {/* leg */}
+            <meshStandardMaterial color="#5A3A22" />
+          </mesh>
+          <mesh position={[-0.225, -1, -0.225]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.03, 0.03, 1]} /> {/* leg */}
+            <meshStandardMaterial color="#5A3A22" />
+          </mesh>
+          <mesh position={[0.225, -1, -0.225]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.03, 0.03, 1]} /> {/* leg */}
+            <meshStandardMaterial color="#5A3A22" />
+          </mesh>
+        </group>
+      )}
+      {furniture === 'cabinet' && (
+        <group>
+          <mesh position={[0, 0, 0]} castShadow receiveShadow>
+            <boxGeometry args={[1.5, 1, 0.5]} /> {/* cabinet body */}
+            <meshPhysicalMaterial {...getMaterialProps()} />
+          </mesh>
+          <mesh position={[0, 0, 0.26]} castShadow receiveShadow>
+            <boxGeometry args={[0.7, 0.7, 0.02]} /> {/* door */}
+            <meshPhysicalMaterial {...getMaterialProps(0.9)} />
+          </mesh>
+          <mesh position={[0.35, 0, 0.26]} castShadow receiveShadow rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.05, 8]} /> {/* handle */}
+            <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
+          </mesh>
+        </group>
+      )}
+      {showMode === 'material' && (
+        <>
+          {furniture === 'table' && <meshPhysicalMaterial {...getMaterialProps()} />}
+        </>
+      )}
+    </mesh>
+  );
+
+  const { language } = useContext(LanguageContext);
+
+  // Helper to get material properties with potential overrides
+  const getMaterialProps = (roughnessMultiplier = 1) => ({
+    color: material.color,
+    metalness: material.metalness || 0.2,
+    roughness: (material.roughness || 0.3) * roughnessMultiplier,
+    clearcoat: material.clearcoat || 0.5,
+    clearcoatRoughness: 0.2,
+    envMapIntensity: 1.5
+  });
+
+  return (
+    <group scale={showMode === 'furniture' ? 0.7 : 1}>
+      {renderMaterial()}
+      
+      {/* Interactive instructions */}
+      <Html position={[0, -2.2, 0]} center>
+        <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full text-white/90 text-xs pointer-events-none">
+          {isSpinning ? "Clique para pausar" : "Clique para girar"} • Clique duplo para mudar visualização
+        </div>
+      </Html>
+      
+      {/* Material type indicator */}
+      <Html position={[2, 1.7, 0]}>
+        <button 
+          onClick={cycleFurniture}
+          className="bg-black/40 backdrop-blur-sm px-3 py-1 rounded text-white/90 text-xs border border-white/20 hover:border-accent/50 transition-colors"
+        >
+          {furniture === 'table' && (language === 'pt' ? 'Mesa' : 'Mesa')}
+          {furniture === 'chair' && (language === 'pt' ? 'Cadeira' : 'Silla')}
+          {furniture === 'cabinet' && (language === 'pt' ? 'Armário' : 'Armario')}
+        </button>
+      </Html>
+    </group>
   );
 };
 
@@ -181,7 +227,457 @@ const Home: React.FC = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [activeProcessStep, setActiveProcessStep] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
+
+  interface Material {
+    id: string;
+    name: string;
+    color: string;
+    roughness: number;
+    metalness: number;
+    furniture: string;
+    properties: string;
+  }
+
+  const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
+  const [activeCategory, setActiveCategory] = useState(0);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [currentFurniture, setCurrentFurniture] = useState(0);
+
+  const furnitureLabels = [
+    { pt: 'Mesa', en: 'Table' },
+    { pt: 'Cadeira', en: 'Chair' },
+    { pt: 'Armário', en: 'Cabinet' },
+    { pt: 'Sofá', en: 'Sofa' },
+    { pt: 'Bancada', en: 'Countertop' }
+  ];
+
+  const cycleFurniture = () => {
+    setCurrentFurniture((prev) => (prev + 1) % furnitureLabels.length);
+  }
+
+  const allMaterials = {
+    woods: [
+      { 
+        id: 'nogueira-americana', 
+        name: language === 'pt' ? 'Nogueira Americana' : 'Nogal Americano', 
+        type: language === 'pt' ? 'Madeira Nobre' : 'Madera Noble',
+        origin: language === 'pt' ? 'América do Norte' : 'América del Norte',
+        color: '#73543D', 
+        roughness: 0.7, 
+        metalness: 0.0,
+        durability: 4.5,
+        maintenance: 3,
+        sustainability: 4,
+        applications: [
+          { pt: 'Mesas de jantar', en: 'Dining tables' },
+          { pt: 'Estantes', en: 'Bookshelves' },
+          { pt: 'Aparadores', en: 'Sideboards' }
+        ],
+        description: {
+          pt: 'Madeira premium com tonalidades ricas em castanhos escuros e padrões de grãos pronunciados. Apresenta excelente estabilidade e resistência, ideal para móveis de alta qualidade que se valorizam com o tempo.',
+          es: 'Madera premium con tonalidades ricas en marrones oscuros y patrones de grano pronunciados. Presenta excelente estabilidad y resistencia, ideal para muebles de alta calidad que se valorizan con el tiempo.'
+        }
+      },
+      { 
+        id: 'carvalho-frances', 
+        name: language === 'pt' ? 'Carvalho Francês' : 'Roble Francés', 
+        type: language === 'pt' ? 'Madeira Nobre' : 'Madera Noble',
+        origin: language === 'pt' ? 'Europa' : 'Europa',
+        color: '#B89A75', 
+        roughness: 0.6, 
+        metalness: 0.0,
+        durability: 5,
+        maintenance: 2.5,
+        sustainability: 4.5,
+        applications: [
+          { pt: 'Pisos', en: 'Flooring' },
+          { pt: 'Mesas', en: 'Tables' },
+          { pt: 'Portas', en: 'Doors' }
+        ],
+        description: {
+          pt: 'Carvalho Francês apresenta veios marcantes e uma tonalidade quente e neutra. Sua textura única e extrema durabilidade o tornam perfeito para móveis que atravessam gerações.',
+          es: 'Roble Francés presenta vetas distintivas y una tonalidad cálida y neutra. Su textura única y extrema durabilidad lo hacen perfecto para muebles que atraviesan generaciones.'
+        }
+      },
+      { 
+        id: 'teca', 
+        name: language === 'pt' ? 'Teca Asiática' : 'Teca Asiática', 
+        type: language === 'pt' ? 'Madeira Exótica' : 'Madera Exótica',
+        origin: language === 'pt' ? 'Sudeste Asiático' : 'Sudeste Asiático',
+        color: '#C19A6B', 
+        roughness: 0.5, 
+        metalness: 0.0,
+        durability: 5,
+        maintenance: 1,
+        sustainability: 3.5,
+        applications: [
+          { pt: 'Móveis externos', en: 'Outdoor furniture' },
+          { pt: 'Decks', en: 'Decks' },
+          { pt: 'Painéis', en: 'Panels' }
+        ],
+        description: {
+          pt: 'Conhecida por sua resistência excepcional à água e intempéries, a Teca possui óleos naturais que a protegem. Sua cor dourada-acastanhada envelhece adquirindo um tom prateado distintivo.',
+          es: 'Conocida por su resistencia excepcional al agua y a la intemperie, la Teca posee aceites naturales que la protegen. Su color dorado-marrón envejece adquiriendo un tono plateado distintivo.'
+        }
+      },
+      { 
+        id: 'freijo', 
+        name: language === 'pt' ? 'Freijó Brasileiro' : 'Freijó Brasileño', 
+        type: language === 'pt' ? 'Madeira Nacional' : 'Madera Nacional',
+        origin: language === 'pt' ? 'Brasil' : 'Brasil',
+        color: '#A67B5B', 
+        roughness: 0.65, 
+        metalness: 0.0,
+        durability: 4,
+        maintenance: 2.5,
+        sustainability: 3.5,
+        applications: [
+          { pt: 'Móveis residenciais', en: 'Residential furniture' },
+          { pt: 'Painéis decorativos', en: 'Decorative panels' },
+          { pt: 'Marcenaria fina', en: 'Fine woodworking' }
+        ],
+        description: {
+          pt: 'Madeira brasileira com tonalidade variando do marrom-claro ao avermelhado, com veios elegantes. Possui boa estabilidade e é fácil de trabalhar, sendo muito valorizada na marcenaria contemporânea.',
+          es: 'Madera brasileña con tonalidad que varía del marrón claro al rojizo, con vetas elegantes. Posee buena estabilidad y es fácil de trabajar, siendo muy valorada en la carpintería contemporánea.'
+        }
+      },
+      { 
+        id: 'sucupira', 
+        name: language === 'pt' ? 'Sucupira' : 'Sucupira', 
+        type: language === 'pt' ? 'Madeira Nacional' : 'Madera Nacional',
+        origin: language === 'pt' ? 'América do Sul' : 'América del Sur',
+        color: '#5A4233', 
+        roughness: 0.75, 
+        metalness: 0.0,
+        durability: 4.5,
+        maintenance: 3.5,
+        sustainability: 3,
+        applications: [
+          { pt: 'Pisos nobres', en: 'Fine flooring' },
+          { pt: 'Móveis de luxo', en: 'Luxury furniture' },
+          { pt: 'Escadas', en: 'Staircases' }
+        ],
+        description: {
+          pt: 'Madeira densa e escura, com alta resistência mecânica. Seus tons variam do marrom-chocolate ao quase preto, com veios sutis. Ideal para móveis que exigem resistência e beleza duradoura.',
+          es: 'Madera densa y oscura, con alta resistencia mecánica. Sus tonos varían del marrón chocolate al casi negro, con vetas sutiles. Ideal para muebles que exigen resistencia y belleza duradera.'
+        }
+      },
+      { 
+        id: 'pau-ferro', 
+        name: language === 'pt' ? 'Pau Ferro' : 'Palo de Hierro', 
+        type: language === 'pt' ? 'Madeira Nacional' : 'Madera Nacional',
+        origin: language === 'pt' ? 'Brasil' : 'Brasil',
+        color: '#4A2C1B', 
+        roughness: 0.8, 
+        metalness: 0.0,
+        durability: 5,
+        maintenance: 4,
+        sustainability: 3,
+        applications: [
+          { pt: 'Tampos de mesa', en: 'Tabletops' },
+          { pt: 'Instrumentos musicais', en: 'Musical instruments' },
+          { pt: 'Móveis de alto padrão', en: 'High-end furniture' }
+        ],
+        description: {
+          pt: 'Uma das madeiras mais densas do mundo, com coloração marrom-avermelhada profunda e veios dramáticos. Extremamente durável e resistente a impactos, cria móveis com aparência inconfundível.',
+          es: 'Una de las maderas más densas del mundo, con coloración marrón-rojiza profunda y vetas dramáticas. Extremadamente duradera y resistente a impactos, crea muebles con apariencia inconfundible.'
+        }
+      }
+    ],
+    fabrics: [
+      { 
+        id: 'linho-belga', 
+        name: language === 'pt' ? 'Linho Belga' : 'Lino Belga', 
+        type: language === 'pt' ? 'Tecido Natural' : 'Tejido Natural',
+        origin: language === 'pt' ? 'Bélgica' : 'Bélgica',
+        color: '#E3DDD3', 
+        roughness: 0.9, 
+        metalness: 0.0,
+        durability: 4,
+        maintenance: 3,
+        sustainability: 5,
+        applications: [
+          { pt: 'Estofados', en: 'Upholstery' },
+          { pt: 'Almofadas', en: 'Pillows' },
+          { pt: 'Revestimentos', en: 'Coverings' }
+        ],
+        description: {
+          pt: 'Tecido natural de alta qualidade com textura distintiva e toque fresco. Respirável e altamente durável, o linho belga é conhecido por desenvolver um caráter único com o tempo de uso.',
+          es: 'Tejido natural de alta calidad con textura distintiva y tacto fresco. Transpirable y altamente duradero, el lino belga es conocido por desarrollar un carácter único con el tiempo de uso.'
+        }
+      },
+      { 
+        id: 'veludo-italiano', 
+        name: language === 'pt' ? 'Veludo Italiano' : 'Terciopelo Italiano', 
+        type: language === 'pt' ? 'Tecido Premium' : 'Tejido Premium',
+        origin: language === 'pt' ? 'Itália' : 'Italia',
+        color: '#60383B', 
+        roughness: 0.2, 
+        metalness: 0.0,
+        durability: 3.5,
+        maintenance: 4,
+        sustainability: 3,
+        applications: [
+          { pt: 'Poltronas', en: 'Armchairs' },
+          { pt: 'Sofás', en: 'Sofas' },
+          { pt: 'Cabeceiras', en: 'Headboards' }
+        ],
+        description: {
+          pt: 'Veludo de alta densidade com toque macio e reflexos luminosos. Sua textura luxuosa adiciona profundidade e sofisticação aos ambientes, sendo perfeito para peças de destaque.',
+          es: 'Terciopelo de alta densidad con tacto suave y reflejos luminosos. Su textura lujosa añade profundidad y sofisticación a los ambientes, siendo perfecto para piezas destacadas.'
+        }
+      },
+    ],
+    metals: [
+      { 
+        id: 'bronze-envelhecido', 
+        name: language === 'pt' ? 'Bronze Envelhecido' : 'Bronce Envejecido', 
+        type: language === 'pt' ? 'Metal Nobre' : 'Metal Noble',
+        origin: language === 'pt' ? 'Produção Local' : 'Producción Local',
+        color: '#966F42', 
+        roughness: 0.1, 
+        metalness: 0.8,
+        durability: 5,
+        maintenance: 2.5,
+        sustainability: 4,
+        applications: [
+          { pt: 'Puxadores', en: 'Handles' },
+          { pt: 'Pés de móveis', en: 'Furniture legs' },
+          { pt: 'Detalhes decorativos', en: 'Decorative details' }
+        ],
+        description: {
+          pt: 'Liga metálica com acabamento artesanal que confere personalidade e sofisticação aos detalhes do mobiliário. Desenvolve uma pátina natural que enriquece sua aparência ao longo do tempo.',
+          es: 'Aleación metálica con acabado artesanal que confiere personalidad y sofisticación a los detalles del mobiliario. Desarrolla una pátina natural que enriquece su apariencia a lo largo del tiempo.'
+        }
+      },
+      { 
+        id: 'latao-polido', 
+        name: language === 'pt' ? 'Latão Polido' : 'Latón Pulido', 
+        type: language === 'pt' ? 'Metal Nobre' : 'Metal Noble',
+        origin: language === 'pt' ? 'Produção Local' : 'Producción Local',
+        color: '#D4AF37', 
+        roughness: 0.1, 
+        metalness: 0.9,
+        durability: 4.5,
+        maintenance: 3,
+        sustainability: 4,
+        applications: [
+          { pt: 'Bases de mesa', en: 'Table bases' },
+          { pt: 'Ferragens decorativas', en: 'Decorative hardware' },
+          { pt: 'Acessórios', en: 'Accessories' }
+        ],
+        description: {
+          pt: 'Metal dourado com brilho sofisticado que adiciona um toque de luxo aos móveis. Sua tonalidade quente combina harmoniosamente com madeiras escuras e mármores.',
+          es: 'Metal dorado con brillo sofisticado que añade un toque de lujo a los muebles. Su tonalidad cálida combina armoniosamente con maderas oscuras y mármoles.'
+        }
+      },
+    ],
+    stones: [
+      { 
+        id: 'marmore-carrara', 
+        name: language === 'pt' ? 'Mármore Carrara' : 'Mármol Carrara', 
+        type: language === 'pt' ? 'Pedra Natural' : 'Piedra Natural',
+        origin: language === 'pt' ? 'Itália' : 'Italia',
+        color: '#E9E9E6', 
+        roughness: 0.2, 
+        metalness: 0.1,
+        durability: 4,
+        maintenance: 4.5,
+        sustainability: 3,
+        applications: [
+          { pt: 'Tampos de mesa', en: 'Tabletops' },
+          { pt: 'Bancadas', en: 'Countertops' },
+          { pt: 'Mesas laterais', en: 'Side tables' }
+        ],
+        description: {
+          pt: 'Mármore italiano de primeira qualidade, com fundo branco e veios cinza sutis. Cada peça é única, com padrões naturais irreproduzíveis que conferem exclusividade ao mobiliário.',
+          es: 'Mármol italiano de primera calidad, con fondo blanco y vetas grises sutiles. Cada pieza es única, con patrones naturales irrepetibles que confieren exclusividad al mobiliario.'
+        }
+      },
+      { 
+        id: 'granito-preto', 
+        name: language === 'pt' ? 'Granito Preto Absoluto' : 'Granito Negro Absoluto', 
+        type: language === 'pt' ? 'Pedra Natural' : 'Piedra Natural',
+        origin: language === 'pt' ? 'Brasil/Índia' : 'Brasil/India',
+        color: '#1D1D1D', 
+        roughness: 0.3, 
+        metalness: 0.2,
+        durability: 5,
+        maintenance: 3,
+        sustainability: 3.5,
+        applications: [
+          { pt: 'Mesas de jantar', en: 'Dining tables' },
+          { pt: 'Bancadas de cozinha', en: 'Kitchen countertops' },
+          { pt: 'Bases de esculturas', en: 'Sculpture bases' }
+        ],
+        description: {
+          pt: 'Granito de cor preta profunda e uniforme, com alta densidade e resistência excepcional a manchas e arranhões. Sua sobriedade cria um contraste elegante com elementos mais claros.',
+          es: 'Granito de color negro profundo y uniforme, con alta densidad y resistencia excepcional a manchas y arañazos. Su sobriedad crea un contraste elegante con elementos más claros.'
+        }
+      },
+    ]
+  }
+
+  interface Material {
+    id: string;
+    name: string;
+    color: string;
+    roughness: number;
+    metalness: number;
+    furniture: string;
+    properties: string;
+  }
+
+  const EnhancedMaterialShowcase = ({ material, currentFurniture }: { material: Material, currentFurniture: number }) => {
+    const meshRef = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.Material> | null>(null);
+    
+    const renderFurnitureModel = () => {
+      switch(currentFurniture) {
+        case 0:
+          return (
+            <group>
+              <mesh castShadow receiveShadow position={[0, 0, 0]}>
+                <boxGeometry args={[3, 0.1, 1.5]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh castShadow position={[-1.2, -0.75, 0]} rotation={[0, 0, 0]}>
+                <cylinderGeometry args={[0.05, 0.05, 1.6]} />
+                <meshStandardMaterial color="#5A3A22" />
+              </mesh>
+              <mesh castShadow position={[1.2, -0.75, 0]} rotation={[0, 0, 0]}>
+                <cylinderGeometry args={[0.05, 0.05, 1.6]} />
+                <meshStandardMaterial color="#5A3A22" />
+              </mesh>
+            </group>
+          );
+        
+        case 1:
+          return (
+            <group>
+              <mesh position={[0, -0.3, 0]} castShadow receiveShadow>
+                <boxGeometry args={[0.5, 0.05, 0.5]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[0, 0.2, -0.25]} castShadow receiveShadow>
+                <boxGeometry args={[0.5, 1, 0.05]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[-0.225, -0.8, 0.225]} castShadow receiveShadow>
+                <cylinderGeometry args={[0.03, 0.03, 1]} />
+                <meshStandardMaterial color="#5A3A22" />
+              </mesh>
+              <mesh position={[0.225, -0.8, 0.225]} castShadow receiveShadow>
+                <cylinderGeometry args={[0.03, 0.03, 1]} />
+                <meshStandardMaterial color="#5A3A22" />
+              </mesh>
+              <mesh position={[-0.225, -0.8, -0.225]} castShadow receiveShadow>
+                <cylinderGeometry args={[0.03, 0.03, 1]} />
+                <meshStandardMaterial color="#5A3A22" />
+              </mesh>
+              <mesh position={[0.225, -0.8, -0.225]} castShadow receiveShadow>
+                <cylinderGeometry args={[0.03, 0.03, 1]} />
+                <meshStandardMaterial color="#5A3A22" />
+              </mesh>
+            </group>
+          );
+        
+        case 2:
+          return (
+            <group>
+              <mesh position={[0, 0, 0]} castShadow receiveShadow>
+                <boxGeometry args={[1.5, 1, 0.5]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[-0.37, 0, 0.26]} castShadow receiveShadow>
+                <boxGeometry args={[0.7, 0.7, 0.02]} />
+                <meshPhysicalMaterial {...getMaterialProps(0.9)} />
+              </mesh>
+              <mesh position={[0.37, 0, 0.26]} castShadow receiveShadow>
+                <boxGeometry args={[0.7, 0.7, 0.02]} />
+                <meshPhysicalMaterial {...getMaterialProps(0.9)} />
+              </mesh>
+              <mesh position={[-0.7, 0, 0.27]} castShadow receiveShadow rotation={[0, 0, Math.PI/2]}>
+                <cylinderGeometry args={[0.02, 0.02, 0.06, 8]} />
+                <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
+              </mesh>
+              <mesh position={[0.7, 0, 0.27]} castShadow receiveShadow rotation={[0, 0, Math.PI/2]}>
+                <cylinderGeometry args={[0.02, 0.02, 0.06, 8]} />
+                <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
+              </mesh>
+            </group>
+          );
+          
+        case 3:
+          return (
+            <group>
+              <mesh position={[0, 0, 0]} castShadow receiveShadow>
+                <boxGeometry args={[2, 0.5, 0.8]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[0, 0.5, -0.35]} castShadow receiveShadow>
+                <boxGeometry args={[2, 0.5, 0.1]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[-0.9, 0.5, 0]} castShadow receiveShadow>
+                <boxGeometry args={[0.2, 0.5, 0.8]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[0.9, 0.5, 0]} castShadow receiveShadow>
+                <boxGeometry args={[0.2, 0.5, 0.8]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[0, 0.3, 0.15]} castShadow receiveShadow>
+                <boxGeometry args={[1.6, 0.1, 0.5]} />
+                <meshPhysicalMaterial {...getMaterialProps(0.5)} />
+              </mesh>
+            </group>
+          );
+          
+        case 4:
+          return (
+            <group>
+              <mesh position={[0, 0, 0]} castShadow receiveShadow>
+                <boxGeometry args={[3, 0.05, 0.8]} />
+                <meshPhysicalMaterial {...getMaterialProps()} />
+              </mesh>
+              <mesh position={[0, -0.5, -0.2]} castShadow receiveShadow>
+                <boxGeometry args={[2.8, 1, 0.4]} />
+                <meshStandardMaterial color="#564A41" />
+              </mesh>
+              <mesh position={[0, -0.25, 0.25]} castShadow receiveShadow>
+                <cylinderGeometry args={[0.15, 0.15, 0.2, 16]} />
+                <meshStandardMaterial color="#CCCCCC" metalness={0.5} roughness={0.2} />
+              </mesh>
+            </group>
+          );
+          
+        default:
+          return (
+            <mesh castShadow receiveShadow ref={meshRef}>
+              <sphereGeometry args={[1, 64, 64]} />
+              <meshPhysicalMaterial {...getMaterialProps()} />
+            </mesh>
+          );
+      }
+    };
+
+    const getMaterialProps = (roughnessMultiplier = 1) => ({
+      metalness: material.metalness || 0.2,
+      roughness: (material.roughness || 0.3) * roughnessMultiplier,
+      clearcoat: material.id.includes('marmore') || material.id.includes('vidro') ? 0.5 : 0.1,
+      clearcoatRoughness: 0.2,
+      envMapIntensity: material.metalness > 0.5 ? 2 : 1,
+      normalScale: material.id.includes('madeira') ? new Vector2(0.3, 0.3) : new Vector2(0.1, 0.1)
+    });
+
+    return (
+      <group ref={meshRef as any}>
+        {renderFurnitureModel()}
+      </group>
+    );
+  };
   
+  // View tracking for premium transitions
   // View tracking for premium transitions
   const [isInView, setIsInView] = useState({
     hero: true,
@@ -1451,50 +1947,349 @@ const testimonials = [
             </Link>
           </div>
         </motion.section>
-
         <motion.div 
-          className="relative h-80 mb-24 overflow-hidden bg-white/5 backdrop-blur-sm rounded-lg"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+  className="relative mb-24 overflow-hidden rounded-2xl shadow-2xl"
+  initial={{ opacity: 0 }}
+  whileInView={{ opacity: 1 }}
+  viewport={{ once: true }}
+  transition={{ duration: 1.2 }}
+>
+  {/* Premium glass morphism background with depth layers */}
+  <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-[#23201C]/90 to-[#1a1713]/80 backdrop-filter backdrop-blur-lg z-0"></div>
+  <div className="absolute inset-0 bg-[url('/images/wood-texture.jpg')] mix-blend-overlay opacity-10 z-0"></div>
+  
+  {/* Decorative elements */}
+  <motion.div 
+    className="absolute top-10 right-10 w-80 h-80 rounded-full bg-accent/5 blur-3xl z-0"
+    animate={{ 
+      scale: [1, 1.2, 1],
+      opacity: [0.1, 0.15, 0.1]
+    }}
+    transition={{ duration: 8, repeat: Infinity }}
+  />
+  
+  <div className="relative z-10 p-10 md:p-14">
+    {/* Elegant header with accent line */}
+    <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
+      <div>
+        <div className="text-accent uppercase tracking-[0.25em] text-xs font-medium mb-3">
+          {language === 'pt' ? 'Materiais Premium' : 'Materiales Premium'}
+        </div>
+        <h2 className="text-4xl md:text-5xl font-serif leading-tight text-white">
+          {language === 'pt' ? 'Biblioteca de Materiais' : 'Biblioteca de Materiales'}
+        </h2>
+        <motion.div 
+          className="h-[2px] w-32 bg-gradient-to-r from-accent via-accent/80 to-transparent mt-6"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 1.2 }}
+          transition={{ duration: 1, delay: 0.2 }}
+          style={{ transformOrigin: "left" }}
+        />
+      </div>
+      
+      <p className="text-white/70 md:max-w-md mt-6 md:mt-0 text-sm md:text-base">
+        {language === 'pt' 
+          ? 'Cada material é cuidadosamente selecionado para garantir durabilidade, beleza e sustentabilidade em nossos móveis personalizados.'
+          : 'Cada material es cuidadosamente seleccionado para garantizar durabilidad, belleza y sostenibilidad en nuestros muebles personalizados.'}
+      </p>
+    </div>
+    
+    {/* Material category tabs */}
+    <div className="mb-10">
+      <div className="flex space-x-2 overflow-x-auto hide-scrollbar pb-2">
+        {['Madeiras', 'Tecidos', 'Metais', 'Pedras', 'Vidros', 'Couros', 'Acabamentos'].map((category, index) => (
+          <motion.button
+            key={category}
+            className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm ${activeCategory === index 
+              ? 'bg-accent text-black font-medium' 
+              : 'bg-white/10 text-white/70 hover:bg-white/20'
+            } transition-all duration-300`}
+            onClick={() => setActiveCategory(index)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {language === 'pt' ? category : 
+              ['Maderas', 'Tejidos', 'Metales', 'Piedras', 'Vidrios', 'Cueros', 'Acabados'][index]
+            }
+          </motion.button>
+        ))}
+      </div>
+    </div>
+    
+    {/* Material grid with enhanced visual presentation */}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-10">
+      {/* Wood materials */}
+      {activeCategory === 0 && allMaterials.woods.map((material) => (
+        <motion.button
+          key={material.id}
+          onClick={() => setActiveMaterial(material)}
+          className={`relative group overflow-hidden rounded-lg transition-all duration-300 ${
+            activeMaterial?.id === material.id 
+              ? 'ring-2 ring-accent scale-105 shadow-lg' 
+              : 'ring-1 ring-white/10 hover:ring-white/30'
+          }`}
+          whileHover={{ y: -5 }}
         >
-          <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
-            <ambientLight intensity={0.5} />
-            <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-            <ContactShadows 
-              position={[0, -1.5, 0]} 
-              opacity={0.6} 
-              scale={10} 
-              blur={2.5} 
-              far={4} 
+          <div className="aspect-square">
+            <img 
+              src={`/images/materials/${material.id}.jpg`} 
+              alt={material.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/materials/fallback.jpg';
+              }}
             />
-            <OrbitControls 
-              enableZoom={false} 
-              enablePan={false}
-              maxPolarAngle={Math.PI / 2} 
-              minPolarAngle={Math.PI / 4}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-0 transition-transform duration-300">
+            <p className="text-white text-sm font-medium line-clamp-1">{material.name}</p>
+            <p className="text-white/60 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity">{material.type}</p>
+          </div>
+          {activeMaterial?.id === material.id && (
+            <motion.div 
+              className="absolute top-2 right-2 h-3 w-3 rounded-full bg-accent"
+              layoutId="materialIndicator"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
-            <MaterialShowcase material={{ 
-              color: '#D4B798', 
-              metalness: 0.3, 
-              roughness: 0.2,
-              clearcoat: 0.8 
-            }} />
-            <Environment preset="apartment" />
-          </Canvas>
+          )}
+        </motion.button>
+      ))}
+      
+      {/* Fabric materials */}
+      {activeCategory === 1 && allMaterials.fabrics.map((material) => (
+        <motion.button
+          key={material.id}
+          onClick={() => setActiveMaterial(material)}
+          className={`relative group overflow-hidden rounded-lg transition-all duration-300 ${
+            activeMaterial?.id === material.id 
+              ? 'ring-2 ring-accent scale-105 shadow-lg' 
+              : 'ring-1 ring-white/10 hover:ring-white/30'
+          }`}
+          whileHover={{ y: -5 }}
+        >
+          <div className="aspect-square">
+            <div className="w-full h-full" style={{ background: material.color }}></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-0 transition-transform duration-300">
+            <p className="text-white text-sm font-medium line-clamp-1">{material.name}</p>
+            <p className="text-white/60 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity">{material.type}</p>
+          </div>
+          {activeMaterial?.id === material.id && (
+            <motion.div 
+              className="absolute top-2 right-2 h-3 w-3 rounded-full bg-accent"
+              layoutId="materialIndicator"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            />
+          )}
+        </motion.button>
+      ))}
+      
+      {/* Similar pattern for other material categories... */}
+    </div>
+    
+    {/* Enhanced 3D visualization */}
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 bg-black/30 rounded-xl overflow-hidden backdrop-blur-sm border border-white/10">
+      {/* 3D Viewer - Taking 3 columns */}
+      <div className="lg:col-span-3 h-80 lg:h-96 relative">
+        <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
+          <ambientLight intensity={0.6} />
+          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} castShadow />
+          <directionalLight position={[-5, 5, -5]} intensity={0.5} />
+          <ContactShadows 
+            position={[0, -1.5, 0]} 
+            opacity={0.6} 
+            scale={10} 
+            blur={2.5} 
+            far={4} 
+          />
+          <OrbitControls 
+            enableZoom={false} 
+            enablePan={false}
+            maxPolarAngle={Math.PI / 2} 
+            minPolarAngle={Math.PI / 4}
+            autoRotate={autoRotate}
+            autoRotateSpeed={3}
+          />
+          <EnhancedMaterialShowcase 
+            material={activeMaterial || allMaterials.woods[0]} 
+            currentFurniture={currentFurniture}
+          />
+          <Environment preset="apartment" />
+        </Canvas>
+        
+        {/* Controls overlay */}
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
+          <motion.button 
+            className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full text-white/80 text-xs flex items-center space-x-2 hover:bg-accent/80 hover:text-black transition-colors"
+            onClick={() => setAutoRotate(!autoRotate)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span>{autoRotate ? "Pausar rotação" : "Auto-rotação"}</span>
+            {autoRotate ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            )}
+          </motion.button>
           
-          <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-            <h3 className="text-white text-xl font-serif mb-2">
-              {language === 'pt' ? 'Experimente Materiais' : 'Experimente Materiales'}
+          <motion.button 
+            className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full text-white/80 text-xs flex items-center space-x-2 hover:bg-accent/80 hover:text-black transition-colors"
+            onClick={cycleFurniture}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span>{furnitureLabels[currentFurniture][language]}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+          </motion.button>
+        </div>
+      </div>
+      
+      {/* Material details - Taking 2 columns */}
+      <div className="lg:col-span-2 p-6 flex flex-col justify-between">
+        {activeMaterial ? (
+          <>
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white text-2xl font-serif">{activeMaterial.name}</h3>
+                <span className="bg-accent/20 text-accent px-2 py-1 rounded text-xs uppercase tracking-wider">
+                  {activeMaterial.origin}
+                </span>
+              </div>
+              
+              <p className="text-white/80 mb-6">{activeMaterial.description[language]}</p>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/5 rounded-lg p-4">
+                  <h4 className="text-accent text-xs uppercase tracking-wider mb-2">
+                    {language === 'pt' ? 'Aplicações Principais' : 'Aplicaciones Principales'}
+                  </h4>
+                  <ul className="text-white/70 text-sm space-y-1">
+                    {activeMaterial.applications.map((app, i) => (
+                      <li key={i} className="flex items-center">
+                        <div className="w-1 h-1 rounded-full bg-accent mr-2"></div>
+                        {app[language]}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="bg-white/5 rounded-lg p-4">
+                  <h4 className="text-accent text-xs uppercase tracking-wider mb-2">
+                    {language === 'pt' ? 'Características' : 'Características'}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      {name: language === 'pt' ? 'Durabilidade' : 'Durabilidad', value: activeMaterial.durability},
+                      {name: language === 'pt' ? 'Manutenção' : 'Mantenimiento', value: activeMaterial.maintenance},
+                      {name: language === 'pt' ? 'Sustentabilidade' : 'Sostenibilidad', value: activeMaterial.sustainability}
+                    ].map((stat, i) => (
+                      <div key={i}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-white/70">{stat.name}</span>
+                          <span className="text-white/90">{stat.value}/5</span>
+                        </div>
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <motion.div 
+                            className="h-full bg-accent"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(stat.value/5) * 100}%` }}
+                            transition={{ duration: 0.5, delay: 0.1 * i }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center border-t border-white/10 pt-4">
+              <span className="text-white/40 text-sm">
+                {language === 'pt' ? 'ID:' : 'ID:'} {activeMaterial.id.toUpperCase()}
+              </span>
+              
+              <button 
+                className="bg-accent/90 hover:bg-accent px-4 py-2 text-black text-sm font-medium rounded transition-colors duration-300 flex items-center"
+                onClick={() => scrollToSection(contactRef)}
+              >
+                {language === 'pt' ? 'Consultar disponibilidade' : 'Consultar disponibilidad'}
+                <ChevronRight size={14} className="ml-2" />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="text-white/40 mb-6">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <h3 className="text-white text-lg font-medium mb-3">
+              {language === 'pt' ? 'Selecione um material' : 'Seleccione un material'}
             </h3>
-            <p className="text-white/70 text-sm">
+            <p className="text-white/50 text-sm">
               {language === 'pt' 
-                ? 'Interaja com os materiais usados em nossas criações'
-                : 'Interactúe con los materiales utilizados en nuestras creaciones'}
+                ? 'Explore nossa biblioteca de materiais premium para seus móveis personalizados' 
+                : 'Explore nuestra biblioteca de materiales premium para sus muebles personalizados'}
             </p>
           </div>
-        </motion.div>
+        )}
+      </div>
+    </div>
+    
+    {/* Certification section */}
+    <div className="mt-10 flex flex-col sm:flex-row justify-between items-center bg-white/5 rounded-lg p-6 backdrop-blur-sm">
+      <div className="mb-4 sm:mb-0">
+        <h4 className="text-white text-lg font-medium mb-2">
+          {language === 'pt' ? 'Materiais Certificados' : 'Materiales Certificados'}
+        </h4>
+        <p className="text-white/70 text-sm max-w-xl">
+          {language === 'pt' 
+            ? 'Trabalhamos apenas com materiais de origem certificada, garantindo a sustentabilidade e qualidade dos nossos móveis.' 
+            : 'Trabajamos solo con materiales de origen certificado, garantizando la sostenibilidad y calidad de nuestros muebles.'}
+        </p>
+      </div>
+      
+      <div className="flex space-x-6">
+        {[
+          {id: 'fsc', name: 'FSC Certified'},
+          {id: 'greenguard', name: 'GREENGUARD'},
+          {id: 'eco', name: 'ECO Certified'}
+        ].map(cert => (
+          <motion.div 
+            key={cert.id} 
+            className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center"
+            whileHover={{ y: -5, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+          >
+            <img 
+              src={`/images/certifications/${cert.id}.svg`} 
+              alt={cert.name} 
+              className="w-10 h-10 object-contain opacity-70"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement.innerHTML = cert.id.toUpperCase();
+              }}
+            />
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  </div>
+</motion.div>
       
       {/* About Section with Dynamic Parallax */}
       <motion.section 
@@ -1600,30 +2395,7 @@ const testimonials = [
                 </div>
                 
                 <h2 className="text-4xl md:text-5xl xl:text-6xl font-serif leading-[1.1] mb-8 tracking-tight text-white">
-                  <div className="overflow-hidden">
-                    <MagneticText>
-                      <motion.div
-                        initial={{ y: 80 }}
-                        whileInView={{ y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        {language === 'pt' ? 'Tradição encontra' : 'Tradición encuentra'}
-                      </motion.div>
-                    </MagneticText>
-                  </div>
-                  <div className="overflow-hidden">
-                    <MagneticText>
-                      <motion.div
-                        initial={{ y: 80 }}
-                        whileInView={{ y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        {language === 'pt' ? 'contemporaneidade' : 'contemporaneidad'}
-                      </motion.div>
-                    </MagneticText>
-                  </div>
+                
                 </h2>
                 
                 <motion.div 
@@ -2202,7 +2974,7 @@ const testimonials = [
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.6 }}
+                      transition={{ duration: 0.6, delay: 0.6 }}
                     >
                       <div className="mt-1 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4B798" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
