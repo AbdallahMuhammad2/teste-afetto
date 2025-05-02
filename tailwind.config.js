@@ -21,6 +21,17 @@ module.exports = {
         },
         copper: '#B17032',
       },
+      accent: {
+        DEFAULT: '#D4B798',
+        light: '#E5D4C0',
+        dark: '#B69678',
+      },
+      dark: {
+        DEFAULT: '#171413',
+        light: '#23201C',
+        lighter: '#2D2925',
+        dark: '#0C0A09',
+      },
       borderRadius: {
         card: '0.75rem',
       },

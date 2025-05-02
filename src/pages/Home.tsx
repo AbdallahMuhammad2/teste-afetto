@@ -4,8 +4,12 @@ import {
   motion, useScroll, useTransform, AnimatePresence, useSpring, 
   MotionValue, useMotionValueEvent
 } from 'framer-motion';
-import { ChevronRight, ArrowRight, ArrowDown, Plus } from 'lucide-react';
-import LanguageContext from '../context/LanguageContext';
+// Corrija o erro de importação adicionando ChevronDown aos imports do Lucide React
+import { 
+  ChevronRight, ArrowRight, ArrowDown, Plus, ChevronDown 
+} from 'lucide-react';
+
+// Restante das importações permanecem as mesmasimport LanguageContext from '../context/LanguageContext';
 import Icon from '../components/ui/Icon';
 import { translations } from '../data/translations';
 import { projects } from '../data/projects';
@@ -14,9 +18,31 @@ import { useLenis } from '@studio-freight/react-lenis';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { blendColor } from '../utils/color';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, Environment, OrbitControls, ContactShadows, Html } from '@react-three/drei';
+import { Environment, OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Vector2 } from 'three';
+import LanguageContext from '../context/LanguageContext';
+interface Material {
+  id: string;
+  name: string;
+  type: string;
+  origin: string;
+  color: string;
+  roughness: number;
+  metalness: number;
+  durability: number;
+  maintenance: number;
+  sustainability: number;
+  applications: { pt: string; en: string; }[];
+  description: { pt: string; es: string; };
+}
+
+interface AllMaterials {
+  woods: Material[];
+  fabrics: Material[];
+  metals: Material[];
+  stones: Material[];
+}
 
 // Enhanced parallax effect with variable intensity
 const useParallax = (value: MotionValue<number>, distance: number, reverse = false) => {
@@ -198,7 +224,167 @@ const MaterialShowcase = ({ material }: { material: MaterialProps }) => {
   );
 };
 
+// Componente de cartão de material aprimorado
+const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false }) => {
+  return (
+    <motion.button
+      key={material.id}
+      onClick={onSelect}
+      className={`relative group overflow-hidden rounded-lg transition-all duration-500 aspect-square ${
+        isActive 
+          ? 'ring-1 ring-accent scale-[1.02] shadow-xl shadow-accent/10 z-10' 
+          : 'ring-0 hover:ring-1 ring-white/10'
+      }`}
+      whileHover={{ 
+        y: -5, 
+        boxShadow: "0 15px 30px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.15)"
+      }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.1 + (index * 0.05) }}
+    >
+      <div className="w-full h-full">
+        {!isFabric ? (
+          <img 
+            src={`/images/materials/${material.id}.jpg`} 
+            alt={material.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/images/materials/fallback.jpg';
+            }}
+          />
+        ) : (
+          <div 
+            className="w-full h-full transition-all duration-700 group-hover:scale-110" 
+            style={{ background: material.color }}
+          ></div>
+        )}
+      </div>
+      
+      {/* Sobreposição com gradiente aprimorado */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      
+      {/* Nome do material com animação aprimorada */}
+      <div className="absolute inset-x-0 bottom-0 p-4 text-left">
+        <div className="transform translate-y-6 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <p className="text-white text-base font-serif font-light">{material.name}</p>
+          <p className="text-white/60 text-xs mt-1 font-sans">{material.type}</p>
+        </div>
+      </div>
+      
+      {/* Indicador ativo aprimorado */}
+      {isActive && (
+        <div className="absolute inset-0 ring-1 ring-accent pointer-events-none">
+          <motion.div 
+            className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent shadow-lg shadow-accent/30"
+            animate={{ 
+              scale: [1, 1.5, 1],
+              opacity: [0.7, 1, 0.7]
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity
+            }}
+          />
+        </div>
+      )}
+    </motion.button>
+  );
+};
+  const MaterialIcon = ({ type, active }: { type: string; active: boolean }) => {
+    const color = active ? "#000" : "#fff";
+    const opacity = active ? "1" : "0.7";
+    
+    switch(type) {
+      case 'wood-grain':
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+            <path d="M2 12h20M2 8h20M2 16h20M2 4h20M2 20h20"/>
+          </svg>
+        );
+    case 'fabric':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+          <path d="M3 3v18M21 3v18M12 3v18M3 3h18M3 21h18M3 12h18"/>
+        </svg>
+      );
+    case 'metal':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+          <path d="M12 2v20M4.5 4v16M19.5 4v16M2 12h20"/>
+        </svg>
+      );
+    case 'stone':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+          <path d="M21 12L12 3 3 12l9 9 9-9z"/>
+        </svg>
+      );
+    case 'glass':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+          <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6-6-2.7 6-6 6z" strokeOpacity="0.7"/>
+        </svg>
+      );
+    case 'leather':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+          <path d="M4 3l16 18M20 3L4 21"/>
+        </svg>
+      );
+    case 'finish':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+          <path d="M2 20h20M2 4h20M12 4v16"/>
+          <path d="M6 12h12M19 8l-3.5 7-2.5-3-4 6.5-3-3.5"/>
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
+
+// Define material interfaces outside the component
+interface ApplicationTranslation {
+  pt: string;
+  en: string;
+}
+
+interface MaterialDescription {
+  pt: string;
+  es: string;
+}
+
+interface Material {
+  id: string;
+  name: string;
+  type: string;
+  origin: string;
+  color: string;
+  roughness: number;
+  metalness: number;
+  durability: number;
+  maintenance: number;
+  sustainability: number;
+  applications: ApplicationTranslation[];
+  description: MaterialDescription;
+}
+
+interface AllMaterials {
+  woods: Material[];
+  fabrics: Material[];
+  metals: Material[];
+  stones: Material[];
+}
+
+// Material showcase component needs to be defined outside
+// Removed duplicate definition of EnhancedMaterialShowcase
+
 const Home: React.FC = () => {
+  const [activeFilter, setActiveFilter] = useState<string>('all'); // Initialize activeFilter with a default value
   // Context and data handling
   const { language } = useContext(LanguageContext);
   const t = translations[language];
@@ -224,124 +410,11 @@ const Home: React.FC = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down');
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [activeProcessStep, setActiveProcessStep] = useState(0);
-  const [hasInteracted, setHasInteracted] = useState(false);
-
-  interface Material {
-    id: string;
-    name: string;
-    color: string;
-    roughness: number;
-    metalness: number;
-    furniture: string;
-    properties: string;
-  }
-
-  const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
-  const [activeCategory, setActiveCategory] = useState(0);
-  const [autoRotate, setAutoRotate] = useState(true);
-  const [currentFurniture, setCurrentFurniture] = useState(0);
-
-  const furnitureLabels = [
-    { pt: 'Mesa', en: 'Table' },
-    { pt: 'Cadeira', en: 'Chair' },
-    { pt: 'Armário', en: 'Cabinet' },
-    { pt: 'Sofá', en: 'Sofa' },
-    { pt: 'Bancada', en: 'Countertop' }
-  ];
-
-  const cycleFurniture = () => {
-    setCurrentFurniture((prev) => (prev + 1) % furnitureLabels.length);
-  }
-
-  const allMaterials = {
+  
+  // Materials data
+  const [allMaterials] = useState<AllMaterials>({
     woods: [
-      { 
-        id: 'nogueira-americana', 
-        name: language === 'pt' ? 'Nogueira Americana' : 'Nogal Americano', 
-        type: language === 'pt' ? 'Madeira Nobre' : 'Madera Noble',
-        origin: language === 'pt' ? 'América do Norte' : 'América del Norte',
-        color: '#73543D', 
-        roughness: 0.7, 
-        metalness: 0.0,
-        durability: 4.5,
-        maintenance: 3,
-        sustainability: 4,
-        applications: [
-          { pt: 'Mesas de jantar', en: 'Dining tables' },
-          { pt: 'Estantes', en: 'Bookshelves' },
-          { pt: 'Aparadores', en: 'Sideboards' }
-        ],
-        description: {
-          pt: 'Madeira premium com tonalidades ricas em castanhos escuros e padrões de grãos pronunciados. Apresenta excelente estabilidade e resistência, ideal para móveis de alta qualidade que se valorizam com o tempo.',
-          es: 'Madera premium con tonalidades ricas en marrones oscuros y patrones de grano pronunciados. Presenta excelente estabilidad y resistencia, ideal para muebles de alta calidad que se valorizan con el tiempo.'
-        }
-      },
-      { 
-        id: 'carvalho-frances', 
-        name: language === 'pt' ? 'Carvalho Francês' : 'Roble Francés', 
-        type: language === 'pt' ? 'Madeira Nobre' : 'Madera Noble',
-        origin: language === 'pt' ? 'Europa' : 'Europa',
-        color: '#B89A75', 
-        roughness: 0.6, 
-        metalness: 0.0,
-        durability: 5,
-        maintenance: 2.5,
-        sustainability: 4.5,
-        applications: [
-          { pt: 'Pisos', en: 'Flooring' },
-          { pt: 'Mesas', en: 'Tables' },
-          { pt: 'Portas', en: 'Doors' }
-        ],
-        description: {
-          pt: 'Carvalho Francês apresenta veios marcantes e uma tonalidade quente e neutra. Sua textura única e extrema durabilidade o tornam perfeito para móveis que atravessam gerações.',
-          es: 'Roble Francés presenta vetas distintivas y una tonalidad cálida y neutra. Su textura única y extrema durabilidad lo hacen perfecto para muebles que atraviesan generaciones.'
-        }
-      },
-      { 
-        id: 'teca', 
-        name: language === 'pt' ? 'Teca Asiática' : 'Teca Asiática', 
-        type: language === 'pt' ? 'Madeira Exótica' : 'Madera Exótica',
-        origin: language === 'pt' ? 'Sudeste Asiático' : 'Sudeste Asiático',
-        color: '#C19A6B', 
-        roughness: 0.5, 
-        metalness: 0.0,
-        durability: 5,
-        maintenance: 1,
-        sustainability: 3.5,
-        applications: [
-          { pt: 'Móveis externos', en: 'Outdoor furniture' },
-          { pt: 'Decks', en: 'Decks' },
-          { pt: 'Painéis', en: 'Panels' }
-        ],
-        description: {
-          pt: 'Conhecida por sua resistência excepcional à água e intempéries, a Teca possui óleos naturais que a protegem. Sua cor dourada-acastanhada envelhece adquirindo um tom prateado distintivo.',
-          es: 'Conocida por su resistencia excepcional al agua y a la intemperie, la Teca posee aceites naturales que la protegen. Su color dorado-marrón envejece adquiriendo un tono plateado distintivo.'
-        }
-      },
-      { 
-        id: 'freijo', 
-        name: language === 'pt' ? 'Freijó Brasileiro' : 'Freijó Brasileño', 
-        type: language === 'pt' ? 'Madeira Nacional' : 'Madera Nacional',
-        origin: language === 'pt' ? 'Brasil' : 'Brasil',
-        color: '#A67B5B', 
-        roughness: 0.65, 
-        metalness: 0.0,
-        durability: 4,
-        maintenance: 2.5,
-        sustainability: 3.5,
-        applications: [
-          { pt: 'Móveis residenciais', en: 'Residential furniture' },
-          { pt: 'Painéis decorativos', en: 'Decorative panels' },
-          { pt: 'Marcenaria fina', en: 'Fine woodworking' }
-        ],
-        description: {
-          pt: 'Madeira brasileira com tonalidade variando do marrom-claro ao avermelhado, com veios elegantes. Possui boa estabilidade e é fácil de trabalhar, sendo muito valorizada na marcenaria contemporânea.',
-          es: 'Madera brasileña con tonalidad que varía del marrón claro al rojizo, con vetas elegantes. Posee buena estabilidad y es fácil de trabajar, siendo muy valorada en la carpintería contemporánea.'
-        }
-      },
-      { 
+      {
         id: 'sucupira', 
         name: language === 'pt' ? 'Sucupira' : 'Sucupira', 
         type: language === 'pt' ? 'Madeira Nacional' : 'Madera Nacional',
@@ -426,7 +499,7 @@ const Home: React.FC = () => {
           pt: 'Veludo de alta densidade com toque macio e reflexos luminosos. Sua textura luxuosa adiciona profundidade e sofisticação aos ambientes, sendo perfeito para peças de destaque.',
           es: 'Terciopelo de alta densidad con tacto suave y reflejos luminosos. Su textura lujosa añade profundidad y sofisticación a los ambientes, siendo perfecto para piezas destacadas.'
         }
-      },
+      }
     ],
     metals: [
       { 
@@ -470,7 +543,7 @@ const Home: React.FC = () => {
           pt: 'Metal dourado com brilho sofisticado que adiciona um toque de luxo aos móveis. Sua tonalidade quente combina harmoniosamente com madeiras escuras e mármores.',
           es: 'Metal dorado con brillo sofisticado que añade un toque de lujo a los muebles. Su tonalidad cálida combina armoniosamente con maderas oscuras y mármoles.'
         }
-      },
+      }
     ],
     stones: [
       { 
@@ -503,20 +576,38 @@ const Home: React.FC = () => {
         roughness: 0.3, 
         metalness: 0.2,
         durability: 5,
-        maintenance: 3,
-        sustainability: 3.5,
+        maintenance: 4.5,
+        sustainability: 3,
         applications: [
-          { pt: 'Mesas de jantar', en: 'Dining tables' },
-          { pt: 'Bancadas de cozinha', en: 'Kitchen countertops' },
-          { pt: 'Bases de esculturas', en: 'Sculpture bases' }
+          { pt: 'Tampos de mesa', en: 'Tabletops' },
+          { pt: 'Bancadas', en: 'Countertops' },
+          { pt: 'Revestimentos', en: 'Wall cladding' }
         ],
         description: {
           pt: 'Granito de cor preta profunda e uniforme, com alta densidade e resistência excepcional a manchas e arranhões. Sua sobriedade cria um contraste elegante com elementos mais claros.',
           es: 'Granito de color negro profundo y uniforme, con alta densidad y resistencia excepcional a manchas y arañazos. Su sobriedad crea un contraste elegante con elementos más claros.'
         }
-      },
+      }
     ]
-  }
+  });
+  
+  // State for material showcase
+  const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
+  const [activeCategory, setActiveCategory] = useState(0);
+  const [currentFurniture, setCurrentFurniture] = useState(0);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [furnitureLabels] = useState([
+    { pt: 'Mesa', en: 'Table' },
+    { pt: 'Cadeira', en: 'Chair' },
+    { pt: 'Armário', en: 'Cabinet' },
+    { pt: 'Estante', en: 'Shelf' },
+    { pt: 'Bancada', en: 'Counter' }
+  ]);
+  
+  // State for process steps
+  const [activeProcessStep, setActiveProcessStep] = useState(0);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   interface Material {
     id: string;
@@ -1127,1169 +1218,1045 @@ const testimonials = [
         </div>
       </motion.header>
       
-      {/* Cinematic Hero Section 2.0 */}
-      <motion.section 
-        ref={heroRef}
-        style={{ 
-          opacity: heroOpacity, 
-          y: heroY, 
-          scale: heroScale 
-        }}
-        className="relative h-[100vh] min-h-[700px] flex items-center overflow-hidden"
-        onViewportEnter={() => setIsInView({...isInView, hero: true})}
-        onViewportLeave={() => setIsInView({...isInView, hero: false})}
-      >
-        {/* Enhanced Video Background with Layered Depth */}
-        <div className="absolute inset-0 z-0">
-          <AnimatePresence>
-            {!videoLoaded && (
-              <motion.div 
-                className="absolute inset-0 z-30 bg-black flex items-center justify-center"
-                initial={{ opacity: 1 }}
-                exit={{ 
-                  opacity: 0,
-                  transition: { duration: 1.5, ease: [0.22, 1, 0.36, 1] }
-                }}
-              >
-                <motion.div
-                  className="relative w-24 h-24"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  {/* Ultra premium loading animation */}
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#d3a17e" stopOpacity="0.4" />
-                        <stop offset="50%" stopColor="#d3a17e" stopOpacity="1" />
-                        <stop offset="100%" stopColor="#d3a17e" stopOpacity="0.4" />
-                      </linearGradient>
-                    </defs>
-                    <motion.circle 
-                      cx="50" cy="50" r="45" 
-                      fill="none" 
-                      stroke="url(#gradient)" 
-                      strokeWidth="1"
-                      strokeDasharray="283"
-                      strokeDashoffset="283"
-                      animate={{ strokeDashoffset: [283, 0] }}
-                      transition={{
-                        duration: 3,
-                        ease: "easeInOut",
-                        repeat: Infinity,
-                        repeatType: "loop"
-                      }}
-                    />
-                    <motion.path
-                      d="M 35 50 L 45 60 L 65 40"
-                      fill="none"
-                      stroke="#d3a17e"
-                      strokeWidth="1.5"
-                      strokeDasharray="50"
-                      strokeDashoffset="50"
-                      animate={{ 
-                        strokeDashoffset: [50, 0],
-                        opacity: [0, 1] 
-                      }}
-                      transition={{
-                        delay: 2,
-                        duration: 0.8,
-                        ease: "easeOut",
-                        repeat: Infinity,
-                        repeatDelay: 2.2
-                      }}
-                    />
-                    <motion.text
-                      x="50" 
-                      y="50" 
-                      textAnchor="middle" 
-                      dominantBaseline="middle" 
-                      fill="#d3a17e"
-                      opacity="0"
-                      animate={{ opacity: [0, 0.8, 0] }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        repeatDelay: 1
-                      }}
-                      style={{ 
-                        fontSize: '8px', 
-                        fontFamily: 'sans-serif', 
-                        letterSpacing: '2px',
-                        textTransform: 'uppercase'
-                      }}
-                    >
-                      afetto
-                    </motion.text>
-                  </svg>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Enhanced video container with adaptive brightness */}
-          <motion.div
-            className="absolute inset-0"
-            initial={{ scale: 1.05, filter: 'brightness(0.6)' }}
-            animate={{ 
-              scale: 1,
-              filter: 'brightness(0.85)',
-              transition: { duration: 4, ease: [0.22, 1, 0.36, 1] }
-            }}
-          >
-            <video 
-              autoPlay 
-              muted 
-              loop 
-              playsInline
-              onLoadedData={handleVideoLoaded}
-              className="w-full h-full object-cover"
-              style={{ 
-                opacity: videoLoaded ? 1 : 0,
-                transition: 'opacity 1.5s ease'
-              }}
-            >
-              <source src="/videos/luxury-atelier.webm" type="video/webm" />
-              <source src="/videos/luxury-atelier.mp4" type="video/mp4" />
-            </video>
-            
-            {/* Multi-layered gradient system for premium depth */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50 mix-blend-multiply z-1"></div>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/95 z-2"></div>
-            
-            {/* Enhanced texture overlay with optical depth */}
-            <motion.div 
-              className="absolute inset-0 opacity-[0.08] z-3" 
-              style={{ 
-                backgroundImage: 'url(/images/grain-texture-light.png)', 
-                backgroundSize: '200px' 
-              }}
-              animate={{
-                backgroundPosition: ['0% 0%', '100% 100%'],
-              }}
-              transition={{
-                duration: 120,
-                ease: "linear",
-                repeat: Infinity,
-                repeatType: "mirror"
-              }}
-            />
-            
-            {/* Dynamic light particles system */}
-            {!prefersReducedMotion && !isMobile && (
-              <motion.div className="absolute inset-0 z-4 overflow-hidden">
-                {Array(20).fill(0).map((_, i) => (
-                  <motion.div
-                    key={`particle-${i}`}
-                    className="absolute rounded-full"
-                    initial={{ 
-                      x: `${Math.random() * 100}%`,
-                      y: `${Math.random() * 100}%`,
-                      opacity: 0,
-                      scale: 0
-                    }}
-                    animate={{
-                      opacity: [0, 0.4, 0],
-                      scale: [0, 1, 0],
-                      filter: [
-                        'blur(2px) brightness(1)', 
-                        'blur(1px) brightness(1.5)', 
-                        'blur(2px) brightness(1)'
-                      ],
-                    }}
-                    transition={{
-                      duration: 8 + Math.random() * 15,
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      delay: Math.random() * 10,
-                    }}
-                    style={{
-                      width: `${2 + Math.random() * 6}px`,
-                      height: `${2 + Math.random() * 6}px`,
-                      background: 'radial-gradient(circle, rgba(211,161,126,0.8) 0%, rgba(211,161,126,0) 70%)',
-                    }}
-                  />
-                ))}
-              </motion.div>
-            )}
-            
-            {/* Animated vignette effect */}
-            <motion.div 
-              className="absolute inset-0 z-5 pointer-events-none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.7 }}
-              transition={{ duration: 2 }}
-              style={{
-                background: 'radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.8) 100%)',
-              }}
-            />
-          </motion.div>
-        </div>
-        
-        {/* Elegant architectural grid */}
-        <div className="absolute inset-0 z-10 opacity-[0.045] pointer-events-none">
-          <div className="grid grid-cols-6 md:grid-cols-12 h-full w-full">
-            {Array(12).fill(0).map((_, i) => (
-              <div key={`grid-col-${i}`} className="h-full border-l border-white/50 last:border-r"></div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Refined accent elements */}
-        <motion.div 
-          className="absolute top-[15vh] left-[10%] w-px h-[35vh] z-10"
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: 1 }}
-          transition={{ 
-            duration: 1.8, 
-            delay: 0.8,
-            ease: [0.22, 1, 0.36, 1]
-          }}
-          style={{ 
-            transformOrigin: 'top',
-            background: 'linear-gradient(to bottom, transparent, rgba(var(--color-accent-rgb), 0.7), transparent)'
-          }}
-        />
-        
-        <motion.div 
-          className="absolute bottom-[15vh] right-[10%] w-px h-[35vh] z-10"
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: 1 }}
-          transition={{ 
-            duration: 1.8, 
-            delay: 1.2,
-            ease: [0.22, 1, 0.36, 1]
-          }}
-          style={{ 
-            transformOrigin: 'bottom',
-            background: 'linear-gradient(to top, transparent, rgba(var(--color-accent-rgb), 0.7), transparent)'
-          }}
-        />
-
-        {/* Elegant design composition element */}
-        <motion.div 
-          className="absolute bottom-[10%] right-[5%] w-[350px] h-[350px] opacity-15 hidden lg:block"
-          initial={{ opacity: 0, rotate: 25 }}
-          animate={{ opacity: 0.15, rotate: 0 }}
-          transition={{ 
-            duration: 3, 
-            delay: 1.5,
-            ease: [0.22, 1, 0.36, 1]
-          }}
-        >
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            <motion.circle 
-              cx="50" cy="50" r="49" 
-              stroke="white" 
-              strokeWidth="0.15" 
-              fill="none"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ 
-                duration: 4, 
-                delay: 1.8,
-                ease: [0.22, 1, 0.36, 1]
-              }}
-            />
-            <motion.circle 
-              cx="50" cy="50" r="35" 
-              stroke="white" 
-              strokeWidth="0.1" 
-              fill="none"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ 
-                duration: 3.5, 
-                delay: 2.2,
-                ease: [0.22, 1, 0.36, 1]
-              }}
-            />
-            <motion.path 
-              d="M15,50 H85 M50,15 V85" 
-              stroke="white" 
-              strokeWidth="0.15"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ 
-                duration: 3, 
-                delay: 2.6,
-                ease: [0.22, 1, 0.36, 1]
-              }}
-            />
-          </svg>
-        </motion.div>
-        
-        {/* Main content container */}
-        <div className="relative z-20 container mx-auto px-6 md:px-20 flex h-full items-center">
-          <motion.div 
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="max-w-6xl"
-            style={{
-              y: heroTitleY
-            }}
-          >
-            {/* Hero Typography */}
-            <motion.div variants={fadeInUp} className="overflow-visible mb-10">
-              <div className="overflow-visible">
-                <motion.p
-                  initial={{ y: 40, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ 
-                    duration: 1.5, 
-                    delay: 0.6, 
-                    ease: [0.22, 1, 0.36, 1]
-                  }}
-                  className="font-semibold text-accent tracking-[0.38em] uppercase text-base mb-8 relative"
-                >
-                  <span className="relative">
-                    {language === 'pt' ? 'Ateliê de Design' : 'Atelier de Diseño'}
-                    <motion.span 
-                      className="absolute -bottom-2 left-0 h-[1px] w-full bg-accent/40"
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ duration: 1.2, delay: 1.2 }}
-                    />
-                  </span>
-                </motion.p>
-              </div>
-              
-              <h1 className="font-serif text-7xl md:text-9xl xl:text-[11rem] leading-[1.01] tracking-[-0.04em] text-white/95 relative drop-shadow-2xl">
-                {/* Title with enhanced 3D effect */}
-                <div className="overflow-hidden relative">
-                  <motion.div
-                    initial={{ y: 150 }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 1.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative"
-                    style={{ 
-                      textShadow: '0 15px 45px rgba(0,0,0,0.4)',
-                      transform: 'perspective(1000px)'
-                    }}
-                  >
-                    {language === 'pt' ? 'Objetos com' : 'Objetos con'}
-                  </motion.div>
-                </div>
-                
-                <div className="overflow-hidden mt-1 md:mt-0">
-                  <motion.div
-                    initial={{ y: 150 }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 1.6, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative"
-                    style={{ 
-                      textShadow: '0 15px 45px rgba(0,0,0,0.4)',
-                      transform: 'perspective(1000px)'
-                    }}
-                  >
-                    {language === 'pt' ? 'significado' : 'significado'}
-                  </motion.div>
-                </div>
-                
-                {/* Enhanced accent line with animated glow */}
-                <motion.div 
-                  className="absolute -bottom-8 left-0 h-[3px] w-40 bg-gradient-to-r from-accent via-accent/80 to-transparent"
-                  initial={{ scaleX: 0, filter: "blur(0px)" }}
-                  animate={{ 
-                    scaleX: 1, 
-                    filter: ["blur(0px)", "blur(3px)", "blur(0px)"]
-                  }}
-                  transition={{ 
-                    scaleX: { 
-                      duration: 1.8, 
-                      delay: 2.2, 
-                      ease: [0.22, 1, 0.36, 1] 
-                    },
-                    filter: {
-                      duration: 3,
-                      repeat: Infinity,
-                      repeatType: "reverse",
-                      ease: "easeInOut"
-                    }
-                  }}
-                  style={{ transformOrigin: "left" }}
-                />
-                
-                {/* Background accent element */}
-                <motion.div
-                  className="absolute -right-28 -bottom-20 w-64 h-64 opacity-5 hidden xl:block"
-                  initial={{ scale: 0, rotate: 45 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ duration: 2, delay: 2 }}
-                >
-                  <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none">
-                    <circle cx="50" cy="50" r="49.5" stroke="white" strokeOpacity="0.5" />
-                    <circle cx="50" cy="50" r="30" stroke="white" strokeOpacity="0.5" />
-                    <path d="M50 0V100" stroke="white" strokeOpacity="0.3" />
-                    <path d="M0 50H100" stroke="white" strokeOpacity="0.3" />
-                  </svg>
-                </motion.div>
-              </h1>
-            </motion.div>
-              
-            {/* Sophisticated subtitle with elegant reveal */}
-            <motion.div 
-              variants={fadeInUp}
-            animate={{ y: [0, 10, 0] }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 2.5, 
-              ease: "easeInOut" 
-            }}
-          >
-            <ArrowDown size={16} className="text-accent/80" />
-          </motion.div>
-        
-        </motion.div>
-        </div>
-
-      </motion.section>
-      
-      {/* Featured Projects - Gallery Experience */}
-      <motion.section
-        ref={galleryRef}
-        className="relative bg-gradient-to-b from-[#f5ede4] to-[#e6e1db] py-36 md:py-60 overflow-hidden"
-        onViewportEnter={() => setIsInView({...isInView, gallery: true})}
-      >
-        {/* Premium architectural grid */}
-        <div className="absolute inset-0 opacity-[0.045] pointer-events-none">
-          <div className="h-full w-full grid grid-cols-6 md:grid-cols-12">
-            {Array(12).fill(0).map((_, i) => (
-              <div key={`grid-col-${i}`} className="h-full border-l border-black/30 last:border-r"></div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Subtle accent elements */}
-        <motion.div 
-          className="absolute top-0 left-0 w-screen h-[1px] bg-black/5"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-          style={{ transformOrigin: 'left' }}
-        />
-        
-        <motion.div 
-          className="absolute bottom-0 right-0 w-screen h-[1px] bg-black/5"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-          style={{ transformOrigin: 'right' }}
-        />
-        
-        {/* Decorative accent element */}
-        <motion.div 
-          className="absolute -top-20 -right-20 w-[400px] h-[400px] opacity-[0.03] pointer-events-none"
-          initial={{ scale: 0.8, rotate: 45 }}
-          whileInView={{ scale: 1, rotate: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <svg viewBox="0 0 100 100" className="w-full h-full text-black">
-            <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="0.2" fill="none" />
-            <line x1="5" y1="50" x2="95" y2="50" stroke="currentColor" strokeWidth="0.2" />
-            <line x1="50" y1="5" x2="50" y2="95" stroke="currentColor" strokeWidth="0.2" />
-          </svg>
-        </motion.div>
-        
-        <div className="relative container mx-auto px-6 md:px-20">
-          {/* Section header */}
-          <div className="mb-36">
-            <div className="grid grid-cols-12 gap-y-14">
-              <motion.div 
-                className="col-span-12 md:col-span-5 mb-12"
-                initial={{ opacity: 0, y: 60 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}              >
-                <div className="text-accent uppercase tracking-[0.28em] text-sm font-semibold mb-8">
-                  {language === 'pt' ? '02 — Portfólio' : '02 — Portafolio'}
-                </div>
-                <h2 className="text-5xl md:text-6xl xl:text-7xl font-serif leading-[1.08] mb-10 tracking-tight text-neutral-900/95">
-                  <div className="overflow-hidden">
-                    <motion.div
-                      initial={{ y: 80 }}
-                      whileInView={{ y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      {language === 'pt' ? 'Trabalhamos com os melhores' : 'Trabajamos con los mejores'}
-                    </motion.div>
-                  </div>
-                </h2>
-                <motion.div 
-                  className="h-[2.5px] w-32 bg-gradient-to-r from-accent via-accent/80 to-transparent rounded-full shadow-lg mb-10"
-                  initial={{ scaleX: 0 }}
-                  whileInView={{ scaleX: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformOrigin: "left" }}
-                />
-              </motion.div>
-              
-              <motion.div 
-                className="col-span-12 md:col-span-6 md:col-start-7"
-                initial={{ opacity: 0, y: 60 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <p className="text-neutral-600 text-lg max-w-xl leading-relaxed">
-                  {language === 'pt' 
-                    ? 'Nossa curadoria de projetos demonstra nosso compromisso com a excelência artesanal e a singularidade que define cada criação. Cada peça reflete a convergência entre tradição e inovação.'
-                    : 'Nuestra curaduría de proyectos demuestra nuestro compromiso con la excelencia artesanal y la singularidad que define cada creación. Cada pieza refleja la convergencia entre tradición e innovación.'}
-                </p>
-                
-                <div className="hidden md:block mt-12">
-                  <Link 
-                    to="/portfolio"
-                    className="group inline-flex items-center"
-                    onMouseEnter={() => handleLinkHover(true)}
-                    onMouseLeave={() => handleLinkHover(false)}
-                  >
-                    <span className="relative text-neutral-900 border-b border-transparent transition-all duration-500 group-hover:border-accent">
-                      {language === 'pt' ? 'Ver toda a coleção' : 'Ver toda la colección'}
-                    </span>
-                    <motion.div
-                      className="ml-3"
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ 
-                        repeat: Infinity, 
-                        duration: 2, 
-                        ease: "easeInOut", 
-                        repeatDelay: 1 
-                      }}
-                    >
-                      <ChevronRight size={16} className="text-accent" />
-                    </motion.div>
-                  </Link>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-          
-          {/* Enhanced Projects Gallery with Kinetic Scroll Effect */}
-          <div className="relative mb-32">
-            <div 
-              className="relative"
-              ref={projectsScrollRef}
-              onMouseEnter={() => handleDragHover(true)}
-              onMouseLeave={() => handleDragHover(false)}
-            >
-              <div 
-                className="overflow-x-auto hide-scrollbar pb-12"
-                style={{ 
-                  scrollSnapType: 'x mandatory',
-                  scrollBehavior: 'smooth' 
-                }}
-              >
-                <motion.div 
-                  className="flex space-x-8"
-                  drag={!isMobile ? "x" : false}
-                  dragConstraints={projectsScrollRef}
-                  dragElastic={0.1}
-                  style={{ 
-                    width: 'max-content', 
-                    paddingLeft: '8vw', 
-                    paddingRight: '8vw' 
-                  }}
-                >
-                  {/* Generate duplicate projects for infinite scroll effect */}
-                  {[...featuredProjects, ...featuredProjects].map((project, index) => (
-                    <motion.div 
-                      key={`project-${project.id}-${index}`}
-                      className="w-[min(600px,80vw)] flex-shrink-0 scroll-snap-align-start relative overflow-hidden"
-                      initial={{ opacity: 0, y: 50 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-100px" }}
-                      transition={{ 
-                        duration: 1.2, 
-                        delay: 0.05 * index,
-                        ease: [0.22, 1, 0.36, 1]
-                      }}
-                      whileHover={{ y: -12 }}
-                    >
-                      <motion.img 
-                        src={project.image} 
-                        alt={project.title}
-                        className="w-full h-full object-cover"
-                        initial={{ scale: 1.1, filter: "grayscale(0.3)" }}
-                        whileInView={{ scale: 1, filter: "grayscale(0)" }}
-                        viewport={{ once: true }}
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ 
-                          scale: { duration: 1.5, ease: [0.22, 1, 0.36, 1] },
-                          filter: { duration: 0.8 }
-                        }}
-                      />
-                      
-                      {/* Deluxe overlay with layered gradients */}
-                      <motion.div 
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
-                        <motion.div 
-                          className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"
-                          initial={{ opacity: 0 }}
-                          whileHover={{ opacity: 1 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        />
-                        
-                        {/* Premium content with strategic reveals */}
-                        <div className="absolute inset-0 flex flex-col justify-end p-8">
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
-                          >
-                            {/* Category with subtle accent */}
-                            <motion.div 
-                              className="inline-block"
-                              initial={{ opacity: 0, y: 10 }}
-                              whileHover={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <span className="text-accent/90 text-xs tracking-widest uppercase px-3 py-1 border border-accent/30 backdrop-blur-sm mb-3 inline-block">
-                                {project.category}
-                              </span>
-                            </motion.div>
-                            
-                            {/* Title with elegant animation */}
-                            <div className="overflow-hidden mb-3">
-                              <motion.h3 
-                                className="text-white text-2xl font-serif"
-                                initial={{ y: 30 }}
-                                whileInView={{ y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: 0.2 }}
-                              >
-                                {project.title}
-                              </motion.h3>
-                            </div>
-                            
-                            {/* Refined accent line */}
-                            <motion.div 
-                              className="h-px w-16 bg-accent/80 mb-4"
-                              initial={{ scaleX: 0 }}
-                              whileInView={{ scaleX: 1 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.3 }}
-                              style={{ transformOrigin: "left" }}
-                            />
-                            
-                            {/* Description with sophisticated fade-in */}
-                            <motion.p 
-                              className="text-white/90 text-sm max-w-md leading-relaxed"
-                              initial={{ opacity: 0 }}
-                              whileHover={{ opacity: 1 }}
-                              transition={{ duration: 0.5, delay: 0.1 }}
-                            >
-                              {project.description[language]}
-                            </motion.p>
-                            
-                            {/* Premium call-to-action */}
-                            <motion.div
-                              className="mt-6"
-                              initial={{ opacity: 0, y: 10 }}
-                              whileHover={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.4 }}
-                            >
-                              <Link
-                                to={`/projeto/${project.slug}`}
-                                className="inline-flex items-center group"
-                              >
-                                <motion.span 
-                                  className="text-white border-b border-transparent group-hover:border-accent transition-all duration-500"
-                                  whileHover={{ x: 2 }}
-                                >
-                                  {language === 'pt' ? 'Ver detalhes' : 'Ver detalles'}
-                                </motion.span>
-                                <motion.div
-                                  className="ml-2"
-                                  animate={{ 
-                                    x: [0, 5, 0],
-                                    transition: { 
-                                      repeat: Infinity, 
-                                      duration: 2, 
-                                      ease: "easeInOut" 
-                                    } 
-                                  }}
-                                >
-                                  <ArrowRight size={14} className="text-accent" />
-                                </motion.div>
-                              </Link>
-                            </motion.div>
-                          </motion.div>
-                        </div>
-                      </motion.div>
-                      
-                      {/* Premium lower info card */}
-                      <div className="p-6 bg-white">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-neutral-900 font-medium mb-1">{project.title}</h3>
-                            <div className="text-neutral-500 text-sm">{project.category}</div>
-                          </div>
-                          
-                          <motion.div
-                            whileHover={{ scale: 1.1, rotate: 45 }}
-                            transition={{ duration: 0.2 }}
-                            className="h-9 w-9 rounded-full bg-accent/10 flex items-center justify-center"
-                          >
-                            <Plus size={14} className="text-accent" />
-                          </motion.div>
-                        </div>
-                        
-                        {/* Subtle progress indicator */}
-                        <div className="h-[2px] w-full bg-neutral-100 mt-4 overflow-hidden">
-                          <motion.div 
-                            className="h-full bg-accent/30"
-                            style={{ 
-                              width: `${100 / featuredProjects.length}%`,
-                              marginLeft: `${(index % featuredProjects.length) / featuredProjects.length * 100}%`
-                            }}
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Active state indicator */}
-                      {(index % featuredProjects.length) === activeProject && (
-                        <motion.div 
-                          className="absolute top-4 right-4 w-3 h-3 rounded-full bg-accent"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      )}
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-              
-              {/* Enhanced scroll indicators */}
-              <div className="flex justify-center mt-14 space-x-5">
-                {featuredProjects.map((_, index) => (
-                  <motion.button
-                    key={index}
-                    className="w-2.5 h-2.5 rounded-full bg-neutral-300 relative"
-                    whileHover={{ 
-                      scale: 1.5,
-                      transition: { duration: 0.1 }
-                    }}
-                    onClick={() => {
-                      if (projectsScrollRef.current) {
-                        const scrollAmount = index * (isMobile ? 85 : 606); // width + gap
-                        projectsScrollRef.current.scrollTo({
-                          left: scrollAmount,
-                          behavior: 'smooth'
-                        });
-                      }
-                    }}
-                  >
-                    {index === activeProject && (
-                      <motion.div
-                        className="absolute inset-0 bg-accent rounded-full"
-                        layoutId="projectIndicator"
-                        transition={{ 
-                          type: 'spring',
-                          stiffness: 220, 
-                          damping: 20
-                        }}
-                      />
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-              
-              {/* Scroll hint */}
-              </div>
-              
-              {/* Scroll hint with animated arrow */}
-              
-              {/* Scroll hint */}
-              <motion.div
-                animate={{ opacity: 0.6, x: 0 }}
-                transition={{ duration: 1, delay: 1.5 }}
-              >
-                <motion.div
-                  animate={{
-                    x: [0, 10, 0],
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 2,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <ArrowRight size={16} className="text-neutral-400" />
-                </motion.div>
-              </motion.div>
-            </div>
-          </div>
-          
-          {/* Mobile CTA */}
-          <div className="text-center mt-24 md:hidden">
-            <Link 
-              to="/portfolio"
-              className="inline-flex items-center px-8 py-4 border border-accent/60 text-neutral-900 hover:bg-accent/5 transition-all duration-500"
-              onMouseEnter={() => handleLinkHover(true)}
-              onMouseLeave={() => handleLinkHover(false)}
-            >
-              {language === 'pt' ? 'Ver toda a coleção' : 'Ver toda la colección'}
-              <ChevronRight className="ml-2" size={16} />
-            </Link>
-          </div>
-        </motion.section>
-        <motion.div 
-  className="relative mb-24 overflow-hidden rounded-2xl shadow-2xl"
+{/* Hero Section Ultra-Premium */}
+<motion.section 
+  ref={heroRef}
+  className="relative h-[100vh] min-h-[800px] overflow-hidden"
   initial={{ opacity: 0 }}
-  whileInView={{ opacity: 1 }}
-  viewport={{ once: true }}
-  transition={{ duration: 1.2 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  style={{ opacity: heroOpacity, y: heroY, scale: heroScale }}
 >
-  {/* Premium glass morphism background with depth layers */}
-  <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-[#23201C]/90 to-[#1a1713]/80 backdrop-filter backdrop-blur-lg z-0"></div>
-  <div className="absolute inset-0 bg-[url('/images/wood-texture.jpg')] mix-blend-overlay opacity-10 z-0"></div>
-  
-  {/* Decorative elements */}
-  <motion.div 
-    className="absolute top-10 right-10 w-80 h-80 rounded-full bg-accent/5 blur-3xl z-0"
-    animate={{ 
-      scale: [1, 1.2, 1],
-      opacity: [0.1, 0.15, 0.1]
-    }}
-    transition={{ duration: 8, repeat: Infinity }}
-  />
-  
-  <div className="relative z-10 p-10 md:p-14">
-    {/* Elegant header with accent line */}
-    <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
-      <div>
-        <div className="text-accent uppercase tracking-[0.25em] text-xs font-medium mb-3">
-          {language === 'pt' ? 'Materiais Premium' : 'Materiales Premium'}
-        </div>
-        <h2 className="text-4xl md:text-5xl font-serif leading-tight text-white">
-          {language === 'pt' ? 'Biblioteca de Materiais' : 'Biblioteca de Materiales'}
-        </h2>
+  {/* Background cinematográfico com gradientes sofisticados e vídeo otimizado */}
+  <div className="absolute inset-0 z-0">
+    <motion.div
+      className="absolute inset-0"
+      initial={{ scale: 1.05, filter: 'brightness(0.7)' }}
+      animate={{ 
+        scale: 1,
+        filter: 'brightness(0.85)',
+        transition: { duration: 5, ease: [0.22, 1, 0.36, 1] }
+      }}
+    >
+      {/* Vídeo com preload e fallback para melhor performance */}
+      <video 
+        autoPlay 
+        muted 
+        loop 
+        playsInline
+        preload="auto"
+        onLoadedData={handleVideoLoaded}
+        className="w-full h-full object-cover"
+      >
+        <source src="/videos/luxury-atelier.webm" type="video/webm" />
+        <source src="/videos/luxury-atelier.mp4" type="video/mp4" />
+      </video>
+      
+      {/* Sistema avançado de overlay multicamadas */}
+      <div className="absolute inset-0 z-10">
+        {/* Gradiente horizontal sofisticado */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0C0A09]/95 via-[#1C1917]/80 to-[#0C0A09]/90 mix-blend-multiply"></div>
+        
+        {/* Gradiente vertical para profundidade */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-black/90"></div>
+        
+        {/* Textura de ruído para cinema */}
         <motion.div 
-          className="h-[2px] w-32 bg-gradient-to-r from-accent via-accent/80 to-transparent mt-6"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, delay: 0.2 }}
-          style={{ transformOrigin: "left" }}
+          className="absolute inset-0 opacity-[0.12] mix-blend-overlay" 
+          style={{ backgroundImage: 'url(/images/noise-texture.png)', backgroundSize: '200px' }}
+          animate={{ backgroundPosition: ['0% 0%', '100% 100%'] }}
+          transition={{ duration: 120, ease: "linear", repeat: Infinity, repeatType: "mirror" }}
         />
       </div>
       
-      <p className="text-white/70 md:max-w-md mt-6 md:mt-0 text-sm md:text-base">
+      {/* Sistema avançado de partículas para efeito visual premium */}
+      {!prefersReducedMotion && !isMobile && (
+        <motion.div className="absolute inset-0 z-20 overflow-hidden">
+          {Array(20).fill(0).map((_, i) => (
+            <motion.div
+              key={`particle-${i}`}
+              className="absolute rounded-full"
+              initial={{ 
+                x: `${Math.random() * 100}%`,
+                y: `${Math.random() * 100}%`,
+                opacity: 0,
+                scale: 0
+              }}
+              animate={{
+                opacity: [0, 0.4, 0],
+                scale: [0, 1, 0],
+                filter: [
+                  'blur(2px) brightness(1)', 
+                  'blur(1px) brightness(1.5)', 
+                  'blur(2px) brightness(1)'
+                ],
+              }}
+              transition={{
+                duration: 8 + Math.random() * 15,
+                ease: "easeInOut",
+                repeat: Infinity,
+                delay: Math.random() * 10,
+              }}
+              style={{
+                width: `${2 + Math.random() * 6}px`,
+                height: `${2 + Math.random() * 6}px`,
+                background: 'radial-gradient(circle, rgba(211,161,126,0.8) 0%, rgba(211,161,126,0) 70%)',
+              }}
+            />
+          ))}
+        </motion.div>
+      )}
+    </motion.div>
+  </div>
+  
+  {/* Grade arquitetônica com proporção áurea */}
+  <div className="absolute inset-0 z-10 opacity-[0.03] pointer-events-none">
+    <div className="grid grid-cols-12 h-full w-full">
+      {Array(12).fill(0).map((_, i) => (
+        <div key={`grid-col-${i}`} className="h-full border-l border-white/50 last:border-r"></div>
+      ))}
+      
+      {/* Linhas horizontais adicionais */}
+      <div className="absolute top-[38.2%] left-0 right-0 h-[1px] bg-white/30"></div>
+      <div className="absolute top-[61.8%] left-0 right-0 h-[1px] bg-white/20"></div>
+    </div>
+  </div>
+  
+  {/* Elementos geométricos decorativos com animações sutis */}
+  <motion.div 
+    className="absolute top-20 right-[10%] w-96 h-96 rounded-full border border-accent/5 opacity-20 hidden lg:block"
+    initial={{ scale: 0.8, rotate: 45, opacity: 0 }}
+    animate={{ scale: 1, rotate: 0, opacity: 0.2 }}
+    transition={{ duration: 3, ease: [0.22, 1, 0.36, 1] }}
+  />
+  
+  <motion.div 
+    className="absolute bottom-40 left-[5%] w-64 h-64 rounded-full border border-accent/10 opacity-10 hidden lg:block"
+    initial={{ scale: 0.8, rotate: -45, opacity: 0 }}
+    animate={{ scale: 1, rotate: 0, opacity: 0.1 }}
+    transition={{ duration: 3, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+  />
+  
+  {/* Linhas de acento verticais animadas */}
+  <motion.div 
+    className="absolute top-[15vh] left-[10%] w-px h-[35vh] z-20"
+    initial={{ scaleY: 0 }}
+    animate={{ scaleY: 1 }}
+    transition={{ duration: 1.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+    style={{ 
+      transformOrigin: 'top',
+      background: 'linear-gradient(to bottom, transparent, rgba(211, 161, 126, 0.7), transparent)'
+    }}
+  />
+  
+  <motion.div 
+    className="absolute bottom-[15vh] right-[10%] w-px h-[35vh] z-20"
+    initial={{ scaleY: 0 }}
+    animate={{ scaleY: 1 }}
+    transition={{ duration: 1.8, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
+    style={{ 
+      transformOrigin: 'bottom',
+      background: 'linear-gradient(to top, transparent, rgba(211, 161, 126, 0.7), transparent)'
+    }}
+  />
+
+  {/* Conteúdo principal centralizado */}
+  <div className="relative z-30 container mx-auto px-8 md:px-24 h-full flex items-center">
+    <motion.div 
+      className="max-w-6xl"
+      style={{ y: heroTitleY }}
+    >
+      {/* Tag introdutória com linha animada */}
+      <motion.p
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 1.5, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="font-sans font-light text-accent tracking-[0.4em] uppercase text-sm mb-10 relative"
+      >
+        <span className="relative">
+          {language === 'pt' ? 'Ateliê de Design & Artesanato' : 'Atelier de Diseño & Artesanía'}
+          <motion.span 
+            className="absolute -bottom-3 left-0 h-[1px] w-full bg-accent/40"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1.2, delay: 1.2 }}
+            style={{ transformOrigin: 'left' }}
+          />
+        </span>
+      </motion.p>
+      
+      {/* Título principal com animação de revelação por palavra */}
+      <h1 className="font-serif font-light text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] leading-[1.05] tracking-[-0.02em] text-white/95 relative">
+        {/* Primeira linha */}
+        <div className="overflow-hidden">
+          <motion.div
+            initial={{ y: 150 }}
+            animate={{ y: 0 }}
+            transition={{ duration: 1.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="relative"
+          >
+            {language === 'pt' ? 'Objetos com' : 'Objetos con'}
+          </motion.div>
+        </div>
+        
+        {/* Segunda linha */}
+        <div className="overflow-hidden mt-1 md:mt-2">
+          <motion.div
+            initial={{ y: 150 }}
+            animate={{ y: 0 }}
+            transition={{ duration: 1.8, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
+            className="relative"
+          >
+            {language === 'pt' ? 'significado' : 'significado'}
+          </motion.div>
+        </div>
+        
+        {/* Linha de acento animada com efeito de brilho */}
+        <motion.div 
+          className="absolute -bottom-8 left-0 h-[3px] w-28 md:w-48"
+          initial={{ scaleX: 0, filter: "blur(0px)" }}
+          animate={{ 
+            scaleX: 1, 
+            filter: ["blur(0px)", "blur(2px)", "blur(0px)"]
+          }}
+          transition={{ 
+            scaleX: { duration: 1.8, delay: 2.2, ease: [0.22, 1, 0.36, 1] },
+            filter: { duration: 3, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }
+          }}
+          style={{ 
+            transformOrigin: "left",
+            background: "linear-gradient(90deg, rgba(211,161,126,1) 0%, rgba(211,161,126,0.7) 50%, rgba(211,161,126,0) 100%)"
+          }}
+        />
+      </h1>
+      
+      {/* Subtítulo com animação sofisticada */}
+      <motion.p
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, delay: 1.8 }}
+        className="text-xl md:text-2xl text-white/80 max-w-3xl font-sans font-light leading-relaxed mt-12 lg:mt-16"
+      >
         {language === 'pt' 
-          ? 'Cada material é cuidadosamente selecionado para garantir durabilidade, beleza e sustentabilidade em nossos móveis personalizados.'
-          : 'Cada material es cuidadosamente seleccionado para garantizar durabilidad, belleza y sostenibilidad en nuestros muebles personalizados.'}
-      </p>
+          ? 'Criamos ambientes que transcendem o ordinário, transformando experiências e elevando os sentidos através de peças artesanais meticulosamente elaboradas.'
+          : 'Creamos ambientes que trascienden lo ordinario, transformando experiencias y elevando los sentidos a través de piezas artesanales meticulosamente elaboradas.'}
+      </motion.p>
+      
+      {/* Grupo de CTA aprimorados */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 2.2 }}
+        className="mt-12 md:mt-16 flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-6"
+      >
+        {/* Botão primário com efeito de preenchimento */}
+        <a
+          href="#portfolio"
+          className="group relative inline-flex items-center overflow-hidden"
+          onClick={(e) => {
+            e.preventDefault();
+            if (galleryRef.current) {
+              galleryRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
+          <motion.div 
+            className="relative z-10 bg-transparent border-2 border-accent px-8 py-4 text-white font-sans font-light tracking-wider overflow-hidden"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.3 }}
+          >
+            <span className="relative z-10 group-hover:text-black transition-colors duration-500">
+              {language === 'pt' ? 'Explorar nossa coleção' : 'Explorar nuestra colección'}
+            </span>
+            
+            {/* Efeito de preenchimento */}
+            <motion.div 
+              className="absolute inset-0 bg-accent z-0"
+              initial={{ scaleX: 0 }}
+              whileHover={{ scaleX: 1 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              style={{ transformOrigin: 'left' }}
+            />
+          </motion.div>
+          
+          {/* Ícone com animação */}
+          <motion.div 
+            className="absolute right-6 opacity-0 group-hover:opacity-100 z-20"
+            initial={{ x: -10 }}
+            whileHover={{ x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              animate={{ x: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            >
+              <ArrowRight size={16} className="text-black" />
+            </motion.div>
+          </motion.div>
+        </a>
+
+        {/* Botão secundário com estilo alternativo */}
+        <motion.a
+          href="#contact"
+          className="group inline-flex items-center space-x-2 text-white/80 hover:text-accent transition-colors duration-300"
+          whileHover={{ x: 5 }}
+          transition={{ duration: 0.3 }}
+          onClick={(e) => {
+            e.preventDefault();
+            if (contactRef.current) {
+              contactRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
+          <span className="font-serif tracking-wide text-base">
+            {language === 'pt' ? 'Agendar consulta' : 'Programar consulta'}
+          </span>
+          <motion.div
+            animate={{ 
+              x: [0, 5, 0],
+              transition: { repeat: Infinity, duration: 2, ease: "easeInOut" }
+            }}
+          >
+            <ChevronRight size={18} />
+          </motion.div>
+        </motion.a>
+      </motion.div>
+    </motion.div>
+  </div>
+  
+  {/* Indicador de scroll animado ao fundo */}
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.8, delay: 3 }}
+    className="absolute bottom-12 left-0 right-0 flex justify-center z-30"
+  >
+    <button 
+      onClick={() => {
+        if (galleryRef.current) {
+          galleryRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }}
+      className="flex flex-col items-center text-white/60 hover:text-white/90 transition-colors duration-300 group"
+      aria-label="Scroll para descobrir mais"
+    >
+      <span className="text-xs uppercase tracking-widest mb-4 font-sans">
+        {language === 'pt' ? 'Deslize para descobrir' : 'Desplácese para descubrir'}
+      </span>
+      <div className="h-14 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent relative">
+        <motion.div 
+          className="absolute top-0 w-1.5 h-1.5 rounded-full bg-accent left-1/2 -translate-x-1/2"
+          animate={{ 
+            y: [0, 24, 0] 
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 2.5,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+    </button>
+  </motion.div>
+  
+  {/* Contador de scroll sutilmente visível */}
+  <motion.div 
+    className="hidden md:block absolute bottom-12 right-12 z-30 text-white/30 text-xs font-mono"
+    style={{ opacity: useTransform(smoothHeroProgress, [0, 0.8], [1, 0]) }}
+  >
+    <motion.span className="inline-block">
+      00
+    </motion.span>
+    <span className="mx-1">/</span>
+    <motion.div 
+      className="inline-block"
+      style={{ opacity: heroProgressHeight }}
+    >
+      01
+    </motion.div>
+  </motion.div>
+</motion.section>
+      
+   
+        <motion.div 
+  className="relative mb-32 overflow-hidden rounded-2xl shadow-2xl bg-[#0C0A09]/70 backdrop-blur-sm"
+  initial={{ opacity: 0 }}
+  whileInView={{ opacity: 1 }}
+  viewport={{ once: true }}
+  transition={{ duration: 1.5 }}
+>
+  {/* Textura de fundo refinada */}
+  <div className="absolute inset-0 bg-[url('/images/elegant-texture.jpg')] opacity-10 mix-blend-overlay z-0"></div>
+  
+  {/* Elementos gradientes dinâmicos */}
+  <motion.div 
+    className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-accent/5 blur-[120px] z-0"
+    animate={{ 
+      scale: [1, 1.2, 1],
+      opacity: [0.05, 0.12, 0.05]
+    }}
+    transition={{ duration: 15, repeat: Infinity }}
+  />
+  <motion.div 
+    className="absolute -bottom-20 -left-20 w-[500px] h-[500px] rounded-full bg-accent/5 blur-[100px] z-0"
+    animate={{ 
+      scale: [1.2, 1, 1.2],
+      opacity: [0.08, 0.15, 0.08]
+    }}
+    transition={{ duration: 12, repeat: Infinity }}
+  />
+  
+  <div className="relative z-10 p-12 md:p-16 lg:p-20">
+    {/* Cabeçalho da seção */}
+    <div className="flex flex-col md:flex-row md:items-end justify-between mb-20">
+      <div>
+        <motion.div 
+          className="text-accent uppercase tracking-[0.35em] text-xs font-light mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          {language === 'pt' ? 'Materiais Selecionados' : 'Materiales Seleccionados'}
+        </motion.div>
+        <motion.h2 
+          className="text-5xl md:text-6xl font-serif font-light leading-tight text-white"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.1 }}
+        >
+          <span className="block">{language === 'pt' ? 'Biblioteca de' : 'Biblioteca de'}</span>
+          <span className="text-6xl md:text-7xl relative">
+            {language === 'pt' ? 'Materiais Nobres' : 'Materiales Nobles'}
+            <motion.div 
+              className="absolute -bottom-4 left-0 h-[1.5px] w-40 bg-gradient-to-r from-accent via-accent/50 to-transparent"
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.2, delay: 0.4 }}
+              style={{ transformOrigin: "left" }}
+            />
+          </span>
+        </motion.h2>
+      </div>
+      
+      <motion.p 
+        className="text-white/70 md:max-w-md mt-10 md:mt-0 text-sm md:text-base leading-relaxed font-sans"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.3 }}
+      >
+        {language === 'pt' 
+          ? 'Cada material é cuidadosamente selecionado e utilizado com precisão artesanal para criar móveis que transcendem gerações, combinando beleza atemporal e durabilidade excepcional.'
+          : 'Cada material es cuidadosamente seleccionado y utilizado con precisión artesanal para crear muebles que trascienden generaciones, combinando belleza atemporal y durabilidad excepcional.'}
+      </motion.p>
     </div>
     
-    {/* Material category tabs */}
-    <div className="mb-10">
-      <div className="flex space-x-2 overflow-x-auto hide-scrollbar pb-2">
-        {['Madeiras', 'Tecidos', 'Metais', 'Pedras', 'Vidros', 'Couros', 'Acabamentos'].map((category, index) => (
+    {/* Abas de categoria de material com estilo premium */}
+    <div className="mb-16">
+      <motion.div 
+        className="flex space-x-4 overflow-x-auto hide-scrollbar pb-6 -mx-2 px-2"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        {[
+          { id: 'woods', icon: 'wood-grain', label: { pt: 'Madeiras', es: 'Maderas' } },
+          { id: 'fabrics', icon: 'fabric', label: { pt: 'Tecidos', es: 'Tejidos' } },
+          { id: 'metals', icon: 'metal', label: { pt: 'Metais', es: 'Metales' } },
+          { id: 'stones', icon: 'stone', label: { pt: 'Pedras', es: 'Piedras' } },
+          { id: 'glass', icon: 'glass', label: { pt: 'Vidros', es: 'Vidrios' } },
+          { id: 'leathers', icon: 'leather', label: { pt: 'Couros', es: 'Cueros' } },
+          { id: 'finishes', icon: 'finish', label: { pt: 'Acabamentos', es: 'Acabados' } },
+        ].map((category, index) => (
           <motion.button
-            key={category}
-            className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm ${activeCategory === index 
-              ? 'bg-accent text-black font-medium' 
-              : 'bg-white/10 text-white/70 hover:bg-white/20'
+            key={category.id}
+            className={`px-6 py-4 rounded-full whitespace-nowrap text-sm flex items-center space-x-3 ${activeCategory === index 
+              ? 'bg-accent text-black font-normal shadow-lg shadow-accent/20' 
+              : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/5'
             } transition-all duration-300`}
             onClick={() => setActiveCategory(index)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 + (index * 0.08) }}
           >
-            {language === 'pt' ? category : 
-              ['Maderas', 'Tejidos', 'Metales', 'Piedras', 'Vidrios', 'Cueros', 'Acabados'][index]
-            }
+            <span className="w-4 h-4 flex items-center justify-center">
+              <MaterialIcon type={category.icon} active={activeCategory === index} />
+            </span>
+            <span className="font-sans tracking-wide">{category.label[language === 'pt' ? 'pt' : 'es']}</span>
           </motion.button>
         ))}
-      </div>
+      </motion.div>
     </div>
     
-    {/* Material grid with enhanced visual presentation */}
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-10">
-      {/* Wood materials */}
-      {activeCategory === 0 && allMaterials.woods.map((material) => (
-        <motion.button
-          key={material.id}
-          onClick={() => setActiveMaterial(material)}
-          className={`relative group overflow-hidden rounded-lg transition-all duration-300 ${
-            activeMaterial?.id === material.id 
-              ? 'ring-2 ring-accent scale-105 shadow-lg' 
-              : 'ring-1 ring-white/10 hover:ring-white/30'
-          }`}
-          whileHover={{ y: -5 }}
+    {/* Layout aprimorado: grade de materiais e visualização 3D */}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      {/* Visualização 3D - 7 colunas em desktop */}
+      <div className="lg:col-span-7 order-1 lg:order-1">
+        <motion.div 
+          className="bg-black/40 rounded-xl overflow-hidden backdrop-blur-md border border-white/10 h-[550px] relative"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
         >
-          <div className="aspect-square">
-            <img 
-              src={`/images/materials/${material.id}.jpg`} 
-              alt={material.name}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = '/images/materials/fallback.jpg';
-              }}
+          <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
+            <ambientLight intensity={0.5} />
+            <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.8} castShadow />
+            <directionalLight position={[-5, 5, -5]} intensity={0.7} />
+            <ContactShadows 
+              position={[0, -1.5, 0]} 
+              opacity={0.7} 
+              scale={10} 
+              blur={2} 
+              far={4} 
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-0 transition-transform duration-300">
-            <p className="text-white text-sm font-medium line-clamp-1">{material.name}</p>
-            <p className="text-white/60 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity">{material.type}</p>
-          </div>
-          {activeMaterial?.id === material.id && (
-            <motion.div 
-              className="absolute top-2 right-2 h-3 w-3 rounded-full bg-accent"
-              layoutId="materialIndicator"
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            <OrbitControls 
+              enableZoom={false} 
+              enablePan={false}
+              maxPolarAngle={Math.PI / 2} 
+              minPolarAngle={Math.PI / 4}
+              autoRotate={autoRotate}
+              autoRotateSpeed={2}
             />
-          )}
-        </motion.button>
-      ))}
-      
-      {/* Fabric materials */}
-      {activeCategory === 1 && allMaterials.fabrics.map((material) => (
-        <motion.button
-          key={material.id}
-          onClick={() => setActiveMaterial(material)}
-          className={`relative group overflow-hidden rounded-lg transition-all duration-300 ${
-            activeMaterial?.id === material.id 
-              ? 'ring-2 ring-accent scale-105 shadow-lg' 
-              : 'ring-1 ring-white/10 hover:ring-white/30'
-          }`}
-          whileHover={{ y: -5 }}
-        >
-          <div className="aspect-square">
-            <div className="w-full h-full" style={{ background: material.color }}></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-0 transition-transform duration-300">
-            <p className="text-white text-sm font-medium line-clamp-1">{material.name}</p>
-            <p className="text-white/60 text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity">{material.type}</p>
-          </div>
-          {activeMaterial?.id === material.id && (
-            <motion.div 
-              className="absolute top-2 right-2 h-3 w-3 rounded-full bg-accent"
-              layoutId="materialIndicator"
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            <EnhancedMaterialShowcase 
+              material={activeMaterial || allMaterials.woods[0]} 
+              currentFurniture={currentFurniture}
             />
-          )}
-        </motion.button>
-      ))}
-      
-      {/* Similar pattern for other material categories... */}
-    </div>
-    
-    {/* Enhanced 3D visualization */}
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 bg-black/30 rounded-xl overflow-hidden backdrop-blur-sm border border-white/10">
-      {/* 3D Viewer - Taking 3 columns */}
-      <div className="lg:col-span-3 h-80 lg:h-96 relative">
-        <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
-          <ambientLight intensity={0.6} />
-          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} castShadow />
-          <directionalLight position={[-5, 5, -5]} intensity={0.5} />
-          <ContactShadows 
-            position={[0, -1.5, 0]} 
-            opacity={0.6} 
-            scale={10} 
-            blur={2.5} 
-            far={4} 
-          />
-          <OrbitControls 
-            enableZoom={false} 
-            enablePan={false}
-            maxPolarAngle={Math.PI / 2} 
-            minPolarAngle={Math.PI / 4}
-            autoRotate={autoRotate}
-            autoRotateSpeed={3}
-          />
-          <EnhancedMaterialShowcase 
-            material={activeMaterial || allMaterials.woods[0]} 
-            currentFurniture={currentFurniture}
-          />
-          <Environment preset="apartment" />
-        </Canvas>
-        
-        {/* Controls overlay */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
-          <motion.button 
-            className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full text-white/80 text-xs flex items-center space-x-2 hover:bg-accent/80 hover:text-black transition-colors"
-            onClick={() => setAutoRotate(!autoRotate)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span>{autoRotate ? "Pausar rotação" : "Auto-rotação"}</span>
-            {autoRotate ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="6" y="4" width="4" height="16"></rect>
-                <rect x="14" y="4" width="4" height="16"></rect>
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-            )}
-          </motion.button>
+            <Environment preset="apartment" />
+          </Canvas>
           
-          <motion.button 
-            className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full text-white/80 text-xs flex items-center space-x-2 hover:bg-accent/80 hover:text-black transition-colors"
-            onClick={cycleFurniture}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          {/* Controles de visualização premium */}
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-4 z-10">
+            <motion.div 
+              className="bg-black/70 backdrop-blur-xl px-6 py-3 rounded-full flex items-center space-x-5 border border-white/5"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <motion.button 
+                className="bg-white/10 hover:bg-accent hover:text-black text-white/90 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
+                onClick={() => setAutoRotate(!autoRotate)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {autoRotate ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                    <path d="M11 8l6 4-6 4V8z"></path>
+                  </svg>
+                )}
+              </motion.button>
+              
+              <div className="h-6 w-px bg-white/10"></div>
+              
+              <div className="flex space-x-3">
+                {furnitureLabels.map((item, idx) => (
+                  <motion.button 
+                    key={idx}
+                    onClick={() => setCurrentFurniture(idx)}
+                    className={`px-4 py-2 rounded-full text-xs flex items-center space-x-2 transition-all duration-300 ${
+                      currentFurniture === idx 
+                        ? 'bg-accent text-black font-medium shadow-md shadow-accent/10' 
+                        : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 + (idx * 0.1) }}
+                  >
+                    <span className="font-sans tracking-wide">{item[language === 'pt' ? 'pt' : 'en']}</span>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* Sobreposição de título de material */}
+          <div className="absolute top-8 left-8 right-8 flex justify-between z-10">
+            <motion.div 
+              className="bg-black/60 backdrop-blur-xl px-5 py-3 rounded-full border border-white/5"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <h3 className="text-white font-serif font-light text-lg">
+                {activeMaterial?.name || (language === 'pt' ? 'Selecione um material' : 'Seleccione un material')}
+              </h3>
+            </motion.div>
+            
+            {activeMaterial && (
+              <motion.div 
+                className="bg-accent text-black px-5 py-3 rounded-full flex items-center space-x-2 shadow-lg shadow-accent/20"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <span className="text-sm font-sans font-medium">{language === 'pt' ? 'Visualizando' : 'Visualizando'}</span>
+                <motion.div 
+                  className="w-2 h-2 bg-black/70 rounded-full"
+                  animate={{ 
+                    scale: [1, 1.5, 1],
+                    opacity: [0.5, 1, 0.5]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity
+                  }}
+                />
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+        
+        {/* Descrição do material */}
+        {activeMaterial && (
+          <motion.div 
+            className="mt-5 bg-black/30 backdrop-blur-md p-6 rounded-lg border border-white/5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
           >
-            <span>{furnitureLabels[currentFurniture][language]}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-            </svg>
-          </motion.button>
-        </div>
+            <p className="text-white/80 text-sm leading-relaxed font-sans">
+              {activeMaterial.description[language === 'pt' ? 'pt' : 'es']}
+            </p>
+          </motion.div>
+        )}
       </div>
       
-      {/* Material details - Taking 2 columns */}
-      <div className="lg:col-span-2 p-6 flex flex-col justify-between">
-        {activeMaterial ? (
-          <>
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white text-2xl font-serif">{activeMaterial.name}</h3>
-                <span className="bg-accent/20 text-accent px-2 py-1 rounded text-xs uppercase tracking-wider">
-                  {activeMaterial.origin}
-                </span>
-              </div>
-              
-              <p className="text-white/80 mb-6">{activeMaterial.description[language]}</p>
-              
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white/5 rounded-lg p-4">
-                  <h4 className="text-accent text-xs uppercase tracking-wider mb-2">
-                    {language === 'pt' ? 'Aplicações Principais' : 'Aplicaciones Principales'}
-                  </h4>
-                  <ul className="text-white/70 text-sm space-y-1">
-                    {activeMaterial.applications.map((app, i) => (
-                      <li key={i} className="flex items-center">
-                        <div className="w-1 h-1 rounded-full bg-accent mr-2"></div>
-                        {app[language]}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+      {/* Grade de materiais - 5 colunas em desktop */}
+      <div className="lg:col-span-5 order-2 lg:order-2">
+        <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/5 h-full">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-white text-xl font-serif font-light">
+              {activeCategory === 0 && (language === 'pt' ? 'Madeiras Premium' : 'Maderas Premium')}
+              {activeCategory === 1 && (language === 'pt' ? 'Tecidos Exclusivos' : 'Tejidos Exclusivos')}
+              {activeCategory === 2 && (language === 'pt' ? 'Metais Nobres' : 'Metales Nobles')}
+              {activeCategory === 3 && (language === 'pt' ? 'Pedras Naturais' : 'Piedras Naturales')}
+              {activeCategory === 4 && (language === 'pt' ? 'Vidros Especiais' : 'Vidrios Especiales')}
+              {activeCategory === 5 && (language === 'pt' ? 'Couros Selecionados' : 'Cueros Seleccionados')}
+              {activeCategory === 6 && (language === 'pt' ? 'Acabamentos Refinados' : 'Acabados Refinados')}
+            </h3>
+            <span className="text-accent/90 text-xs px-4 py-1.5 rounded-full border border-accent/20 font-sans">
+              {activeCategory === 0 && allMaterials.woods.length}
+              {activeCategory === 1 && allMaterials.fabrics.length}
+              {activeCategory === 2 && allMaterials.metals.length}
+              {activeCategory === 3 && allMaterials.stones.length}
+              {language === 'pt' ? ' opções' : ' opciones'}
+            </span>
+          </div>
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`category-${activeCategory}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="h-[400px] overflow-y-auto hide-scrollbar pr-2"
+            >
+              {/* Grid de cartões de material */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Materiais de madeira */}
+                {activeCategory === 0 && allMaterials.woods.map((material, idx) => (
+                  <MaterialCard 
+                    key={material.id} 
+                    material={material} 
+                    isActive={activeMaterial?.id === material.id}
+                    onSelect={() => setActiveMaterial({ ...material, furniture: material.furniture || null, properties: material.properties || null })}
+                    index={idx} 
+                  />
+                ))}
                 
-                <div className="bg-white/5 rounded-lg p-4">
-                  <h4 className="text-accent text-xs uppercase tracking-wider mb-2">
-                    {language === 'pt' ? 'Características' : 'Características'}
-                  </h4>
-                  <div className="grid grid-cols-1 gap-2">
+                {/* Materiais de tecido */}
+                {activeCategory === 1 && allMaterials.fabrics.map((material, idx) => (
+                  <MaterialCard 
+                    key={material.id} 
+                    material={material} 
+                    isActive={activeMaterial?.id === material.id}
+                    onSelect={() => setActiveMaterial(material)}
+                    index={idx} 
+                    isFabric={true}
+                  />
+                ))}
+                
+                {/* Materiais de metal */}
+                {activeCategory === 2 && allMaterials.metals.map((material, idx) => (
+                  <MaterialCard 
+                    key={material.id} 
+                    material={material} 
+                    isActive={activeMaterial?.id === material.id}
+                    onSelect={() => setActiveMaterial(material)}
+                    index={idx} 
+                  />
+                ))}
+                
+                {/* Materiais de pedra */}
+                {activeCategory === 3 && allMaterials.stones.map((material, idx) => (
+                  <MaterialCard 
+                    key={material.id} 
+                    material={material} 
+                    isActive={activeMaterial?.id === material.id}
+                    onSelect={() => setActiveMaterial(material)}
+                    index={idx} 
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+          
+          {/* Seção de informações do material */}
+          <motion.div 
+            className="mt-8 pt-8 border-t border-white/5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            {activeMaterial ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <div className="flex items-baseline justify-between mb-4">
+                    <h4 className="text-accent text-xs uppercase tracking-widest font-sans">
+                      {language === 'pt' ? 'Especificações' : 'Especificaciones'}
+                    </h4>
+                    <span className="text-white/40 text-xs font-sans">{activeMaterial.origin}</span>
+                  </div>
+                  
+                  <div className="space-y-5 mt-6">
                     {[
                       {name: language === 'pt' ? 'Durabilidade' : 'Durabilidad', value: activeMaterial.durability},
                       {name: language === 'pt' ? 'Manutenção' : 'Mantenimiento', value: activeMaterial.maintenance},
                       {name: language === 'pt' ? 'Sustentabilidade' : 'Sostenibilidad', value: activeMaterial.sustainability}
                     ].map((stat, i) => (
                       <div key={i}>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-white/70">{stat.name}</span>
-                          <span className="text-white/90">{stat.value}/5</span>
+                        <div className="flex justify-between text-xs mb-2 font-sans">
+                          <span className="text-white/80">{stat.name}</span>
+                          <div className="flex space-x-1.5">
+                            {[1, 2, 3, 4, 5].map(dot => (
+                              <motion.div 
+                                key={dot}
+                                className={`w-1.5 h-1.5 rounded-full ${dot <= stat.value ? 'bg-accent' : 'bg-white/10'}`}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.5 + (i * 0.1) + (dot * 0.05) }}
+                              />
+                            ))}
+                          </div>
                         </div>
-                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                           <motion.div 
-                            className="h-full bg-accent"
+                            className="h-full"
                             initial={{ width: 0 }}
                             animate={{ width: `${(stat.value/5) * 100}%` }}
-                            transition={{ duration: 0.5, delay: 0.1 * i }}
+                            transition={{ duration: 0.7, delay: 0.2 + (i * 0.1) }}
+                            style={{
+                              background: "linear-gradient(90deg, rgba(211,161,126,0.7) 0%, rgba(211,161,126,1) 50%, rgba(211,161,126,0.7) 100%)"
+                            }}
                           />
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
+                
+                <div>
+                  <h4 className="text-accent text-xs uppercase tracking-widest font-sans mb-4">
+                    {language === 'pt' ? 'Aplicações Ideais' : 'Aplicaciones Ideales'}
+                  </h4>
+                  <ul className="mt-4 space-y-3">
+                    {activeMaterial.applications.map((app, i) => (
+                      <motion.li 
+                        key={i} 
+                        className="flex items-center text-white/80 text-sm font-sans"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + (i * 0.1) }}
+                      >
+                        <motion.div 
+                          className="w-1.5 h-1.5 rounded-full bg-accent mr-3"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.4 + (i * 0.1) }}
+                        />
+                        {app[language === 'pt' ? 'pt' : 'en']}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex justify-between items-center border-t border-white/10 pt-4">
-              <span className="text-white/40 text-sm">
-                {language === 'pt' ? 'ID:' : 'ID:'} {activeMaterial.id.toUpperCase()}
-              </span>
-              
-              <button 
-                className="bg-accent/90 hover:bg-accent px-4 py-2 text-black text-sm font-medium rounded transition-colors duration-300 flex items-center"
-                onClick={() => scrollToSection(contactRef)}
-              >
-                {language === 'pt' ? 'Consultar disponibilidade' : 'Consultar disponibilidad'}
-                <ChevronRight size={14} className="ml-2" />
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-white/40 mb-6">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-              </svg>
-            </div>
-            <h3 className="text-white text-lg font-medium mb-3">
-              {language === 'pt' ? 'Selecione um material' : 'Seleccione un material'}
-            </h3>
-            <p className="text-white/50 text-sm">
-              {language === 'pt' 
-                ? 'Explore nossa biblioteca de materiais premium para seus móveis personalizados' 
-                : 'Explore nuestra biblioteca de materiales premium para sus muebles personalizados'}
-            </p>
-          </div>
-        )}
+            ) : (
+              <div className="text-center text-white/60 py-6 font-sans italic">
+                {language === 'pt' ? 'Selecione um material para ver detalhes' : 'Seleccione un material para ver detalles'}
+              </div>
+            )}
+          </motion.div>
+        </div>
       </div>
     </div>
     
-    {/* Certification section */}
-    <div className="mt-10 flex flex-col sm:flex-row justify-between items-center bg-white/5 rounded-lg p-6 backdrop-blur-sm">
-      <div className="mb-4 sm:mb-0">
-        <h4 className="text-white text-lg font-medium mb-2">
+    {/* Barra de ação aprimorada */}
+    <motion.div 
+      className="mt-16 bg-gradient-to-r from-black/50 via-black/40 to-black/30 rounded-lg backdrop-blur-xl flex flex-col sm:flex-row justify-between items-center border border-white/5 overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8, delay: 0.4 }}
+    >
+      <div className="p-8 border-r border-white/5 flex-1">
+        <h4 className="text-white text-lg font-serif font-light flex items-center">
+          <motion.div 
+            className="w-5 h-5 flex items-center justify-center mr-3 text-accent"
+            animate={{ rotate: [0, 180] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10-10-4.5 10-10 10z"></path>
+              <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6-6-2.7 6-6 6z"></path>
+              <path d="M12 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path>
+            </svg>
+          </motion.div>
           {language === 'pt' ? 'Materiais Certificados' : 'Materiales Certificados'}
         </h4>
-        <p className="text-white/70 text-sm max-w-xl">
+        <p className="text-white/70 text-sm mt-3 max-w-xl font-sans leading-relaxed">
           {language === 'pt' 
-            ? 'Trabalhamos apenas com materiais de origem certificada, garantindo a sustentabilidade e qualidade dos nossos móveis.' 
-            : 'Trabajamos solo con materiales de origen certificado, garantizando la sostenibilidad y calidad de nuestros muebles.'}
+            ? 'Trabalhamos apenas com fornecedores certificados que garantem a origem sustentável e a qualidade excepcional dos materiais.' 
+            : 'Trabajamos solo con proveedores certificados que garantizan el origen sostenible y la calidad excepcional de los materiales.'}
         </p>
       </div>
       
-      <div className="flex space-x-6">
-        {[
-          {id: 'fsc', name: 'FSC Certified'},
-          {id: 'greenguard', name: 'GREENGUARD'},
-          {id: 'eco', name: 'ECO Certified'}
-        ].map(cert => (
+      <div className="p-8 flex flex-col items-center sm:items-end">
+        <div className="flex space-x-4 mb-6">
+          {[
+            {id: 'fsc', name: 'FSC Certified'},
+            {id: 'greenguard', name: 'GREENGUARD'},
+            {id: 'eco', name: 'ECO Certified'}
+          ].map((cert, idx) => (
+            <motion.div 
+              key={cert.id} 
+              className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center border border-white/10"
+              whileHover={{ y: -5, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 + (idx * 0.1) }}
+            >
+              <img 
+                src={`/images/certifications/${cert.id}.svg`} 
+                alt={cert.name} 
+                className="w-8 h-8 object-contain opacity-70"
+              />
+            </motion.div>
+          ))}
+        </div>
+        
+        <button 
+          className="bg-accent hover:bg-accent/90 px-6 py-3.5 text-black text-sm font-medium rounded-full transition-colors duration-300 flex items-center space-x-2 group shadow-lg shadow-accent/10"
+          onClick={() => scrollToSection(contactRef)}
+        >
+          <span className="font-sans tracking-wide">{language === 'pt' ? 'Consultar disponibilidade' : 'Consultar disponibilidad'}</span>
           <motion.div 
-            key={cert.id} 
-            className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center"
-            whileHover={{ y: -5, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+            className="transition-transform group-hover:translate-x-1"
+            animate={{ x: [0, 3, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatType: "loop" }}
           >
-            <img 
-              src={`/images/certifications/${cert.id}.svg`} 
-              alt={cert.name} 
-              className="w-10 h-10 object-contain opacity-70"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement.innerHTML = cert.id.toUpperCase();
-              }}
-            />
+            <ChevronRight size={14} />
           </motion.div>
-        ))}
+        </button>
       </div>
-    </div>
+    </motion.div>
   </div>
 </motion.div>
+<motion.section 
+  ref={processRef}
+  className="py-40 md:py-60 bg-gradient-to-b from-[#0C0A09] to-[#171413] relative overflow-hidden"
+>
+  {/* Elementos de background aprimorados */}
+  <motion.div 
+    className="absolute inset-0 opacity-5 pointer-events-none"
+    style={{ 
+      backgroundImage: 'url(/images/grid-pattern.svg)',
+      backgroundSize: '50px',
+    }}
+  />
+  
+  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-accent/30 to-transparent opacity-50"></div>
+  <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-transparent via-accent/30 to-transparent opacity-50"></div>
+  
+  {/* Elementos circulares ornamentais */}
+  <motion.div 
+    className="absolute -top-32 -right-32 w-64 h-64 border border-accent/10 rounded-full opacity-20"
+    initial={{ scale: 0.8, rotate: 45 }}
+    whileInView={{ scale: 1, rotate: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+  />
+  
+  <motion.div 
+    className="absolute -bottom-40 -left-40 w-80 h-80 border border-accent/10 rounded-full opacity-20"
+    initial={{ scale: 0.8, rotate: -45 }}
+    whileInView={{ scale: 1, rotate: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+  />
+  
+  <div className="container mx-auto px-6 md:px-24 relative z-10">
+    {/* Cabeçalho da seção */}
+    <div className="text-center max-w-4xl mx-auto mb-24">
+      <motion.div 
+        className="text-accent uppercase tracking-[0.35em] text-xs font-light mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+      >
+        {language === 'pt' ? 'Metodologia' : 'Metodología'}
+      </motion.div>
+      
+      <motion.h2 
+        className="text-5xl md:text-6xl font-serif font-light text-white mb-6"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+      >
+        {language === 'pt' ? 'Nosso Processo Criativo' : 'Nuestro Proceso Creativo'}
+      </motion.h2>
+      
+      <motion.div 
+        className="h-[1.5px] w-20 bg-accent mx-auto mb-12"
+        initial={{ scaleX: 0 }}
+        whileInView={{ scaleX: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1, delay: 0.4 }}
+      />
+      
+      <motion.p 
+        className="text-white/70 text-lg max-w-2xl mx-auto font-sans leading-relaxed"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        {language === 'pt' 
+          ? 'Da concepção à execução, cada etapa é tratada com extremo cuidado para garantir que cada peça expresse perfeitamente a visão do cliente e os valores da nossa marca.'
+          : 'De la concepción a la ejecución, cada etapa se trata con sumo cuidado para garantizar que cada pieza exprese perfectamente la visión del cliente y los valores de nuestra marca.'}
+      </motion.p>
+    </div>
+    
+    {/* Etapas do processo aprimoradas */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+      {[
+        { 
+          number: '01', 
+          title: { pt: 'Consulta & Briefing', es: 'Consulta & Briefing' },
+          description: { pt: 'Entendemos suas necessidades, preferências e visão para o projeto.', es: 'Entendemos sus necesidades, preferencias y visión para el proyecto.' },
+          icon: 'chat-bubble'
+        },
+        { 
+          number: '02', 
+          title: { pt: 'Design & Conceito', es: 'Diseño & Concepto' },
+          description: { pt: 'Criamos esboços e visualizações 3D para materializar a proposta.', es: 'Creamos bocetos y visualizaciones 3D para materializar la propuesta.' },
+          icon: 'pen-tool'
+        },
+        { 
+          number: '03', 
+          title: { pt: 'Produção Artesanal', es: 'Producción Artesanal' },
+          description: { pt: 'Nossas mãos experientes transformam os materiais selecionados em peças únicas.', es: 'Nuestras manos expertas transforman los materiales seleccionados en piezas únicas.' },
+          icon: 'hammer'
+        },
+        { 
+          number: '04', 
+          title: { pt: 'Entrega & Instalação', es: 'Entrega & Instalación' },
+          description: { pt: 'Garantimos que cada detalhe seja perfeito em seu espaço final.', es: 'Garantizamos que cada detalle sea perfecto en su espacio final.' },
+          icon: 'package'
+        }
+      ].map((step, index) => (
+        <motion.div
+          key={index}
+          className={`relative p-8 ${activeProcessStep === index ? 'bg-accent/5 border border-accent/20' : 'bg-white/5 border border-white/5'} rounded-xl backdrop-blur-sm transition-all duration-500`}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.1 * index }}
+        >
+          {/* Número da etapa */}
+          <motion.div 
+            className={`absolute -top-5 -right-5 w-14 h-14 rounded-full flex items-center justify-center text-lg font-serif ${activeProcessStep === index ? 'bg-accent text-black' : 'bg-white/10 text-white/90'} transition-all duration-500`}
+            initial={{ scale: 0 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.2 + (0.1 * index) }}
+          >
+            {step.number}
+          </motion.div>
+          
+          {/* Ícone */}
+          <div className={`h-16 w-16 rounded-full ${activeProcessStep === index ? 'bg-accent/20' : 'bg-white/5'} flex items-center justify-center mb-6 transition-all duration-500`}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={activeProcessStep === index ? "#D4B798" : "rgba(255,255,255,0.7)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              {step.icon === 'chat-bubble' && (
+                <>
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </>
+              )}
+              {step.icon === 'pen-tool' && (
+                <>
+                  <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                  <path d="M2 2l7.586 7.586"></path>
+                  <circle cx="11" cy="11" r="2"></circle>
+                </>
+              )}
+              {step.icon === 'hammer' && (
+                <>
+                  <path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"></path>
+                  <path d="M17.64 15L22 10.64"></path>
+                  <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"></path>
+                </>
+              )}
+              {step.icon === 'package' && (
+                <>
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.29 7 12 12 20.71 7"></polyline>
+                  <line x1="12" y1="22" x2="12" y2="12"></line>
+                </>
+              )}
+            </svg>
+          </div>
+          
+          {/* Título e descrição */}
+          <h3 className={`text-xl mb-4 font-serif font-light ${activeProcessStep === index ? 'text-accent' : 'text-white'} transition-colors duration-500`}>
+            {step.title[language === 'pt' ? 'pt' : 'es']}
+          </h3>
+          
+          <p className="text-white/70 font-sans leading-relaxed">
+            {step.description[language === 'pt' ? 'pt' : 'es']}
+          </p>
+          
+          {/* Indicador ativo */}
+          {activeProcessStep === index && (
+            <motion.div 
+              className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.5 }}
+              style={{ transformOrigin: 'left' }}
+            />
+          )}
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</motion.section>
       
       {/* About Section with Dynamic Parallax */}
       <motion.section 
@@ -3293,6 +3260,80 @@ const testimonials = [
           </div>
         </div>
       </motion.footer>
+      
+      {/* Botão CTA Premium */}
+      <Link
+        to="/contato"
+        className="group relative overflow-hidden inline-flex items-center justify-center"
+        onMouseEnter={() => handleCtaHover(true)}
+        onMouseLeave={() => handleCtaHover(false)}
+      >
+        <motion.div 
+          className="relative z-10 bg-accent px-10 py-4 text-black font-sans font-medium tracking-wider overflow-hidden"
+          whileHover={{ 
+            scale: 1.02,
+            transition: { duration: 0.3 }
+          }}
+        >
+          <span className="relative z-20">
+            {language === 'pt' ? 'Comece seu projeto' : 'Comience su proyecto'}
+          </span>
+          
+          {/* Efeito de brilho */}
+          <motion.div 
+            className="absolute inset-0 z-10"
+            initial={{ background: "linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%)", backgroundSize: "200% 200%", backgroundPosition: "0% 0%" }}
+            whileHover={{ 
+              backgroundPosition: "200% 200%"
+            }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+          
+          {/* Efeito de expansão radial */}
+          <motion.div 
+            className="absolute inset-0 z-0 opacity-0 bg-white/20"
+            initial={{ scale: 0, opacity: 0, x: "var(--x)", y: "var(--y)" }}
+            whileHover={{ 
+              scale: 4, 
+              opacity: 0.5,
+            }}
+            transition={{ duration: 0.4 }}
+            style={{ 
+              borderRadius: "50%", 
+              transformOrigin: "center",
+              left: "calc(var(--x) - 50px)",
+              top: "calc(var(--y) - 50px)",
+              width: "100px",
+              height: "100px"
+            }}
+          />
+        </motion.div>
+        
+        {/* Ícone de seta com animação */}
+        <motion.div 
+          className="absolute right-6 opacity-0 group-hover:opacity-100 z-20"
+          initial={{ x: -10 }}
+          whileHover={{ x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <motion.div
+            animate={{ x: [0, 5, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+          >
+            <ArrowRight size={16} className="text-black" />
+          </motion.div>
+        </motion.div>
+        
+        {/* Sombra */}
+        <motion.div 
+          className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100"
+          initial={{ boxShadow: "0 0 0 rgba(211, 161, 126, 0)" }}
+          whileHover={{ 
+            boxShadow: "0 8px 30px rgba(211, 161, 126, 0.3)"
+          }}
+          transition={{ duration: 0.3 }}
+        />
+      </Link>
     </motion.div>
   );
 } 
