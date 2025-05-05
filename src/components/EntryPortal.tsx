@@ -1,33 +1,13 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useAnimation, useTransform, useScroll, useMotionValue, useSpring } from 'framer-motion';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence, useAnimation, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import { ArrowRight, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 import LanguageContext from '../context/LanguageContext';
-import useMousePosition from '../hooks/useMousePosition'; // We'll create this custom hook
+import useMousePosition from '../hooks/useMousePosition';
 
 type EntryPortalProps = {
   onSelect: (type: 'b2c' | 'b2b') => void;
 };
-
-// First, let's create our custom mouse position hook
-// filepath: /c:/Users/abdal/OneDrive/Documentos/GitHub/teste-afetto/src/hooks/useMousePosition.ts
-// export function useMousePosition() {
-//   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-//   
-//   useEffect(() => {
-//     const updateMousePosition = (ev: MouseEvent) => {
-//       setMousePosition({ x: ev.clientX, y: ev.clientY });
-//     };
-//     
-//     window.addEventListener('mousemove', updateMousePosition);
-//     
-//     return () => {
-//       window.removeEventListener('mousemove', updateMousePosition);
-//     };
-//   }, []);
-//   
-//   return mousePosition;
-// }
 
 const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
   const { language } = useContext(LanguageContext);
@@ -35,11 +15,17 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
   const [loadingStage, setLoadingStage] = useState(0);
   const [showCursor, setShowCursor] = useState(false);
   const [cursorText, setCursorText] = useState('');
+  const [cursorVariant, setCursorVariant] = useState<'default' | 'text' | 'button'>('default');
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const mainControls = useAnimation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Track mouse position for parallax effects
+  const ambientSoundRef = useRef<HTMLAudioElement | null>(null);
+  const hoverSoundRef = useRef<HTMLAudioElement | null>(null);
+  const clickSoundRef = useRef<HTMLAudioElement | null>(null);
+  const transitionSoundRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Track mouse position for dynamic effects
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   
@@ -51,6 +37,16 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
   // Transform values for parallax effects on bg elements
   const bgX = useTransform(mouseX, [-500, 500], [10, -10]);
   const bgY = useTransform(mouseY, [-500, 500], [10, -10]);
+  
+  // Additional transforms for more dynamic elements
+  const lightX = useTransform(mouseX, [-500, 500], [20, -20]);
+  const lightY = useTransform(mouseY, [-500, 500], [20, -20]);
+  const particlesX = useTransform(mouseX, [-500, 500], [-15, 15]);
+  const particlesY = useTransform(mouseY, [-500, 500], [-15, 15]);
+  
+  // Enhanced cursor transforms for magnetic effect
+  const magneticCursorX = useTransform(mouseX, [-500, 500], [-10, 10]);
+  const magneticCursorY = useTransform(mouseY, [-500, 500], [-10, 10]);
   
   // Track mouse movement for effects
   useEffect(() => {
@@ -64,18 +60,75 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [mouseX, mouseY]);
 
-  // Create a 3-stage loading animation sequence
+  // Initialize sound effects
   useEffect(() => {
-    // Play audio when site loads (commented out as it needs user interaction)
-    // const ambientSound = new Audio('/sounds/ambient-luxury.mp3');
-    // ambientSound.volume = 0.1;
-    // ambientSound.loop = true;
-    // ambientSound.play().catch(e => console.log("Audio playback prevented: ", e));
+    ambientSoundRef.current = new Audio('/sounds/ambient-luxury.mp3');
+    if (ambientSoundRef.current) {
+      ambientSoundRef.current.volume = 0.15;
+      ambientSoundRef.current.loop = true;
+    }
+    
+    hoverSoundRef.current = new Audio('/sounds/hover-elegant.mp3');
+    if (hoverSoundRef.current) {
+      hoverSoundRef.current.volume = 0.2;
+    }
+    
+    clickSoundRef.current = new Audio('/sounds/click-soft.mp3');
+    if (clickSoundRef.current) {
+      clickSoundRef.current.volume = 0.3;
+    }
+    
+    transitionSoundRef.current = new Audio('/sounds/transition-smooth.mp3');
+    if (transitionSoundRef.current) {
+      transitionSoundRef.current.volume = 0.25;
+    }
+    
+    return () => {
+      if (ambientSoundRef.current) ambientSoundRef.current.pause();
+      if (hoverSoundRef.current) hoverSoundRef.current.pause();
+      if (clickSoundRef.current) clickSoundRef.current.pause();
+      if (transitionSoundRef.current) transitionSoundRef.current.pause();
+    };
+  }, []);
+  
+  // Handle audio toggle
+  const toggleAudio = () => {
+    if (audioEnabled) {
+      if (ambientSoundRef.current) ambientSoundRef.current.pause();
+      setAudioEnabled(false);
+    } else {
+      if (ambientSoundRef.current) {
+        ambientSoundRef.current.play().catch(e => console.log("Audio playback prevented: ", e));
+        if (transitionSoundRef.current) {
+          transitionSoundRef.current.play().catch(e => console.log("Audio playback prevented: ", e));
+        }
+      }
+      setAudioEnabled(true);
+    }
+  };
+
+  // Play hover sound effect
+  const playHoverSound = () => {
+    if (audioEnabled && hoverSoundRef.current) {
+      hoverSoundRef.current.currentTime = 0;
+      hoverSoundRef.current.play().catch(e => console.log("Audio playback prevented: ", e));
+    }
+  };
+  
+  // Play click sound effect
+  const playClickSound = () => {
+    if (audioEnabled && clickSoundRef.current) {
+      clickSoundRef.current.currentTime = 0;
+      clickSoundRef.current.play().catch(e => console.log("Audio playback prevented: ", e));
+    }
+  };
+
+  // Enhanced loading sequence with more stages for finer transitions
+  useEffect(() => {
+    // Prepare DOM for animations
+    document.body.style.overflow = 'hidden';
     
     const sequence = async () => {
-      // Prepare DOM for animations
-      document.body.style.overflow = 'hidden';
-      
       // Stage 1: Initial fade in
       await new Promise(resolve => setTimeout(resolve, 600));
       setLoadingStage(1); // Fade in background
@@ -97,8 +150,12 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
       await new Promise(resolve => setTimeout(resolve, 500));
       setLoadingStage(5); // Show options
       
-      // Enable custom cursor after everything is loaded
+      // Stage 6: Reveal additional elements and enable interactions
       await new Promise(resolve => setTimeout(resolve, 300));
+      setLoadingStage(6); // Fully loaded state
+      
+      // Enable custom cursor after everything is loaded
+      await new Promise(resolve => setTimeout(resolve, 200));
       setShowCursor(true);
     };
     
@@ -174,6 +231,10 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         pt: 'ACESSAR PORTAL B2B',
         es: 'ACCEDER PORTAL B2B'
       }
+    },
+    audio: {
+      pt: 'Experiência de áudio',
+      es: 'Experiencia de audio'
     }
   };
 
@@ -214,8 +275,8 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
       }
     },
     hover: (direction: 'left' | 'right') => ({
-      y: -15,
-      x: direction === 'left' ? -8 : 8,
+      y: -20,
+      x: direction === 'left' ? -10 : 10,
       transition: { 
         duration: 0.7,
         ease: [0.16, 1, 0.3, 1] 
@@ -223,17 +284,25 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
     })
   };
 
-  const lineVariants = {
-    hidden: { scaleX: 0 },
-    visible: { 
-      scaleX: 1,
-      transition: { 
-        duration: 1.2,
-        ease: [0.16, 1, 0.3, 1] 
-      }
+  const cursorVariants = {
+    default: {
+      width: 24,
+      height: 24,
+      opacity: 0.6
+    },
+    text: {
+      width: 80,
+      height: 80,
+      opacity: 1
+    },
+    button: {
+      width: 80,
+      height: 80,
+      opacity: 1
     }
   };
 
+  // Enhanced split text animation with staggered letters
   const splitTextAnimation = (text: string) => {
     return (
       <span className="inline-block overflow-hidden">
@@ -263,12 +332,21 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
   const handleMouseEnter = (type: 'b2c' | 'b2b') => {
     setHoveredOption(type);
     setCursorText(type === 'b2c' ? 'EXPLORAR' : 'ACESSAR');
+    setCursorVariant('text');
+    playHoverSound();
   };
 
   // Handle mouse leave
   const handleMouseLeave = () => {
     setHoveredOption(null);
     setCursorText('');
+    setCursorVariant('default');
+  };
+
+  // Handle option selection with sound effect
+  const handleSelect = (type: 'b2c' | 'b2b') => {
+    playClickSound();
+    setTimeout(() => onSelect(type), 200);
   };
 
   return (
@@ -276,7 +354,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
       ref={containerRef}
       className="fixed inset-0 z-50 overflow-hidden bg-black select-none"
     >
-      {/* Custom cursor */}
+      {/* Custom cursor with magnetic effect */}
       {showCursor && (
         <motion.div 
           className="fixed top-0 left-0 z-[100] pointer-events-none mix-blend-difference"
@@ -286,20 +364,29 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
           }}
         >
           <motion.div 
-            className={`w-6 h-6 rounded-full bg-white flex items-center justify-center
-                      ${cursorText ? 'w-24 h-24' : 'w-6 h-6'}`}
-            animate={{ 
-              width: cursorText ? 80 : 24,
-              height: cursorText ? 80 : 24,
-              opacity: 1
+            className="flex items-center justify-center"
+            variants={cursorVariants}
+            animate={cursorVariant}
+            transition={{ 
+              duration: 0.3, 
+              ease: [0.16, 1, 0.3, 1],
+              opacity: { duration: 0.2 } 
             }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
+            <motion.div
+              className="absolute rounded-full bg-white"
+              animate={{ 
+                width: cursorVariant === 'default' ? 24 : cursorVariant === 'text' ? 80 : 60,
+                height: cursorVariant === 'default' ? 24 : cursorVariant === 'text' ? 80 : 60,
+              }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            />
+            
             {cursorText && (
               <motion.span 
-                className="text-black uppercase text-xs tracking-widest font-light"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                className="text-black uppercase text-xs tracking-widest font-light relative z-10"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.2 }}
               >
                 {cursorText}
@@ -323,19 +410,20 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
               animate={{ rotate: 90 }}
               transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
             >
+              {/* Animated rings with glowing effect */}
               <motion.div 
                 className="absolute inset-0 border border-[#D3A17E]/20 rounded-full"
-                animate={{ scale: [1, 1.1, 1] }}
+                animate={{ scale: [1, 1.1, 1], boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 20px rgba(211,161,126,0.2)", "0 0 0px rgba(211,161,126,0)"] }}
                 transition={{ repeat: Infinity, duration: 2 }}
               />
               <motion.div 
                 className="absolute inset-3 border border-[#D3A17E]/30 rounded-full"
-                animate={{ scale: [1.1, 1, 1.1] }}
+                animate={{ scale: [1.1, 1, 1.1], boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 15px rgba(211,161,126,0.3)", "0 0 0px rgba(211,161,126,0)"] }}
                 transition={{ repeat: Infinity, duration: 2, delay: 0.3 }}
               />
               <motion.div 
                 className="absolute inset-6 border border-[#D3A17E]/50 rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
+                animate={{ scale: [1, 1.2, 1], boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 10px rgba(211,161,126,0.4)", "0 0 0px rgba(211,161,126,0)"] }}
                 transition={{ repeat: Infinity, duration: 2, delay: 0.6 }}
               />
               <motion.div 
@@ -344,7 +432,19 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ repeat: Infinity, duration: 2, delay: 0.9 }}
               >
-                <span className="font-serif text-2xl text-[#D3A17E]">A</span>
+                <motion.span 
+                  className="font-serif text-2xl text-[#D3A17E]"
+                  animate={{ 
+                    textShadow: [
+                      "0 0 0px rgba(211,161,126,0)", 
+                      "0 0 10px rgba(211,161,126,0.8)", 
+                      "0 0 0px rgba(211,161,126,0)"
+                    ] 
+                  }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                >
+                  A
+                </motion.span>
               </motion.div>
             </motion.div>
           </motion.div>
@@ -376,7 +476,9 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
               loop
               playsInline
               initial={{ scale: 1.3 }}
-              animate={{ scale: 1.1 }}
+              animate={{ 
+                scale: loadingStage >= 6 ? 1.05 : 1.1 
+              }}
               transition={{ duration: 10 }}
             >
               <source src="/videos/luxury-ambient-dark.mp4" type="video/mp4" />
@@ -391,38 +493,76 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
             transition={{ duration: 2 }}
           />
 
-          {/* Light rays effect */}
+          {/* Enhanced light rays effect with parallax */}
           <motion.div
             className="absolute inset-0 opacity-20 bg-[url('/images/light-rays.png')] bg-cover bg-center mix-blend-overlay"
+            style={{
+              x: lightX,
+              y: lightY,
+              scale: 1.1
+            }}
             initial={{ opacity: 0, rotate: -5, scale: 1.2 }}
             animate={{ 
               opacity: loadingStage >= 2 ? 0.2 : 0,
               rotate: 0,
-              scale: 1
+              scale: 1.1
             }}
             transition={{ duration: 4 }}
           />
           
-          {/* Gold dust particles */}
+          {/* Gold dust particles with enhanced parallax */}
           <motion.div
             className="absolute inset-0 opacity-30 bg-[url('/images/gold-particles.png')] bg-cover bg-center"
-            style={{ x: useTransform(mouseX, [-500, 500], [20, -20]), y: useTransform(mouseY, [-500, 500], [20, -20]) }}
+            style={{ 
+              x: particlesX,
+              y: particlesY
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: loadingStage >= 2 ? 0.3 : 0 }}
             transition={{ duration: 2 }}
           />
+          
+          {/* Dynamic radial spotlight following mouse position */}
+          <motion.div
+            className="absolute inset-0 opacity-0 radial-spotlight"
+            style={{ 
+              opacity: loadingStage >= 6 ? 0.3 : 0,
+              background: `radial-gradient(circle 800px at ${mouseX.get() + window.innerWidth/2}px ${mouseY.get() + window.innerHeight/2}px, rgba(211,161,126,0.08), transparent)` 
+            }}
+          />
         </motion.div>
         
-        {/* Fine grain overlay */}
+        {/* Fine grain overlay with animation */}
         <motion.div 
           className="absolute inset-0 opacity-20 mix-blend-overlay bg-[url('/images/film-grain.png')] bg-repeat"
           initial={{ opacity: 0 }}
-          animate={{ opacity: loadingStage >= 1 ? 0.2 : 0 }}
-          transition={{ duration: 3 }}
+          animate={{ 
+            opacity: loadingStage >= 1 ? [0.15, 0.2, 0.15] : 0 
+          }}
+          transition={{ 
+            opacity: { 
+              duration: 4,
+              repeat: Infinity,
+              repeatType: "mirror" 
+            } 
+          }}
         />
         
-        {/* Vignette effect */}
+        {/* Enhanced vignette effect */}
         <div className="absolute inset-0 z-10 bg-radial-vignette opacity-80 pointer-events-none" />
+        
+        {/* Subtle scanline effect */}
+        <motion.div 
+          className="absolute inset-0 z-10 opacity-[0.03] pointer-events-none bg-[url('/images/scanlines.png')] bg-repeat"
+          animate={{
+            backgroundPositionY: [0, 100],
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 10,
+            ease: "linear" 
+          }}
+        />
       </div>
 
       {/* Golden horizontal lines */}
@@ -448,19 +588,21 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
       />
 
-      {/* Cinematic logo reveal - Center to top */}
+      {/* Enhanced logo reveal with 3D effect */}
       <motion.div 
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center"
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center perspective-1000"
         initial={{ opacity: 0 }}
         animate={{ 
           opacity: loadingStage >= 2 ? 1 : 0,
           y: loadingStage >= 4 ? -300 : 0,
-          scale: loadingStage >= 4 ? 0.8 : 1
+          scale: loadingStage >= 4 ? 0.8 : 1,
+          rotateX: loadingStage >= 4 ? [0, 10, 0] : 0
         }}
         transition={{ 
           opacity: { duration: 1 }, 
           y: { duration: 1.8, ease: [0.16, 1, 0.3, 1] },
-          scale: { duration: 1.8, ease: [0.16, 1, 0.3, 1] }
+          scale: { duration: 1.8, ease: [0.16, 1, 0.3, 1] },
+          rotateX: { duration: 2, ease: "easeInOut" }
         }}
       >
         <motion.div 
@@ -472,24 +614,42 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
           }}
           transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Animated circular elements */}
+          {/* Animated circular elements with glow */}
           <motion.div 
             className="absolute inset-0 rounded-full border border-[#D3A17E]/20"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            animate={{ 
+              rotate: 360,
+              boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 15px rgba(211,161,126,0.15)", "0 0 0px rgba(211,161,126,0)"]
+            }}
+            transition={{ 
+              rotate: { duration: 40, repeat: Infinity, ease: "linear" },
+              boxShadow: { duration: 4, repeat: Infinity, repeatType: "mirror" }
+            }}
           />
           <motion.div 
             className="absolute inset-4 rounded-full border border-[#D3A17E]/30"
-            animate={{ rotate: -360 }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            animate={{ 
+              rotate: -360,
+              boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 15px rgba(211,161,126,0.2)", "0 0 0px rgba(211,161,126,0)"]
+            }}
+            transition={{ 
+              rotate: { duration: 30, repeat: Infinity, ease: "linear" },
+              boxShadow: { duration: 3, repeat: Infinity, repeatType: "mirror", delay: 0.5 }
+            }}
           />
           <motion.div 
             className="absolute inset-8 rounded-full border border-[#D3A17E]/50"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            animate={{ 
+              rotate: 360,
+              boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 15px rgba(211,161,126,0.3)", "0 0 0px rgba(211,161,126,0)"] 
+            }}
+            transition={{ 
+              rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+              boxShadow: { duration: 2.5, repeat: Infinity, repeatType: "mirror", delay: 1 }
+            }}
           />
           
-          {/* Logo center */}
+          {/* Logo center with glowing effect */}
           <motion.div 
             className="w-20 h-20 border border-[#D3A17E] relative flex items-center justify-center"
             initial={{ opacity: 0 }}
@@ -505,8 +665,16 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
               <motion.span 
                 className="font-serif text-3xl text-[#D3A17E]"
                 initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: loadingStage >= 2 ? 1 : 0, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
+                animate={{ 
+                  opacity: loadingStage >= 2 ? 1 : 0, 
+                  scale: 1,
+                  textShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 10px rgba(211,161,126,0.8)", "0 0 0px rgba(211,161,126,0)"]
+                }}
+                transition={{ 
+                  opacity: { duration: 0.8, delay: 0.7 },
+                  scale: { duration: 0.8, delay: 0.7 },
+                  textShadow: { duration: 3, repeat: Infinity, repeatType: "mirror" }
+                }}
               >
                 A
               </motion.span>
@@ -519,9 +687,14 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
           initial={{ opacity: 0, letterSpacing: "0.8em" }}
           animate={{ 
             opacity: loadingStage >= 2 ? 1 : 0,
-            letterSpacing: "1.2em"
+            letterSpacing: "1.2em",
+            textShadow: ["0 0 0px rgba(255,255,255,0)", "0 0 10px rgba(255,255,255,0.3)", "0 0 0px rgba(255,255,255,0)"]
           }}
-          transition={{ duration: 1.5, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ 
+            opacity: { duration: 1.5, delay: 0.8 },
+            letterSpacing: { duration: 1.5, delay: 0.8, ease: [0.16, 1, 0.3, 1] },
+            textShadow: { duration: 4, repeat: Infinity, repeatType: "mirror" }
+          }}
         >
           Afetto
         </motion.span>
@@ -536,15 +709,15 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         </motion.span>
       </motion.div>
 
-      {/* Main content area */}
+      {/* Main content area with enhanced 3D perspective */}
       <motion.div 
-        className="absolute inset-0 z-20 flex flex-col justify-center items-center px-6"
+        className="absolute inset-0 z-20 flex flex-col justify-center items-center px-6 perspective-1200"
         variants={containerVariants}
         initial="hidden"
         animate={mainControls}
       >
         <div className="container mx-auto max-w-[1600px]">
-          {/* Upper headline that fades in */}
+          {/* Upper headline with enhanced fade in */}
           <motion.div 
             className="text-center mb-2"
             initial={{ opacity: 0, y: 20 }}
@@ -557,53 +730,78 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
             <motion.span 
               className="inline-block text-[#D3A17E]/80 text-xs tracking-[0.5em] uppercase pl-[0.5em] font-light mb-3"
               initial={{ opacity: 0 }}
-              animate={{ opacity: loadingStage >= 4 ? 0.8 : 0 }}
-              transition={{ duration: 1, delay: 0.6 }}
+              animate={{ 
+                opacity: loadingStage >= 4 ? [0.7, 0.9, 0.7] : 0 
+              }}
+              transition={{ 
+                opacity: { 
+                  duration: 4, 
+                  delay: 0.6, 
+                  repeat: Infinity, 
+                  repeatType: "mirror" 
+                } 
+              }}
             >
               {translations.headline[language]}
             </motion.span>
           </motion.div>
           
-          {/* Main title with letter-by-letter animation */}
+          {/* Enhanced main title with letter-by-letter animation and 3D effect */}
           <motion.div 
-            className="text-center mb-32"
+            className="text-center mb-32 perspective-1000"
             initial={{ opacity: 0 }}
             animate={{ opacity: loadingStage >= 4 ? 1 : 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl xl:text-8xl text-white tracking-wider leading-tight mb-6">
+            <motion.h1 
+              className="font-serif text-4xl md:text-6xl lg:text-7xl xl:text-8xl text-white tracking-wider leading-tight mb-6"
+              initial={{ rotateX: 20 }}
+              animate={{ rotateX: 0 }}
+              transition={{ duration: 1.5, delay: 1, ease: [0.16, 1, 0.3, 1] }}
+            >
               {splitTextAnimation(translations.title[language])}
-            </h1>
+            </motion.h1>
             
             <motion.div 
               className="h-[1px] w-0 mx-auto"
               style={{ background: 'linear-gradient(to right, transparent, rgba(211,161,126,0.4) 20%, rgba(211,161,126,0.8) 50%, rgba(211,161,126,0.4) 80%, transparent 100%)' }}
               initial={{ width: 0 }}
-              animate={{ width: loadingStage >= 4 ? 180 : 0 }}
-              transition={{ duration: 1.5, delay: 1.8 }}
+              animate={{ 
+                width: loadingStage >= 4 ? 180 : 0,
+                boxShadow: loadingStage >= 5 ? ["0 0 0px rgba(211,161,126,0)", "0 0 10px rgba(211,161,126,0.6)", "0 0 0px rgba(211,161,126,0)"] : "none"
+              }}
+              transition={{ 
+                width: { duration: 1.5, delay: 1.8 },
+                boxShadow: { duration: 3, repeat: Infinity, repeatType: "mirror" }
+              }}
             />
           </motion.div>
 
-          {/* The two options in a stunning layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-20">
-            {/* Consumer option - museum quality display */}
+          {/* The two options in a stunning layout with 3D effects */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-20 perspective-1200">
+            {/* Consumer option with enhanced 3D effect */}
             <motion.div
-              className="relative group cursor-pointer overflow-hidden perspective-1000"
+              className="relative group cursor-pointer overflow-hidden perspective-1000 rounded-sm"
               custom="left"
               variants={cardVariants}
               whileHover="hover"
               onMouseEnter={() => handleMouseEnter('b2c')}
               onMouseLeave={handleMouseLeave}
-              onClick={() => onSelect('b2c')}
-              style={{ opacity: loadingStage >= 5 ? 1 : 0 }}
+              onClick={() => handleSelect('b2c')}
+              style={{ 
+                opacity: loadingStage >= 5 ? 1 : 0,
+                boxShadow: hoveredOption === 'b2c' ? "0 25px 50px -12px rgba(211, 161, 126, 0.15)" : "0 15px 30px -15px rgba(0, 0, 0, 0.25)"
+              }}
             >
               <div className="relative aspect-[3/4] overflow-hidden transform-gpu transition-transform duration-700 ease-out will-change-transform">
-                {/* Background with parallax effect */}
+                {/* Background with enhanced parallax effect */}
                 <motion.div
                   className="absolute inset-0 bg-[url('/images/residential-luxury.jpg')] bg-cover bg-center z-0 will-change-transform"
                   style={{
-                    x: useTransform(mouseX, [-500, 500], [15, -15], { clamp: false }),
-                    y: useTransform(mouseY, [-500, 500], [15, -15], { clamp: false }),
+                    x: useTransform(mouseX, [-500, 500], [20, -20], { clamp: false }),
+                    y: useTransform(mouseY, [-500, 500], [20, -20], { clamp: false }),
+                    rotateX: useTransform(mouseY, [-500, 500], [1, -1], { clamp: false }),
+                    rotateY: useTransform(mouseX, [-500, 500], [-1, 1], { clamp: false }),
                   }}
                   animate={{ 
                     scale: hoveredOption === 'b2c' ? 1.08 : 1,
@@ -619,51 +817,71 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                   transition={{ duration: 0.8 }}
                 />
                 
-                {/* Gold accent elements */}
+                {/* Enhanced gold accent elements with glow effect */}
                 <motion.div 
                   className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleX: 0, originX: 0 }}
-                  animate={{ scaleX: hoveredOption === 'b2c' ? 1 : 0 }}
+                  animate={{ 
+                    scaleX: hoveredOption === 'b2c' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2c' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 />
                 
                 <motion.div 
                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleX: 0, originX: 1 }}
-                  animate={{ scaleX: hoveredOption === 'b2c' ? 1 : 0 }}
+                  animate={{ 
+                    scaleX: hoveredOption === 'b2c' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2c' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 />
                 
-                {/* Left and right borders */}
+                {/* Left and right borders with enhanced glow */}
                 <motion.div 
                   className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleY: 0, originY: 0 }}
-                  animate={{ scaleY: hoveredOption === 'b2c' ? 1 : 0 }}
+                  animate={{ 
+                    scaleY: hoveredOption === 'b2c' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2c' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                 />
                 
                 <motion.div 
                   className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleY: 0, originY: 1 }}
-                  animate={{ scaleY: hoveredOption === 'b2c' ? 1 : 0 }}
+                  animate={{ 
+                    scaleY: hoveredOption === 'b2c' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2c' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                 />
                 
-                {/* Content with animation on hover */}
+                {/* Content with enhanced animation on hover */}
                 <div className="absolute inset-0 p-8 sm:p-10 md:p-12 z-30 flex flex-col justify-end">
                   <motion.div
                     initial={{ y: 0 }}
-                    animate={{ y: hoveredOption === 'b2c' ? -10 : 0 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                    animate={{ y: hoveredOption === 'b2c' ? -20 : 0 }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <motion.div 
                       className="mb-5 overflow-hidden"
                       initial={{ height: 24 }}
                       whileHover={{ height: 30 }}
                     >
-                      <span className="text-[#D3A17E] text-xs uppercase tracking-[0.5em] pl-[0.5em] font-light">
+                      <motion.span 
+                        className="text-[#D3A17E] text-xs uppercase tracking-[0.5em] pl-[0.5em] font-light"
+                        animate={{ 
+                          textShadow: hoveredOption === 'b2c' ? 
+                            ["0 0 0px rgba(211,161,126,0)", "0 0 5px rgba(211,161,126,0.7)", "0 0 0px rgba(211,161,126,0)"] : 
+                            "none" 
+                        }}
+                        transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
+                      >
                         {translations.consumer.subtitle[language]}
-                      </span>
+                      </motion.span>
                     </motion.div>
                     
                     <h2 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif mb-6 tracking-wider">
@@ -674,7 +892,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                       {translations.consumer.description[language]}
                     </p>
                     
-                    {/* Feature list with fancy markers */}
+                    {/* Feature list with enhanced markers */}
                     <ul className="grid grid-cols-2 gap-4 mb-10">
                       {translations.consumer.features[language].map((feature, index) => (
                         <li key={index} className="flex items-center text-white/80 group">
@@ -685,9 +903,16 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                             transition={{ duration: 0.4, delay: index * 0.1 }}
                             viewport={{ once: true }}
                           />
-                          <span className="text-sm tracking-wider group-hover:text-[#D3A17E] transition-colors duration-300">
+                          <motion.span 
+                            className="text-sm tracking-wider group-hover:text-[#D3A17E] transition-colors duration-300"
+                            animate={{ 
+                              x: hoveredOption === 'b2c' ? 3 : 0,
+                              opacity: hoveredOption === 'b2c' ? 1 : 0.8
+                            }}
+                            transition={{ duration: 0.3, delay: 0.05 * index }}
+                          >
                             {feature}
-                          </span>
+                          </motion.span>
                         </li>
                       ))}
                     </ul>
@@ -695,12 +920,22 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                     <motion.div
                       className="inline-flex items-center"
                       initial={{ x: 0 }}
-                      animate={{ x: hoveredOption === 'b2c' ? 5 : 0 }}
-                      transition={{ duration: 0.2 }}
+                      animate={{ 
+                        x: hoveredOption === 'b2c' ? 5 : 0,
+                        filter: hoveredOption === 'b2c' ? "drop-shadow(0 0 8px rgba(211,161,126,0.5))" : "none"
+                      }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <span className="text-[#D3A17E] text-sm tracking-widest uppercase pb-1 border-b border-[#D3A17E]/30">
+                      <motion.span 
+                        className="text-[#D3A17E] text-sm tracking-widest uppercase pb-1 border-b border-[#D3A17E]/30"
+                        animate={{ 
+                          borderBottomWidth: hoveredOption === 'b2c' ? "2px" : "1px",
+                          borderBottomColor: hoveredOption === 'b2c' ? "rgba(211,161,126,0.6)" : "rgba(211,161,126,0.3)"
+                        }}
+                        transition={{ duration: 0.3 }}
+                      >
                         {translations.consumer.cta[language]}
-                      </span>
+                      </motion.span>
                       <ChevronRight size={18} className="text-[#D3A17E] ml-1" strokeWidth={1.5} />
                     </motion.div>
                   </motion.div>
@@ -708,24 +943,29 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
               </div>
             </motion.div>
 
-            {/* Business option with elegant styling */}
+            {/* Business option with enhanced styling */}
             <motion.div
-              className="relative group cursor-pointer overflow-hidden perspective-1000"
+              className="relative group cursor-pointer overflow-hidden perspective-1000 rounded-sm"
               custom="right"
               variants={cardVariants}
               whileHover="hover"
               onMouseEnter={() => handleMouseEnter('b2b')}
               onMouseLeave={handleMouseLeave}
-              onClick={() => onSelect('b2b')}
-              style={{ opacity: loadingStage >= 5 ? 1 : 0 }}
+              onClick={() => handleSelect('b2b')}
+              style={{ 
+                opacity: loadingStage >= 5 ? 1 : 0,
+                boxShadow: hoveredOption === 'b2b' ? "0 25px 50px -12px rgba(211, 161, 126, 0.15)" : "0 15px 30px -15px rgba(0, 0, 0, 0.25)"
+              }}
             >
               <div className="relative aspect-[3/4] overflow-hidden transform-gpu transition-transform duration-700 ease-out will-change-transform">
-                {/* Background with parallax effect */}
+                {/* Background with enhanced parallax effect */}
                 <motion.div
                   className="absolute inset-0 bg-[url('/images/corporate-elegant.jpg')] bg-cover bg-center z-0 will-change-transform"
                   style={{
-                    x: useTransform(mouseX, [-500, 500], [15, -15], { clamp: false }),
-                    y: useTransform(mouseY, [-500, 500], [15, -15], { clamp: false }),
+                    x: useTransform(mouseX, [-500, 500], [20, -20], { clamp: false }),
+                    y: useTransform(mouseY, [-500, 500], [20, -20], { clamp: false }),
+                    rotateX: useTransform(mouseY, [-500, 500], [1, -1], { clamp: false }),
+                    rotateY: useTransform(mouseX, [-500, 500], [-1, 1], { clamp: false }),
                   }}
                   animate={{ 
                     scale: hoveredOption === 'b2b' ? 1.08 : 1,
@@ -741,18 +981,24 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                   transition={{ duration: 0.8 }}
                 />
                 
-                {/* Gold accent elements */}
+                {/* Enhanced gold accent elements */}
                 <motion.div 
                   className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleX: 0, originX: 0 }}
-                  animate={{ scaleX: hoveredOption === 'b2b' ? 1 : 0 }}
+                  animate={{ 
+                    scaleX: hoveredOption === 'b2b' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2b' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 />
                 
                 <motion.div 
                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleX: 0, originX: 1 }}
-                  animate={{ scaleX: hoveredOption === 'b2b' ? 1 : 0 }}
+                  animate={{ 
+                    scaleX: hoveredOption === 'b2b' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2b' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 />
                 
@@ -760,32 +1006,46 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                 <motion.div 
                   className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleY: 0, originY: 0 }}
-                  animate={{ scaleY: hoveredOption === 'b2b' ? 1 : 0 }}
+                  animate={{ 
+                    scaleY: hoveredOption === 'b2b' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2b' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                 />
                 
                 <motion.div 
                   className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-[#D3A17E]/80 to-transparent z-20"
                   initial={{ scaleY: 0, originY: 1 }}
-                  animate={{ scaleY: hoveredOption === 'b2b' ? 1 : 0 }}
+                  animate={{ 
+                    scaleY: hoveredOption === 'b2b' ? 1 : 0,
+                    boxShadow: hoveredOption === 'b2b' ? "0 0 10px rgba(211,161,126,0.4)" : "none"
+                  }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                 />
                 
-                {/* Content with animation on hover */}
+                {/* Content with enhanced animations on hover */}
                 <div className="absolute inset-0 p-8 sm:p-10 md:p-12 z-30 flex flex-col justify-end">
                   <motion.div
                     initial={{ y: 0 }}
-                    animate={{ y: hoveredOption === 'b2b' ? -10 : 0 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                    animate={{ y: hoveredOption === 'b2b' ? -20 : 0 }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <motion.div 
                       className="mb-5 overflow-hidden"
                       initial={{ height: 24 }}
                       whileHover={{ height: 30 }}
                     >
-                      <span className="text-[#D3A17E] text-xs uppercase tracking-[0.5em] pl-[0.5em] font-light">
+                      <motion.span 
+                        className="text-[#D3A17E] text-xs uppercase tracking-[0.5em] pl-[0.5em] font-light"
+                        animate={{ 
+                          textShadow: hoveredOption === 'b2b' ? 
+                            ["0 0 0px rgba(211,161,126,0)", "0 0 5px rgba(211,161,126,0.7)", "0 0 0px rgba(211,161,126,0)"] : 
+                            "none" 
+                        }}
+                        transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
+                      >
                         {translations.business.subtitle[language]}
-                      </span>
+                      </motion.span>
                     </motion.div>
                     
                     <h2 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif mb-6 tracking-wider">
@@ -796,7 +1056,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                       {translations.business.description[language]}
                     </p>
                     
-                    {/* Feature list with fancy markers */}
+                    {/* Feature list with enhanced markers */}
                     <ul className="grid grid-cols-2 gap-4 mb-10">
                       {translations.business.features[language].map((feature, index) => (
                         <li key={index} className="flex items-center text-white/80 group">
@@ -807,9 +1067,16 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                             transition={{ duration: 0.4, delay: index * 0.1 }}
                             viewport={{ once: true }}
                           />
-                          <span className="text-sm tracking-wider group-hover:text-[#D3A17E] transition-colors duration-300">
+                          <motion.span 
+                            className="text-sm tracking-wider group-hover:text-[#D3A17E] transition-colors duration-300"
+                            animate={{ 
+                              x: hoveredOption === 'b2b' ? 3 : 0,
+                              opacity: hoveredOption === 'b2b' ? 1 : 0.8
+                            }}
+                            transition={{ duration: 0.3, delay: 0.05 * index }}
+                          >
                             {feature}
-                          </span>
+                          </motion.span>
                         </li>
                       ))}
                     </ul>
@@ -817,12 +1084,22 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
                     <motion.div
                       className="inline-flex items-center"
                       initial={{ x: 0 }}
-                      animate={{ x: hoveredOption === 'b2b' ? 5 : 0 }}
-                      transition={{ duration: 0.2 }}
+                      animate={{ 
+                        x: hoveredOption === 'b2b' ? 5 : 0,
+                        filter: hoveredOption === 'b2b' ? "drop-shadow(0 0 8px rgba(211,161,126,0.5))" : "none"
+                      }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <span className="text-[#D3A17E] text-sm tracking-widest uppercase pb-1 border-b border-[#D3A17E]/30">
+                      <motion.span 
+                        className="text-[#D3A17E] text-sm tracking-widest uppercase pb-1 border-b border-[#D3A17E]/30"
+                        animate={{ 
+                          borderBottomWidth: hoveredOption === 'b2b' ? "2px" : "1px",
+                          borderBottomColor: hoveredOption === 'b2b' ? "rgba(211,161,126,0.6)" : "rgba(211,161,126,0.3)"
+                        }}
+                        transition={{ duration: 0.3 }}
+                      >
                         {translations.business.cta[language]}
-                      </span>
+                      </motion.span>
                       <ChevronRight size={18} className="text-[#D3A17E] ml-1" strokeWidth={1.5} />
                     </motion.div>
                   </motion.div>
@@ -833,7 +1110,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         </div>
       </motion.div>
 
-      {/* Language selector with ultra-premium styling */}
+      {/* Language selector with enhanced styling */}
       <motion.div 
         className="absolute top-8 right-12 z-30 flex items-center space-x-1"
         initial={{ opacity: 0, y: -10 }}
@@ -846,6 +1123,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         <Link 
           to="?lang=pt" 
           className={`relative px-4 py-2 overflow-hidden ${language === 'pt' ? 'text-[#D3A17E]' : 'text-white/40 hover:text-white/80'} transition-colors duration-500`}
+          onMouseEnter={playHoverSound}
         >
           <span className="relative z-10 text-xs uppercase tracking-[0.3em] pl-[0.3em]">
             Português
@@ -855,8 +1133,14 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-[#D3A17E]/30" 
               layoutId="langUnderline"
               initial={{ width: 0 }}
-              animate={{ width: '60%' }}
-              transition={{ duration: 0.3 }}
+              animate={{ 
+                width: '60%',
+                boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 5px rgba(211,161,126,0.5)", "0 0 0px rgba(211,161,126,0)"]
+              }}
+              transition={{ 
+                width: { duration: 0.3 },
+                boxShadow: { duration: 2, repeat: Infinity }
+              }}
             />
           )}
         </Link>
@@ -866,6 +1150,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         <Link 
           to="?lang=es" 
           className={`relative px-4 py-2 overflow-hidden ${language === 'es' ? 'text-[#D3A17E]' : 'text-white/40 hover:text-white/80'} transition-colors duration-500`}
+          onMouseEnter={playHoverSound}
         >
           <span className="relative z-10 text-xs uppercase tracking-[0.3em] pl-[0.3em]">
             Español
@@ -875,41 +1160,123 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-[#D3A17E]/30" 
               layoutId="langUnderline"
               initial={{ width: 0 }}
-              animate={{ width: '60%' }}
-              transition={{ duration: 0.3 }}
+              animate={{ 
+                width: '60%',
+                boxShadow: ["0 0 0px rgba(211,161,126,0)", "0 0 5px rgba(211,161,126,0.5)", "0 0 0px rgba(211,161,126,0)"]
+              }}
+              transition={{ 
+                width: { duration: 0.3 },
+                boxShadow: { duration: 2, repeat: Infinity }
+              }}
             />
           )}
         </Link>
       </motion.div>
 
-      {/* Signature bottom decoration */}
+      {/* Audio toggle button */}
+      <motion.button
+        className="absolute top-8 left-12 z-30 flex items-center space-x-2 text-white/60 hover:text-[#D3A17E] transition-colors duration-300 text-xs tracking-wider"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: loadingStage >= 6 ? 1 : 0 }}
+        transition={{ duration: 0.6, delay: 3 }}
+        onClick={toggleAudio}
+        onMouseEnter={() => {
+          setCursorVariant('button');
+          playHoverSound();
+        }}
+        onMouseLeave={() => setCursorVariant('default')}
+      >
+        {audioEnabled ? (
+          <>
+            <Volume2 size={14} />
+            <span className="uppercase tracking-[0.2em]">{translations.audio[language]}</span>
+          </>
+        ) : (
+          <>
+            <VolumeX size={14} />
+            <span className="uppercase tracking-[0.2em]">{translations.audio[language]}</span>
+          </>
+        )}
+      </motion.button>
+
+      {/* Enhanced signature with elegant animation */}
       <motion.div 
         className="absolute bottom-8 left-0 right-0 flex justify-center items-center z-30"
         initial={{ opacity: 0 }}
-        animate={{ opacity: loadingStage >= 5 ? 0.8 : 0 }}
-        transition={{ duration: 0.6, delay: 2.4 }}
+        animate={{ 
+          opacity: loadingStage >= 5 ? [0.7, 0.8, 0.7] : 0 
+        }}
+        transition={{ 
+          opacity: { 
+            duration: 5,
+            repeat: Infinity,
+            repeatType: "mirror"
+          }
+        }}
       >
-        <motion.div 
-          className="w-[1px] h-10 bg-[#D3A17E]/30 mx-4"
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: loadingStage >= 5 ? 1 : 0 }}
-          transition={{ duration: 0.8, delay: 2.6 }}
-        />
-        <motion.div 
-          className="text-white/40 text-xs uppercase tracking-[0.3em] pl-[0.3em]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: loadingStage >= 5 ? 0.7 : 0 }}
-          transition={{ duration: 0.8, delay: 2.8 }}
-        >
-          © {new Date().getFullYear()} <span className="text-[#D3A17E]/60">Afetto</span> Design
-        </motion.div>
-        <motion.div 
-          className="w-[1px] h-10 bg-[#D3A17E]/30 mx-4"
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: loadingStage >= 5 ? 1 : 0 }}
-          transition={{ duration: 0.8, delay: 2.6 }}
-        />
+        <div className="flex flex-col items-center">
+          <motion.div 
+            className="h-[1px] w-20 bg-[#D3A17E]/30 mb-4"
+            initial={{ scaleX: 0 }}
+            animate={{ 
+              scaleX: loadingStage >= 5 ? 1 : 0,
+              boxShadow: loadingStage >= 5 ? ["0 0 0px rgba(211,161,126,0)", "0 0 5px rgba(211,161,126,0.3)", "0 0 0px rgba(211,161,126,0)"] : "none"
+            }}
+            transition={{ 
+              scaleX: { duration: 1.5, delay: 2.5 },
+              boxShadow: { duration: 3, repeat: Infinity, repeatType: "mirror" }
+            }}
+          />
+          
+          <motion.div
+            className="text-white/40 font-serif text-sm tracking-widest"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: loadingStage >= 5 ? 0.7 : 0, y: loadingStage >= 5 ? 0 : 10 }}
+            transition={{ duration: 1, delay: 2.7 }}
+          >
+            AFETTO © {new Date().getFullYear()}
+          </motion.div>
+        </div>
       </motion.div>
+
+      {/* Subtle radial mouse follower */}
+      <motion.div
+        className="fixed top-0 left-0 w-[400px] h-[400px] pointer-events-none z-10 opacity-20"
+        style={{
+          x: magneticCursorX,
+          y: magneticCursorY,
+          backgroundImage: "radial-gradient(circle, rgba(211,161,126,0.1) 0%, transparent 70%)",
+          transform: "translate(-50%, -50%)",
+          left: cursorX,
+          top: cursorY
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: loadingStage >= 6 ? 0.2 : 0 }}
+        transition={{ duration: 1 }}
+      />
+      
+      {/* Premium hover effect particles */}
+      <AnimatePresence>
+        {hoveredOption && (
+          <motion.div
+            className="fixed top-0 left-0 w-full h-full pointer-events-none z-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="absolute inset-0">
+              <motion.div
+                className="absolute top-0 left-0 w-full h-full bg-[url('/images/dust-particles.png')] bg-repeat opacity-10"
+                animate={{
+                  backgroundPosition: ["0% 0%", "100% 100%"]
+                }}
+                transition={{ duration: 120, ease: "linear", repeat: Infinity }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
