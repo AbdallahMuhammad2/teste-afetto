@@ -8,8 +8,8 @@ import {
   ArrowUpRight, ChevronRight, Plus, X, ChevronsRight, ArrowLeft
 } from 'lucide-react';
 import LanguageContext from '../../context/LanguageContext';
-import { projects as allProjects } from '../../data/projects';
-import useMediaQuery from '../../hooks/useMediaQuery';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { Project as ProjectType, projects as projectData } from '../../data/projects'; // Import both type and data
 
 // Project type definition to match your data structure
 interface ProjectDetails {
@@ -50,7 +50,12 @@ const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef, setCurs
   // State
   const { language } = useContext(LanguageContext) as { language: 'pt' | 'es' };
   const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [projects, setProjects] = useState<ProjectDetails[]>(allProjects);
+  const allProjects: ProjectDetails[] = projectData.map(project => ({
+    ...project,
+    title: { pt: project.title, es: project.title }, // Transform title to match ProjectDetails type
+    description: { pt: project.description.pt, es: project.description.es }, // Transform description correctly
+  })); // Use the imported project data
+  const [projects, setProjects] = useState<ProjectDetails[]>(allProjects); // Initialize with all projects
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [hoveredProject, setHoveredProject] = useState<number | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -74,9 +79,10 @@ const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef, setCurs
     offset: ["start end", "end start"]
   });
   
-  const [ref, inView] = useInView({
-    threshold: 0.1,
-    triggerOnce: false,
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, {
+    amount: 0.1,
+    once: false,
   });
   
   // Motion values
@@ -96,11 +102,10 @@ const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef, setCurs
     { id: 'furniture', name: language === 'pt' ? 'Mobiliário' : 'Mobiliario' },
     { id: 'lighting', name: language === 'pt' ? 'Iluminação' : 'Iluminación' },
   ];
-
   // Get count for each category
   const getCategoryCount = (categoryId: string) => {
     if (categoryId === 'all') return allProjects.length;
-    return allProjects.filter(project => project.category === categoryId).length;
+    return allProjects.filter((project: ProjectDetails) => project.category === categoryId).length;
   };
 
   // Filter projects by category
@@ -111,10 +116,11 @@ const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef, setCurs
     if (activeFilter === 'all') {
       setProjects(allProjects);
     } else {
-      setProjects(allProjects.filter(project => project.category === activeFilter));
+      setProjects(allProjects.filter((project: ProjectDetails) => project.category === activeFilter));
     }
-  }, [activeFilter]);
+  }, [activeFilter, allProjects]); // Add allProjects to dependency array
 
+  // Handle project hover for cursor effect
   // Handle project hover for cursor effect
   const handleProjectHover = (id: number | null, isHovering: boolean) => {
     setHoveredProject(id);
