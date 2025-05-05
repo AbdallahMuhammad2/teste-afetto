@@ -1,14 +1,15 @@
 import React, { useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  motion, useScroll, useTransform, AnimatePresence, useSpring, 
+import {
+  motion, useScroll, useTransform, AnimatePresence, useSpring,
   MotionValue, useMotionValueEvent
 } from 'framer-motion';
 // Corrija o erro de importação adicionando ChevronDown aos imports do Lucide React
-import { 
-  ChevronRight, ArrowRight, ArrowDown, Plus, ChevronDown 
+import {
+  ChevronRight, ArrowRight, ArrowDown, Plus, ChevronDown
 } from 'lucide-react';
-
+import FeaturedProjects from '../components/home/FeaturedProjects';
+import ErrorBoundary from '../components/ErrorBoundary';
 // Restante das importações permanecem as mesmasimport LanguageContext from '../context/LanguageContext';
 import Icon from '../components/ui/Icon';
 import { translations } from '../data/translations';
@@ -22,6 +23,7 @@ import { Environment, OrbitControls, ContactShadows, Html } from '@react-three/d
 import * as THREE from 'three';
 import { Vector2 } from 'three';
 import LanguageContext from '../context/LanguageContext';
+import HeroCanvas from '../components/HeroCanvas';
 interface Material {
   id: string;
   name: string;
@@ -59,8 +61,8 @@ const textReveal = {
   visible: (i = 0) => ({
     y: 0,
     opacity: 1,
-    transition: { 
-      duration: 1.2, 
+    transition: {
+      duration: 1.2,
       delay: 0.1 * i,
       ease: [0.22, 1, 0.36, 1]
     }
@@ -72,8 +74,8 @@ const lineReveal = {
   visible: (i = 0) => ({
     scaleX: 1,
     opacity: 1,
-    transition: { 
-      duration: 1.4, 
+    transition: {
+      duration: 1.4,
       delay: 0.2 + (0.1 * i),
       ease: [0.22, 1, 0.36, 1]
     }
@@ -86,7 +88,7 @@ const premiumButtonHover = (event: MouseEvent) => {
   const rect = button.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  
+
   button.style.setProperty('--x', `${x}px`);
   button.style.setProperty('--y', `${y}px`);
 };
@@ -103,7 +105,7 @@ const MaterialShowcase = ({ material }: { material: MaterialProps }) => {
   const [isSpinning, setIsSpinning] = useState(true);
   const [showMode, setShowMode] = useState('material'); // 'material', 'furniture'
   const [furniture, setFurniture] = useState('table'); // 'table', 'chair', 'cabinet'
-  
+
   // Auto-rotation
   useFrame((state) => {
     if (meshRef.current && isSpinning) {
@@ -123,11 +125,12 @@ const MaterialShowcase = ({ material }: { material: MaterialProps }) => {
     const nextIndex = (currentIndex + 1) % types.length;
     setFurniture(types[nextIndex]);
   };
+  const { scrollYProgress } = useScroll();
 
   // Material showcase with simple shapes
   const renderMaterial = () => (
-    <mesh 
-      ref={meshRef} 
+    <mesh
+      ref={meshRef}
       castShadow
       receiveShadow
       onClick={() => setIsSpinning(!isSpinning)}
@@ -201,17 +204,17 @@ const MaterialShowcase = ({ material }: { material: MaterialProps }) => {
   return (
     <group scale={showMode === 'furniture' ? 0.7 : 1}>
       {renderMaterial()}
-      
+
       {/* Interactive instructions */}
       <Html position={[0, -2.2, 0]} center>
         <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full text-white/90 text-xs pointer-events-none">
           {isSpinning ? "Clique para pausar" : "Clique para girar"} • Clique duplo para mudar visualização
         </div>
       </Html>
-      
+
       {/* Material type indicator */}
       <Html position={[2, 1.7, 0]}>
-        <button 
+        <button
           onClick={cycleFurniture}
           className="bg-black/40 backdrop-blur-sm px-3 py-1 rounded text-white/90 text-xs border border-white/20 hover:border-accent/50 transition-colors"
         >
@@ -230,13 +233,12 @@ const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false })
     <motion.button
       key={material.id}
       onClick={onSelect}
-      className={`relative group overflow-hidden rounded-lg transition-all duration-500 aspect-square ${
-        isActive 
-          ? 'ring-1 ring-accent scale-[1.02] shadow-xl shadow-accent/10 z-10' 
+      className={`relative group overflow-hidden rounded-lg transition-all duration-500 aspect-square ${isActive
+          ? 'ring-1 ring-accent scale-[1.02] shadow-xl shadow-accent/10 z-10'
           : 'ring-0 hover:ring-1 ring-white/10'
-      }`}
-      whileHover={{ 
-        y: -5, 
+        }`}
+      whileHover={{
+        y: -5,
         boxShadow: "0 15px 30px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.15)"
       }}
       initial={{ opacity: 0, y: 20 }}
@@ -245,8 +247,8 @@ const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false })
     >
       <div className="w-full h-full">
         {!isFabric ? (
-          <img 
-            src={`/images/materials/${material.id}.jpg`} 
+          <img
+            src={`/images/materials/${material.id}.jpg`}
             alt={material.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             onError={(e) => {
@@ -255,16 +257,16 @@ const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false })
             }}
           />
         ) : (
-          <div 
-            className="w-full h-full transition-all duration-700 group-hover:scale-110" 
+          <div
+            className="w-full h-full transition-all duration-700 group-hover:scale-110"
             style={{ background: material.color }}
           ></div>
         )}
       </div>
-      
+
       {/* Sobreposição com gradiente aprimorado */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      
+
       {/* Nome do material com animação aprimorada */}
       <div className="absolute inset-x-0 bottom-0 p-4 text-left">
         <div className="transform translate-y-6 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -272,17 +274,17 @@ const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false })
           <p className="text-white/60 text-xs mt-1 font-sans">{material.type}</p>
         </div>
       </div>
-      
+
       {/* Indicador ativo aprimorado */}
       {isActive && (
         <div className="absolute inset-0 ring-1 ring-accent pointer-events-none">
-          <motion.div 
+          <motion.div
             className="absolute top-2 right-2 h-2 w-2 rounded-full bg-accent shadow-lg shadow-accent/30"
-            animate={{ 
+            animate={{
               scale: [1, 1.5, 1],
               opacity: [0.7, 1, 0.7]
             }}
-            transition={{ 
+            transition={{
               duration: 2,
               repeat: Infinity
             }}
@@ -292,54 +294,54 @@ const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false })
     </motion.button>
   );
 };
-  const MaterialIcon = ({ type, active }: { type: string; active: boolean }) => {
-    const color = active ? "#000" : "#fff";
-    const opacity = active ? "1" : "0.7";
-    
-    switch(type) {
-      case 'wood-grain':
-        return (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
-            <path d="M2 12h20M2 8h20M2 16h20M2 4h20M2 20h20"/>
-          </svg>
-        );
+const MaterialIcon = ({ type, active }: { type: string; active: boolean }) => {
+  const color = active ? "#000" : "#fff";
+  const opacity = active ? "1" : "0.7";
+
+  switch (type) {
+    case 'wood-grain':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
+          <path d="M2 12h20M2 8h20M2 16h20M2 4h20M2 20h20" />
+        </svg>
+      );
     case 'fabric':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
-          <path d="M3 3v18M21 3v18M12 3v18M3 3h18M3 21h18M3 12h18"/>
+          <path d="M3 3v18M21 3v18M12 3v18M3 3h18M3 21h18M3 12h18" />
         </svg>
       );
     case 'metal':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
-          <path d="M12 2v20M4.5 4v16M19.5 4v16M2 12h20"/>
+          <path d="M12 2v20M4.5 4v16M19.5 4v16M2 12h20" />
         </svg>
       );
     case 'stone':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
-          <path d="M21 12L12 3 3 12l9 9 9-9z"/>
+          <path d="M21 12L12 3 3 12l9 9 9-9z" />
         </svg>
       );
     case 'glass':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
-          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
-          <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6-6-2.7 6-6 6z" strokeOpacity="0.7"/>
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z" />
+          <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6-6-2.7 6-6 6z" strokeOpacity="0.7" />
         </svg>
       );
     case 'leather':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
-          <path d="M3 6h18M3 12h18M3 18h18"/>
-          <path d="M4 3l16 18M20 3L4 21"/>
+          <path d="M3 6h18M3 12h18M3 18h18" />
+          <path d="M4 3l16 18M20 3L4 21" />
         </svg>
       );
     case 'finish':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}>
-          <path d="M2 20h20M2 4h20M12 4v16"/>
-          <path d="M6 12h12M19 8l-3.5 7-2.5-3-4 6.5-3-3.5"/>
+          <path d="M2 20h20M2 4h20M12 4v16" />
+          <path d="M6 12h12M19 8l-3.5 7-2.5-3-4 6.5-3-3.5" />
         </svg>
       );
     default:
@@ -392,7 +394,7 @@ const Home: React.FC = () => {
   const isReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const isMobile = useMediaQuery('(max-width: 768px)');
-  
+
   // Advanced refs for sophisticated scroll interactions
   const heroRef = useRef<HTMLDivElement>(null);
   const mainScrollRef = useRef<HTMLDivElement>(null);
@@ -402,7 +404,7 @@ const Home: React.FC = () => {
   const contactRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const projectsScrollRef = useRef<HTMLDivElement>(null);
-  
+
   // Enhanced state management for interactions
   const [activeProject, setActiveProject] = useState<number | null>(null);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
@@ -410,17 +412,17 @@ const Home: React.FC = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down');
   const [videoLoaded, setVideoLoaded] = useState(false);
-  
+
   // Materials data
   const [allMaterials] = useState<AllMaterials>({
     woods: [
       {
-        id: 'sucupira', 
-        name: language === 'pt' ? 'Sucupira' : 'Sucupira', 
+        id: 'sucupira',
+        name: language === 'pt' ? 'Sucupira' : 'Sucupira',
         type: language === 'pt' ? 'Madeira Nacional' : 'Madera Nacional',
         origin: language === 'pt' ? 'América do Sul' : 'América del Sur',
-        color: '#5A4233', 
-        roughness: 0.75, 
+        color: '#5A4233',
+        roughness: 0.75,
         metalness: 0.0,
         durability: 4.5,
         maintenance: 3.5,
@@ -435,13 +437,13 @@ const Home: React.FC = () => {
           es: 'Madera densa y oscura, con alta resistencia mecánica. Sus tonos varían del marrón chocolate al casi negro, con vetas sutiles. Ideal para muebles que exigen resistencia y belleza duradera.'
         }
       },
-      { 
-        id: 'pau-ferro', 
-        name: language === 'pt' ? 'Pau Ferro' : 'Palo de Hierro', 
+      {
+        id: 'pau-ferro',
+        name: language === 'pt' ? 'Pau Ferro' : 'Palo de Hierro',
         type: language === 'pt' ? 'Madeira Nacional' : 'Madera Nacional',
         origin: language === 'pt' ? 'Brasil' : 'Brasil',
-        color: '#4A2C1B', 
-        roughness: 0.8, 
+        color: '#4A2C1B',
+        roughness: 0.8,
         metalness: 0.0,
         durability: 5,
         maintenance: 4,
@@ -458,13 +460,13 @@ const Home: React.FC = () => {
       }
     ],
     fabrics: [
-      { 
-        id: 'linho-belga', 
-        name: language === 'pt' ? 'Linho Belga' : 'Lino Belga', 
+      {
+        id: 'linho-belga',
+        name: language === 'pt' ? 'Linho Belga' : 'Lino Belga',
         type: language === 'pt' ? 'Tecido Natural' : 'Tejido Natural',
         origin: language === 'pt' ? 'Bélgica' : 'Bélgica',
-        color: '#E3DDD3', 
-        roughness: 0.9, 
+        color: '#E3DDD3',
+        roughness: 0.9,
         metalness: 0.0,
         durability: 4,
         maintenance: 3,
@@ -479,13 +481,13 @@ const Home: React.FC = () => {
           es: 'Tejido natural de alta calidad con textura distintiva y tacto fresco. Transpirable y altamente duradero, el lino belga es conocido por desarrollar un carácter único con el tiempo de uso.'
         }
       },
-      { 
-        id: 'veludo-italiano', 
-        name: language === 'pt' ? 'Veludo Italiano' : 'Terciopelo Italiano', 
+      {
+        id: 'veludo-italiano',
+        name: language === 'pt' ? 'Veludo Italiano' : 'Terciopelo Italiano',
         type: language === 'pt' ? 'Tecido Premium' : 'Tejido Premium',
         origin: language === 'pt' ? 'Itália' : 'Italia',
-        color: '#60383B', 
-        roughness: 0.2, 
+        color: '#60383B',
+        roughness: 0.2,
         metalness: 0.0,
         durability: 3.5,
         maintenance: 4,
@@ -502,13 +504,13 @@ const Home: React.FC = () => {
       }
     ],
     metals: [
-      { 
-        id: 'bronze-envelhecido', 
-        name: language === 'pt' ? 'Bronze Envelhecido' : 'Bronce Envejecido', 
+      {
+        id: 'bronze-envelhecido',
+        name: language === 'pt' ? 'Bronze Envelhecido' : 'Bronce Envejecido',
         type: language === 'pt' ? 'Metal Nobre' : 'Metal Noble',
         origin: language === 'pt' ? 'Produção Local' : 'Producción Local',
-        color: '#966F42', 
-        roughness: 0.1, 
+        color: '#966F42',
+        roughness: 0.1,
         metalness: 0.8,
         durability: 5,
         maintenance: 2.5,
@@ -523,13 +525,13 @@ const Home: React.FC = () => {
           es: 'Aleación metálica con acabado artesanal que confiere personalidad y sofisticación a los detalles del mobiliario. Desarrolla una pátina natural que enriquece su apariencia a lo largo del tiempo.'
         }
       },
-      { 
-        id: 'latao-polido', 
-        name: language === 'pt' ? 'Latão Polido' : 'Latón Pulido', 
+      {
+        id: 'latao-polido',
+        name: language === 'pt' ? 'Latão Polido' : 'Latón Pulido',
         type: language === 'pt' ? 'Metal Nobre' : 'Metal Noble',
         origin: language === 'pt' ? 'Produção Local' : 'Producción Local',
-        color: '#D4AF37', 
-        roughness: 0.1, 
+        color: '#D4AF37',
+        roughness: 0.1,
         metalness: 0.9,
         durability: 4.5,
         maintenance: 3,
@@ -546,13 +548,13 @@ const Home: React.FC = () => {
       }
     ],
     stones: [
-      { 
-        id: 'marmore-carrara', 
-        name: language === 'pt' ? 'Mármore Carrara' : 'Mármol Carrara', 
+      {
+        id: 'marmore-carrara',
+        name: language === 'pt' ? 'Mármore Carrara' : 'Mármol Carrara',
         type: language === 'pt' ? 'Pedra Natural' : 'Piedra Natural',
         origin: language === 'pt' ? 'Itália' : 'Italia',
-        color: '#E9E9E6', 
-        roughness: 0.2, 
+        color: '#E9E9E6',
+        roughness: 0.2,
         metalness: 0.1,
         durability: 4,
         maintenance: 4.5,
@@ -567,13 +569,13 @@ const Home: React.FC = () => {
           es: 'Mármol italiano de primera calidad, con fondo blanco y vetas grises sutiles. Cada pieza es única, con patrones naturales irrepetibles que confieren exclusividad al mobiliario.'
         }
       },
-      { 
-        id: 'granito-preto', 
-        name: language === 'pt' ? 'Granito Preto Absoluto' : 'Granito Negro Absoluto', 
+      {
+        id: 'granito-preto',
+        name: language === 'pt' ? 'Granito Preto Absoluto' : 'Granito Negro Absoluto',
         type: language === 'pt' ? 'Pedra Natural' : 'Piedra Natural',
         origin: language === 'pt' ? 'Brasil/Índia' : 'Brasil/India',
-        color: '#1D1D1D', 
-        roughness: 0.3, 
+        color: '#1D1D1D',
+        roughness: 0.3,
         metalness: 0.2,
         durability: 5,
         maintenance: 4.5,
@@ -590,7 +592,7 @@ const Home: React.FC = () => {
       }
     ]
   });
-  
+
   // State for material showcase
   const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
   const [activeCategory, setActiveCategory] = useState(0);
@@ -603,7 +605,7 @@ const Home: React.FC = () => {
     { pt: 'Estante', en: 'Shelf' },
     { pt: 'Bancada', en: 'Counter' }
   ]);
-  
+
   // State for process steps
   const [activeProcessStep, setActiveProcessStep] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -621,9 +623,9 @@ const Home: React.FC = () => {
 
   const EnhancedMaterialShowcase = ({ material, currentFurniture }: { material: Material, currentFurniture: number }) => {
     const meshRef = useRef<THREE.Mesh<THREE.BufferGeometry, THREE.Material> | null>(null);
-    
+
     const renderFurnitureModel = () => {
-      switch(currentFurniture) {
+      switch (currentFurniture) {
         case 0:
           return (
             <group>
@@ -641,7 +643,7 @@ const Home: React.FC = () => {
               </mesh>
             </group>
           );
-        
+
         case 1:
           return (
             <group>
@@ -671,7 +673,7 @@ const Home: React.FC = () => {
               </mesh>
             </group>
           );
-        
+
         case 2:
           return (
             <group>
@@ -687,17 +689,17 @@ const Home: React.FC = () => {
                 <boxGeometry args={[0.7, 0.7, 0.02]} />
                 <meshPhysicalMaterial {...getMaterialProps(0.9)} />
               </mesh>
-              <mesh position={[-0.7, 0, 0.27]} castShadow receiveShadow rotation={[0, 0, Math.PI/2]}>
+              <mesh position={[-0.7, 0, 0.27]} castShadow receiveShadow rotation={[0, 0, Math.PI / 2]}>
                 <cylinderGeometry args={[0.02, 0.02, 0.06, 8]} />
                 <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
               </mesh>
-              <mesh position={[0.7, 0, 0.27]} castShadow receiveShadow rotation={[0, 0, Math.PI/2]}>
+              <mesh position={[0.7, 0, 0.27]} castShadow receiveShadow rotation={[0, 0, Math.PI / 2]}>
                 <cylinderGeometry args={[0.02, 0.02, 0.06, 8]} />
                 <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
               </mesh>
             </group>
           );
-          
+
         case 3:
           return (
             <group>
@@ -723,7 +725,7 @@ const Home: React.FC = () => {
               </mesh>
             </group>
           );
-          
+
         case 4:
           return (
             <group>
@@ -741,7 +743,7 @@ const Home: React.FC = () => {
               </mesh>
             </group>
           );
-          
+
         default:
           return (
             <mesh castShadow receiveShadow ref={meshRef}>
@@ -767,7 +769,7 @@ const Home: React.FC = () => {
       </group>
     );
   };
-  
+
   // View tracking for premium transitions
   // View tracking for premium transitions
   const [isInView, setIsInView] = useState({
@@ -777,91 +779,91 @@ const Home: React.FC = () => {
     process: false,
     contact: false
   });
-  
+
   // Lenis smooth scroll integration
   const lenis = useLenis();
-  
+
   // Advanced scroll tracking for sophisticated parallax effects
   const { scrollY } = useScroll();
   const { scrollYProgress: heroScrollProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"]
   });
-  
+
   const { scrollYProgress: galleryProgress } = useScroll({
     target: galleryRef,
     offset: ["start end", "end start"]
   });
-  
+
   const { scrollYProgress: aboutProgress } = useScroll({
     target: aboutRef,
     offset: ["start end", "end start"]
   });
-  
+
   const { scrollYProgress: processScrollProgress } = useScroll({
     target: processRef,
     offset: ["start end", "end start"]
   });
   // Testimonials data
-const testimonials = [
-  {
-    quote: {
-      pt: "A Afetto transformou completamente nossa sala de estar, criando um espaço que é ao mesmo tempo elegante e acolhedor. Cada detalhe foi pensado cuidadosamente, resultando em uma atmosfera que realmente reflete nossa personalidade.",
-      es: "Afetto transformó completamente nuestra sala de estar, creando un espacio que es a la vez elegante y acogedor. Cada detalle fue cuidadosamente pensado, resultando en una atmósfera que realmente refleja nuestra personalidad."
+  const testimonials = [
+    {
+      quote: {
+        pt: "A Afetto transformou completamente nossa sala de estar, criando um espaço que é ao mesmo tempo elegante e acolhedor. Cada detalhe foi pensado cuidadosamente, resultando em uma atmosfera que realmente reflete nossa personalidade.",
+        es: "Afetto transformó completamente nuestra sala de estar, creando un espacio que es a la vez elegante y acogedor. Cada detalle fue cuidadosamente pensado, resultando en una atmósfera que realmente refleja nuestra personalidad."
+      },
+      name: "Carolina Mendes",
+      title: "São Paulo, Brasil",
+      image: "/images/testimonials/client-1.jpg"
     },
-    name: "Carolina Mendes",
-    title: "São Paulo, Brasil",
-    image: "/images/testimonials/client-1.jpg"
-  },
-  {
-    quote: {
-      pt: "O processo de trabalho com a equipe da Afetto foi extraordinário. Sua atenção aos detalhes e compromisso com a excelência são incomparáveis. As peças personalizadas que criaram para nosso escritório são verdadeiras obras de arte.",
-      es: "El proceso de trabajo con el equipo de Afetto fue extraordinario. Su atención al detalle y compromiso con la excelencia son incomparables. Las piezas personalizadas que crearon para nuestra oficina son verdaderas obras de arte."
+    {
+      quote: {
+        pt: "O processo de trabalho com a equipe da Afetto foi extraordinário. Sua atenção aos detalhes e compromisso com a excelência são incomparáveis. As peças personalizadas que criaram para nosso escritório são verdadeiras obras de arte.",
+        es: "El proceso de trabajo con el equipo de Afetto fue extraordinario. Su atención al detalle y compromiso con la excelencia son incomparables. Las piezas personalizadas que crearon para nuestra oficina son verdaderas obras de arte."
+      },
+      name: "Rafael Oliveira",
+      title: "Rio de Janeiro, Brasil",
+      image: "/images/testimonials/client-2.jpg"
     },
-    name: "Rafael Oliveira",
-    title: "Rio de Janeiro, Brasil",
-    image: "/images/testimonials/client-2.jpg"
-  },
-  {
-    quote: {
-      pt: "Procurávamos algo único que refletisse nossa paixão por design e funcionalidade. A Afetto entendeu perfeitamente nossa visão e a transformou em realidade, superando todas as nossas expectativas.",
-      es: "Buscábamos algo único que reflejara nuestra pasión por el diseño y la funcionalidad. Afetto entendió perfectamente nuestra visión y la transformó en realidad, superando todas nuestras expectativas."
+    {
+      quote: {
+        pt: "Procurávamos algo único que refletisse nossa paixão por design e funcionalidade. A Afetto entendeu perfeitamente nossa visão e a transformou em realidade, superando todas as nossas expectativas.",
+        es: "Buscábamos algo único que reflejara nuestra pasión por el diseño y la funcionalidad. Afetto entendió perfectamente nuestra visión y la transformó en realidad, superando todas nuestras expectativas."
+      },
+      name: "Maria e Pedro Santos",
+      title: "Porto Alegre, Brasil",
+      image: "/images/testimonials/client-3.jpg"
     },
-    name: "Maria e Pedro Santos",
-    title: "Porto Alegre, Brasil",
-    image: "/images/testimonials/client-3.jpg"
-  },
-  {
-    quote: {
-      pt: "Trabalhar com a Afetto foi uma experiência transformadora. Eles não apenas criaram móveis incríveis, mas também nos guiaram através de todo o processo de design, garantindo que cada escolha fosse perfeita para nosso espaço.",
-      es: "Trabajar con Afetto fue una experiencia transformadora. No solo crearon muebles increíbles, sino que también nos guiaron a través de todo el proceso de diseño, asegurando que cada elección fuera perfecta para nuestro espacio."
-    },
-    name: "Fernanda Lima",
-    title: "Brasília, Brasil",
-    image: "/images/testimonials/client-4.jpg"
-  }
-];
+    {
+      quote: {
+        pt: "Trabalhar com a Afetto foi uma experiência transformadora. Eles não apenas criaram móveis incríveis, mas também nos guiaram através de todo o processo de design, garantindo que cada escolha fosse perfeita para nosso espaço.",
+        es: "Trabajar con Afetto fue una experiencia transformadora. No solo crearon muebles increíbles, sino que también nos guiaron a través de todo el proceso de diseño, asegurando que cada elección fuera perfecta para nuestro espacio."
+      },
+      name: "Fernanda Lima",
+      title: "Brasília, Brasil",
+      image: "/images/testimonials/client-4.jpg"
+    }
+  ];
   // Ultra-smooth motion values with custom physics
   const smoothHeroProgress = useSpring(heroScrollProgress, {
     ...slowSpring,
     restDelta: 0.001
   });
-  
+
   const smoothGalleryProgress = useSpring(galleryProgress, {
     ...slowSpring,
     restDelta: 0.001
   });
-  
+
   const smoothAboutProgress = useSpring(aboutProgress, {
     ...slowSpring,
     restDelta: 0.001
   });
-  
+
   const smoothProcessProgress = useSpring(processScrollProgress, {
     ...fastSpring,
     restDelta: 0.001
   });
-  
+
   // Advanced parallax and visual transformations
   const heroOpacity = useTransform(smoothHeroProgress, [0, 0.8], [1, 0]);
   const heroY = useTransform(smoothHeroProgress, [0, 1], [0, 200]);
@@ -870,14 +872,14 @@ const testimonials = [
   const heroSubtitleY = useParallax(smoothHeroProgress, -60);
   const heroProgressHeight = useTransform(smoothHeroProgress, [0, 1], ["0%", "100%"]);
   const processLineProgress = useTransform(processScrollProgress, [0, 0.3], [0, 1]);
-  
+
   // Advanced color transitions based on scroll
   const processLineColor = useTransform(
     processScrollProgress,
     [0, 0.3, 0.6, 0.9],
     ["rgba(211, 161, 126, 0.3)", "rgba(211, 161, 126, 0.5)", "rgba(211, 161, 126, 0.7)", "rgba(211, 161, 126, 0.9)"]
   );
-  
+
   // Detect scroll direction for advanced interaction cues
   useMotionValueEvent(scrollY, "change", (latest) => {
     const direction = latest > lastScrollY ? 'down' : 'up';
@@ -886,49 +888,49 @@ const testimonials = [
     }
     setLastScrollY(latest);
   });
-  
+
   // Advanced mouse tracking for parallax effects
   useEffect(() => {
     if (prefersReducedMotion) return;
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!hasInteracted) setHasInteracted(true);
-      
-      setCursorPosition({ 
-        x: e.clientX, 
-        y: e.clientY 
+
+      setCursorPosition({
+        x: e.clientX,
+        y: e.clientY
       });
-      
+
       // Calculate mouse position relative to window center (-1 to 1)
       setMousePosition({
         x: (e.clientX / window.innerWidth - 0.5) * 2,
         y: (e.clientY / window.innerHeight - 0.5) * 2
       });
     };
-    
+
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [hasInteracted, prefersReducedMotion]);
-  
+
   // Project hover state management with smooth transitions
   const handleProjectHover = useCallback((index: number | null) => {
     setActiveProject(index);
     setCursorVariant(index !== null ? "project" : "default");
   }, []);
-  
+
   // Dynamic cursor behavior
   const handleLinkHover = useCallback((enter: boolean) => {
     setCursorVariant(enter ? "link" : "default");
   }, []);
-  
+
   const handleCtaHover = useCallback((enter: boolean) => {
     setCursorVariant(enter ? "cta" : "default");
   }, []);
-  
+
   const handleDragHover = useCallback((enter: boolean) => {
     setCursorVariant(enter ? "drag" : "default");
   }, []);
-  
+
   // Scroll to section with smooth animation
   const scrollToSection = useCallback((sectionRef: React.RefObject<HTMLDivElement>) => {
     if (sectionRef.current && lenis) {
@@ -940,27 +942,27 @@ const testimonials = [
       });
     }
   }, [lenis]);
-  
+
   // Monitor process steps for transitions
   useEffect(() => {
     const checkProcessStep = () => {
       if (!processRef.current) return;
-      
+
       const { top } = processRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const scrollPosition = window.scrollY;
-      
+
       // Calculate which step should be active based on scroll position
       const processStep = Math.floor(((scrollPosition + viewportHeight - top) / viewportHeight) * 3);
       if (processStep >= 0 && processStep <= 3 && processStep !== activeProcessStep) {
         setActiveProcessStep(processStep);
       }
     };
-    
+
     window.addEventListener('scroll', checkProcessStep);
     return () => window.removeEventListener('scroll', checkProcessStep);
   }, [activeProcessStep]);
-  
+
   // Sophisticated animation variants
   const staggerContainer = {
     hidden: { opacity: 0 },
@@ -973,11 +975,11 @@ const testimonials = [
       }
     }
   };
-  
+
   const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         duration: 1.2,
@@ -985,11 +987,11 @@ const testimonials = [
       }
     }
   };
-  
+
   const slideInRight = {
     hidden: { opacity: 0, x: -40 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
       transition: {
         duration: 1.2,
@@ -997,11 +999,11 @@ const testimonials = [
       }
     }
   };
-  
+
   const revealInOut = {
     hidden: { opacity: 0, scale: 0.9 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       scale: 1,
       transition: {
         duration: 1.4,
@@ -1009,7 +1011,7 @@ const testimonials = [
       }
     }
   };
-  
+
   const lineGrow = {
     hidden: { scaleX: 0 },
     visible: {
@@ -1129,7 +1131,7 @@ const testimonials = [
           </motion.div>
         )}
       </AnimatePresence>
-  
+
       {/* Premium Header Navigation */}
       <motion.header
         className="fixed top-0 left-0 right-0 h-[90px] z-50 flex items-center px-8 transition-all duration-500"
@@ -1196,7 +1198,7 @@ const testimonials = [
               </motion.span>
             </motion.div>
           </Link>
-  
+
           {/* Premium CTA Button with layered effects */}
           <Link
             to="/agendar"
@@ -1217,9 +1219,8 @@ const testimonials = [
           </Link>
         </div>
       </motion.header>
-      
-{/* Hero Section Ultra-Premium */}
-<motion.section 
+
+<motion.section
   ref={heroRef}
   className="relative h-[100vh] min-h-[800px] overflow-hidden"
   initial={{ opacity: 0 }}
@@ -1227,56 +1228,84 @@ const testimonials = [
   exit={{ opacity: 0 }}
   style={{ opacity: heroOpacity, y: heroY, scale: heroScale }}
 >
-  {/* Background cinematográfico com gradientes sofisticados e vídeo otimizado */}
+  {/* ErrorBoundary para HeroCanvas com fallback elegante */}
+  <ErrorBoundary fallback={
+    <div className="absolute inset-0 bg-gradient-to-r from-[#0A0806]/95 via-[#171412]/80 to-[#0B0905]/90 flex items-center justify-center">
+      <div className="text-white/80 font-serif text-5xl">Objetos com significado</div>
+    </div>
+  }>
+    <HeroCanvas scrollYProgress={heroScrollProgress} />
+  </ErrorBoundary>
+  
+  {/* Background cinematográfico com múltiplas camadas */}
   <div className="absolute inset-0 z-0">
     <motion.div
       className="absolute inset-0"
       initial={{ scale: 1.05, filter: 'brightness(0.7)' }}
-      animate={{ 
+      animate={{
         scale: 1,
         filter: 'brightness(0.85)',
         transition: { duration: 5, ease: [0.22, 1, 0.36, 1] }
       }}
     >
-      {/* Vídeo com preload e fallback para melhor performance */}
-      <video 
-        autoPlay 
-        muted 
-        loop 
+      {/* Vídeo de fundo otimizado com preload e múltiplos formatos */}
+      <video
+        autoPlay
+        muted
+        loop
         playsInline
         preload="auto"
         onLoadedData={handleVideoLoaded}
         className="w-full h-full object-cover"
+        style={{ 
+          filter: `saturate(${useTransform(heroScrollProgress, [0, 0.6], [1, 1.4]).get()})` 
+        }}
       >
         <source src="/videos/luxury-atelier.webm" type="video/webm" />
         <source src="/videos/luxury-atelier.mp4" type="video/mp4" />
       </video>
-      
-      {/* Sistema avançado de overlay multicamadas */}
+
+      {/* Sistema de camadas de gradiente premium */}
       <div className="absolute inset-0 z-10">
-        {/* Gradiente horizontal sofisticado */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0C0A09]/95 via-[#1C1917]/80 to-[#0C0A09]/90 mix-blend-multiply"></div>
+        {/* Gradiente principal refinado */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0806]/95 via-[#171412]/80 to-[#0B0905]/90"></div>
         
-        {/* Gradiente vertical para profundidade */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-black/90"></div>
-        
-        {/* Textura de ruído para cinema */}
+        {/* Vinheta dinâmica que responde ao scroll */}
         <motion.div 
-          className="absolute inset-0 opacity-[0.12] mix-blend-overlay" 
-          style={{ backgroundImage: 'url(/images/noise-texture.png)', backgroundSize: '200px' }}
-          animate={{ backgroundPosition: ['0% 0%', '100% 100%'] }}
-          transition={{ duration: 120, ease: "linear", repeat: Infinity, repeatType: "mirror" }}
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.8) 80%)',
+            opacity: useTransform(heroScrollProgress, [0, 0.3], [0.7, 0.9])
+          }}
+        />
+
+        {/* Texture overlay com movimento sutil */}
+        <motion.div
+          className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
+          style={{ 
+            backgroundImage: 'url(/images/noise-texture.png)', 
+            backgroundSize: '200px' 
+          }}
+          animate={{ 
+            backgroundPosition: ['0% 0%', '100% 100%'] 
+          }}
+          transition={{ 
+            duration: 120, 
+            ease: "linear", 
+            repeat: Infinity, 
+            repeatType: "mirror" 
+          }}
         />
       </div>
-      
-      {/* Sistema avançado de partículas para efeito visual premium */}
+
+      {/* Sistema de partículas premium e otimizado com Instances */}
       {!prefersReducedMotion && !isMobile && (
         <motion.div className="absolute inset-0 z-20 overflow-hidden">
-          {Array(20).fill(0).map((_, i) => (
+          {Array(25).fill(0).map((_, i) => (
             <motion.div
-              key={`particle-${i}`}
+              key={`hero-particle-${i}`}
               className="absolute rounded-full"
-              initial={{ 
+              initial={{
                 x: `${Math.random() * 100}%`,
                 y: `${Math.random() * 100}%`,
                 opacity: 0,
@@ -1286,8 +1315,8 @@ const testimonials = [
                 opacity: [0, 0.4, 0],
                 scale: [0, 1, 0],
                 filter: [
-                  'blur(2px) brightness(1)', 
-                  'blur(1px) brightness(1.5)', 
+                  'blur(2px) brightness(1)',
+                  'blur(1px) brightness(1.5)',
                   'blur(2px) brightness(1)'
                 ],
               }}
@@ -1308,74 +1337,74 @@ const testimonials = [
       )}
     </motion.div>
   </div>
-  
+
   {/* Grade arquitetônica com proporção áurea */}
   <div className="absolute inset-0 z-10 opacity-[0.03] pointer-events-none">
     <div className="grid grid-cols-12 h-full w-full">
       {Array(12).fill(0).map((_, i) => (
         <div key={`grid-col-${i}`} className="h-full border-l border-white/50 last:border-r"></div>
       ))}
-      
-      {/* Linhas horizontais adicionais */}
       <div className="absolute top-[38.2%] left-0 right-0 h-[1px] bg-white/30"></div>
       <div className="absolute top-[61.8%] left-0 right-0 h-[1px] bg-white/20"></div>
     </div>
   </div>
-  
-  {/* Elementos geométricos decorativos com animações sutis */}
-  <motion.div 
+
+  {/* Elementos geométricos decorativos com animações dinâmicas */}
+  <motion.div
     className="absolute top-20 right-[10%] w-96 h-96 rounded-full border border-accent/5 opacity-20 hidden lg:block"
     initial={{ scale: 0.8, rotate: 45, opacity: 0 }}
     animate={{ scale: 1, rotate: 0, opacity: 0.2 }}
-    transition={{ duration: 3, ease: [0.22, 1, 0.36, 1] }}
+    transition={{ duration: 3, ease: [0.32, 0.75, 0.36, 1] }}
   />
-  
-  <motion.div 
+
+  <motion.div
     className="absolute bottom-40 left-[5%] w-64 h-64 rounded-full border border-accent/10 opacity-10 hidden lg:block"
     initial={{ scale: 0.8, rotate: -45, opacity: 0 }}
     animate={{ scale: 1, rotate: 0, opacity: 0.1 }}
-    transition={{ duration: 3, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    transition={{ duration: 3, delay: 0.5, ease: [0.32, 0.75, 0.36, 1] }}
   />
-  
-  {/* Linhas de acento verticais animadas */}
-  <motion.div 
+
+  {/* Linhas de acento verticais com animação refinada */}
+  <motion.div
     className="absolute top-[15vh] left-[10%] w-px h-[35vh] z-20"
     initial={{ scaleY: 0 }}
     animate={{ scaleY: 1 }}
-    transition={{ duration: 1.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-    style={{ 
+    transition={{ duration: 1.8, delay: 0.8, ease: [0.32, 0.75, 0.36, 1] }}
+    style={{
       transformOrigin: 'top',
       background: 'linear-gradient(to bottom, transparent, rgba(211, 161, 126, 0.7), transparent)'
     }}
   />
-  
-  <motion.div 
+
+  <motion.div
     className="absolute bottom-[15vh] right-[10%] w-px h-[35vh] z-20"
     initial={{ scaleY: 0 }}
     animate={{ scaleY: 1 }}
-    transition={{ duration: 1.8, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
-    style={{ 
+    transition={{ duration: 1.8, delay: 1.2, ease: [0.32, 0.75, 0.36, 1] }}
+    style={{
       transformOrigin: 'bottom',
       background: 'linear-gradient(to top, transparent, rgba(211, 161, 126, 0.7), transparent)'
     }}
   />
 
-  {/* Conteúdo principal centralizado */}
+  {/* Conteúdo principal centralizado com layout refinado */}
   <div className="relative z-30 container mx-auto px-8 md:px-24 h-full flex items-center">
-    <motion.div 
+    <motion.div
       className="max-w-6xl"
       style={{ y: heroTitleY }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, transition: { delay: 0.3, duration: 1 } }}
     >
-      {/* Tag introdutória com linha animada */}
+      {/* Tag introdutória com linha animada aprimorada */}
       <motion.p
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 1.5, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 1.5, delay: 0.6, ease: [0.32, 0.75, 0.36, 1] }}
         className="font-sans font-light text-accent tracking-[0.4em] uppercase text-sm mb-10 relative"
       >
         <span className="relative">
           {language === 'pt' ? 'Ateliê de Design & Artesanato' : 'Atelier de Diseño & Artesanía'}
-          <motion.span 
+          <motion.span
             className="absolute -bottom-3 left-0 h-[1px] w-full bg-accent/40"
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
@@ -1384,72 +1413,84 @@ const testimonials = [
           />
         </span>
       </motion.p>
-      
-      {/* Título principal com animação de revelação por palavra */}
-      <h1 className="font-serif font-light text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] leading-[1.05] tracking-[-0.02em] text-white/95 relative">
+
+      {/* Título principal com animação sofisticada por palavra */}
+      <h1 className="font-serif font-light text-7xl md:text-8xl lg:text-9xl xl:text-[12rem] leading-[1.02] tracking-[-0.03em] text-white/95 relative">
         {/* Primeira linha */}
         <div className="overflow-hidden">
           <motion.div
             initial={{ y: 150 }}
             animate={{ y: 0 }}
-            transition={{ duration: 1.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 1.8, delay: 0.8, ease: [0.32, 0.75, 0.36, 1] }}
             className="relative"
+            // Efeito sutil de "vida" após 7s de inatividade
+            whileInView={(_, { getTransform }) => {
+              // Cronometro para animação de "vida"
+              setTimeout(() => {
+                animate(getTransform(), {
+                  x: [-4, 4, -3, 2, 0],
+                  transition: { 
+                    duration: 3,
+                    ease: [0.32, 0.75, 0.36, 1],
+                    times: [0, 0.2, 0.5, 0.8, 1] 
+                  }
+                });
+              }, 7000);
+            }}
           >
             {language === 'pt' ? 'Objetos com' : 'Objetos con'}
           </motion.div>
         </div>
-        
-        {/* Segunda linha */}
+
+        {/* Segunda linha com efeito de gradiente dinâmico */}
         <div className="overflow-hidden mt-1 md:mt-2">
           <motion.div
             initial={{ y: 150 }}
             animate={{ y: 0 }}
-            transition={{ duration: 1.8, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 1.8, delay: 1.1, ease: [0.32, 0.75, 0.36, 1] }}
             className="relative"
+            // Efeito sutil de "vida" após 10s de inatividade
+            whileInView={(_, { getTransform }) => {
+              // Cronometro para animação de "vida"
+              setTimeout(() => {
+                animate(getTransform(), {
+                  x: [4, -3, 2, -1, 0],
+                  transition: { 
+                    duration: 3,
+                    ease: [0.32, 0.75, 0.36, 1],
+                    times: [0, 0.3, 0.6, 0.9, 1] 
+                  }
+                });
+              }, 10000);
+            }}
           >
-            {language === 'pt' ? 'significado' : 'significado'}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white/95 to-white/80">
+              {language === 'pt' ? 'significado' : 'significado'}
+            </span>
           </motion.div>
         </div>
-        
-        {/* Linha de acento animada com efeito de brilho */}
-        <motion.div 
-          className="absolute -bottom-8 left-0 h-[3px] w-28 md:w-48"
-          initial={{ scaleX: 0, filter: "blur(0px)" }}
-          animate={{ 
-            scaleX: 1, 
-            filter: ["blur(0px)", "blur(2px)", "blur(0px)"]
-          }}
-          transition={{ 
-            scaleX: { duration: 1.8, delay: 2.2, ease: [0.22, 1, 0.36, 1] },
-            filter: { duration: 3, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }
-          }}
-          style={{ 
-            transformOrigin: "left",
-            background: "linear-gradient(90deg, rgba(211,161,126,1) 0%, rgba(211,161,126,0.7) 50%, rgba(211,161,126,0) 100%)"
-          }}
-        />
       </h1>
-      
-      {/* Subtítulo com animação sofisticada */}
+
+      {/* Subtítulo com animação refinada */}
       <motion.p
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, delay: 1.8 }}
+        transition={{ duration: 1.2, delay: 1.8, ease: [0.32, 0.75, 0.36, 1] }}
         className="text-xl md:text-2xl text-white/80 max-w-3xl font-sans font-light leading-relaxed mt-12 lg:mt-16"
       >
-        {language === 'pt' 
+        {language === 'pt'
           ? 'Criamos ambientes que transcendem o ordinário, transformando experiências e elevando os sentidos através de peças artesanais meticulosamente elaboradas.'
           : 'Creamos ambientes que trascienden lo ordinario, transformando experiencias y elevando los sentidos a través de piezas artesanales meticulosamente elaboradas.'}
       </motion.p>
-      
-      {/* Grupo de CTA aprimorados */}
+
+      {/* Grupo de CTA com design e interações premium */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 2.2 }}
+        transition={{ duration: 1, delay: 2.2, ease: [0.32, 0.75, 0.36, 1] }}
         className="mt-12 md:mt-16 flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-6"
       >
-        {/* Botão primário com efeito de preenchimento */}
+        {/* Botão primário com efeito de preenchimento avançado */}
         <a
           href="#portfolio"
           className="group relative inline-flex items-center overflow-hidden"
@@ -1460,47 +1501,51 @@ const testimonials = [
             }
           }}
         >
-          <motion.div 
+          <motion.div
             className="relative z-10 bg-transparent border-2 border-accent px-8 py-4 text-white font-sans font-light tracking-wider overflow-hidden"
             whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: [0.32, 0.75, 0.36, 1] }}
           >
             <span className="relative z-10 group-hover:text-black transition-colors duration-500">
               {language === 'pt' ? 'Explorar nossa coleção' : 'Explorar nuestra colección'}
             </span>
-            
-            {/* Efeito de preenchimento */}
-            <motion.div 
+
+            {/* Efeito de preenchimento com easing personalizado */}
+            <motion.div
               className="absolute inset-0 bg-accent z-0"
               initial={{ scaleX: 0 }}
               whileHover={{ scaleX: 1 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4, ease: [0.32, 0.75, 0.36, 1] }}
               style={{ transformOrigin: 'left' }}
             />
           </motion.div>
-          
-          {/* Ícone com animação */}
-          <motion.div 
+
+          {/* Ícone com animação refinada */}
+          <motion.div
             className="absolute right-6 opacity-0 group-hover:opacity-100 z-20"
             initial={{ x: -10 }}
             whileHover={{ x: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: [0.32, 0.75, 0.36, 1] }}
           >
             <motion.div
               animate={{ x: [0, 5, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 1.5,
+                ease: [0.32, 0.75, 0.36, 1] 
+              }}
             >
               <ArrowRight size={16} className="text-black" />
             </motion.div>
           </motion.div>
         </a>
 
-        {/* Botão secundário com estilo alternativo */}
+        {/* Botão secundário com estilo alternativo e animação aprimorada */}
         <motion.a
           href="#contact"
           className="group inline-flex items-center space-x-2 text-white/80 hover:text-accent transition-colors duration-300"
           whileHover={{ x: 5 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.3, ease: [0.32, 0.75, 0.36, 1] }}
           onClick={(e) => {
             e.preventDefault();
             if (contactRef.current) {
@@ -1512,9 +1557,9 @@ const testimonials = [
             {language === 'pt' ? 'Agendar consulta' : 'Programar consulta'}
           </span>
           <motion.div
-            animate={{ 
+            animate={{
               x: [0, 5, 0],
-              transition: { repeat: Infinity, duration: 2, ease: "easeInOut" }
+              transition: { repeat: Infinity, duration: 2, ease: [0.32, 0.75, 0.36, 1] }
             }}
           >
             <ChevronRight size={18} />
@@ -1523,15 +1568,15 @@ const testimonials = [
       </motion.div>
     </motion.div>
   </div>
-  
-  {/* Indicador de scroll animado ao fundo */}
+
+  {/* Indicador de scroll com animação de pulso */}
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8, delay: 3 }}
+    transition={{ duration: 0.8, delay: 3, ease: [0.32, 0.75, 0.36, 1] }}
     className="absolute bottom-12 left-0 right-0 flex justify-center z-30"
   >
-    <button 
+    <button
       onClick={() => {
         if (galleryRef.current) {
           galleryRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -1544,23 +1589,28 @@ const testimonials = [
         {language === 'pt' ? 'Deslize para descobrir' : 'Desplácese para descubrir'}
       </span>
       <div className="h-14 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent relative">
-        <motion.div 
+        <motion.div
           className="absolute top-0 w-1.5 h-1.5 rounded-full bg-accent left-1/2 -translate-x-1/2"
-          animate={{ 
-            y: [0, 24, 0] 
+          animate={{
+            y: [0, 24, 0],
+            boxShadow: [
+              '0 0 0 rgba(211, 161, 126, 0)',
+              '0 0 10px rgba(211, 161, 126, 0.7)',
+              '0 0 0 rgba(211, 161, 126, 0)'
+            ]
           }}
-          transition={{ 
+          transition={{
             repeat: Infinity,
             duration: 2.5,
-            ease: "easeInOut"
+            ease: [0.32, 0.75, 0.36, 1]
           }}
         />
       </div>
     </button>
   </motion.div>
-  
-  {/* Contador de scroll sutilmente visível */}
-  <motion.div 
+
+  {/* Contador de scroll com design premium */}
+  <motion.div
     className="hidden md:block absolute bottom-12 right-12 z-30 text-white/30 text-xs font-mono"
     style={{ opacity: useTransform(smoothHeroProgress, [0, 0.8], [1, 0]) }}
   >
@@ -1568,7 +1618,7 @@ const testimonials = [
       00
     </motion.span>
     <span className="mx-1">/</span>
-    <motion.div 
+    <motion.div
       className="inline-block"
       style={{ opacity: heroProgressHeight }}
     >
@@ -1576,1765 +1626,1768 @@ const testimonials = [
     </motion.div>
   </motion.div>
 </motion.section>
-      
-   
-        <motion.div 
-  className="relative mb-32 overflow-hidden rounded-2xl shadow-2xl bg-[#0C0A09]/70 backdrop-blur-sm"
-  initial={{ opacity: 0 }}
-  whileInView={{ opacity: 1 }}
-  viewport={{ once: true }}
-  transition={{ duration: 1.5 }}
->
-  {/* Textura de fundo refinada */}
-  <div className="absolute inset-0 bg-[url('/images/elegant-texture.jpg')] opacity-10 mix-blend-overlay z-0"></div>
-  
-  {/* Elementos gradientes dinâmicos */}
-  <motion.div 
-    className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-accent/5 blur-[120px] z-0"
-    animate={{ 
-      scale: [1, 1.2, 1],
-      opacity: [0.05, 0.12, 0.05]
-    }}
-    transition={{ duration: 15, repeat: Infinity }}
-  />
-  <motion.div 
-    className="absolute -bottom-20 -left-20 w-[500px] h-[500px] rounded-full bg-accent/5 blur-[100px] z-0"
-    animate={{ 
-      scale: [1.2, 1, 1.2],
-      opacity: [0.08, 0.15, 0.08]
-    }}
-    transition={{ duration: 12, repeat: Infinity }}
-  />
-  
-  <div className="relative z-10 p-12 md:p-16 lg:p-20">
-    {/* Cabeçalho da seção */}
-    <div className="flex flex-col md:flex-row md:items-end justify-between mb-20">
-      <div>
-        <motion.div 
-          className="text-accent uppercase tracking-[0.35em] text-xs font-light mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          {language === 'pt' ? 'Materiais Selecionados' : 'Materiales Seleccionados'}
-        </motion.div>
-        <motion.h2 
-          className="text-5xl md:text-6xl font-serif font-light leading-tight text-white"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, delay: 0.1 }}
-        >
-          <span className="block">{language === 'pt' ? 'Biblioteca de' : 'Biblioteca de'}</span>
-          <span className="text-6xl md:text-7xl relative">
-            {language === 'pt' ? 'Materiais Nobres' : 'Materiales Nobles'}
-            <motion.div 
-              className="absolute -bottom-4 left-0 h-[1.5px] w-40 bg-gradient-to-r from-accent via-accent/50 to-transparent"
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2, delay: 0.4 }}
-              style={{ transformOrigin: "left" }}
-            />
-          </span>
-        </motion.h2>
-      </div>
-      
-      <motion.p 
-        className="text-white/70 md:max-w-md mt-10 md:mt-0 text-sm md:text-base leading-relaxed font-sans"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-      >
-        {language === 'pt' 
-          ? 'Cada material é cuidadosamente selecionado e utilizado com precisão artesanal para criar móveis que transcendem gerações, combinando beleza atemporal e durabilidade excepcional.'
-          : 'Cada material es cuidadosamente seleccionado y utilizado con precisión artesanal para crear muebles que trascienden generaciones, combinando belleza atemporal y durabilidad excepcional.'}
-      </motion.p>
-    </div>
-    
-    {/* Abas de categoria de material com estilo premium */}
-    <div className="mb-16">
-      <motion.div 
-        className="flex space-x-4 overflow-x-auto hide-scrollbar pb-6 -mx-2 px-2"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-      >
-        {[
-          { id: 'woods', icon: 'wood-grain', label: { pt: 'Madeiras', es: 'Maderas' } },
-          { id: 'fabrics', icon: 'fabric', label: { pt: 'Tecidos', es: 'Tejidos' } },
-          { id: 'metals', icon: 'metal', label: { pt: 'Metais', es: 'Metales' } },
-          { id: 'stones', icon: 'stone', label: { pt: 'Pedras', es: 'Piedras' } },
-          { id: 'glass', icon: 'glass', label: { pt: 'Vidros', es: 'Vidrios' } },
-          { id: 'leathers', icon: 'leather', label: { pt: 'Couros', es: 'Cueros' } },
-          { id: 'finishes', icon: 'finish', label: { pt: 'Acabamentos', es: 'Acabados' } },
-        ].map((category, index) => (
-          <motion.button
-            key={category.id}
-            className={`px-6 py-4 rounded-full whitespace-nowrap text-sm flex items-center space-x-3 ${activeCategory === index 
-              ? 'bg-accent text-black font-normal shadow-lg shadow-accent/20' 
-              : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/5'
-            } transition-all duration-300`}
-            onClick={() => setActiveCategory(index)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 + (index * 0.08) }}
-          >
-            <span className="w-4 h-4 flex items-center justify-center">
-              <MaterialIcon type={category.icon} active={activeCategory === index} />
-            </span>
-            <span className="font-sans tracking-wide">{category.label[language === 'pt' ? 'pt' : 'es']}</span>
-          </motion.button>
-        ))}
-      </motion.div>
-    </div>
-    
-    {/* Layout aprimorado: grade de materiais e visualização 3D */}
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-      {/* Visualização 3D - 7 colunas em desktop */}
-      <div className="lg:col-span-7 order-1 lg:order-1">
-        <motion.div 
-          className="bg-black/40 rounded-xl overflow-hidden backdrop-blur-md border border-white/10 h-[550px] relative"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
-            <ambientLight intensity={0.5} />
-            <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.8} castShadow />
-            <directionalLight position={[-5, 5, -5]} intensity={0.7} />
-            <ContactShadows 
-              position={[0, -1.5, 0]} 
-              opacity={0.7} 
-              scale={10} 
-              blur={2} 
-              far={4} 
-            />
-            <OrbitControls 
-              enableZoom={false} 
-              enablePan={false}
-              maxPolarAngle={Math.PI / 2} 
-              minPolarAngle={Math.PI / 4}
-              autoRotate={autoRotate}
-              autoRotateSpeed={2}
-            />
-            <EnhancedMaterialShowcase 
-              material={activeMaterial || allMaterials.woods[0]} 
-              currentFurniture={currentFurniture}
-            />
-            <Environment preset="apartment" />
-          </Canvas>
-          
-          {/* Controles de visualização premium */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-4 z-10">
-            <motion.div 
-              className="bg-black/70 backdrop-blur-xl px-6 py-3 rounded-full flex items-center space-x-5 border border-white/5"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <motion.button 
-                className="bg-white/10 hover:bg-accent hover:text-black text-white/90 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
-                onClick={() => setAutoRotate(!autoRotate)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {autoRotate ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="6" y="4" width="4" height="16"></rect>
-                    <rect x="14" y="4" width="4" height="16"></rect>
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
-                    <path d="M11 8l6 4-6 4V8z"></path>
-                  </svg>
-                )}
-              </motion.button>
-              
-              <div className="h-6 w-px bg-white/10"></div>
-              
-              <div className="flex space-x-3">
-                {furnitureLabels.map((item, idx) => (
-                  <motion.button 
-                    key={idx}
-                    onClick={() => setCurrentFurniture(idx)}
-                    className={`px-4 py-2 rounded-full text-xs flex items-center space-x-2 transition-all duration-300 ${
-                      currentFurniture === idx 
-                        ? 'bg-accent text-black font-medium shadow-md shadow-accent/10' 
-                        : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.7 + (idx * 0.1) }}
-                  >
-                    <span className="font-sans tracking-wide">{item[language === 'pt' ? 'pt' : 'en']}</span>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-          
-          {/* Sobreposição de título de material */}
-          <div className="absolute top-8 left-8 right-8 flex justify-between z-10">
-            <motion.div 
-              className="bg-black/60 backdrop-blur-xl px-5 py-3 rounded-full border border-white/5"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <h3 className="text-white font-serif font-light text-lg">
-                {activeMaterial?.name || (language === 'pt' ? 'Selecione um material' : 'Seleccione un material')}
-              </h3>
-            </motion.div>
-            
-            {activeMaterial && (
-              <motion.div 
-                className="bg-accent text-black px-5 py-3 rounded-full flex items-center space-x-2 shadow-lg shadow-accent/20"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <span className="text-sm font-sans font-medium">{language === 'pt' ? 'Visualizando' : 'Visualizando'}</span>
-                <motion.div 
-                  className="w-2 h-2 bg-black/70 rounded-full"
-                  animate={{ 
-                    scale: [1, 1.5, 1],
-                    opacity: [0.5, 1, 0.5]
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity
-                  }}
-                />
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-        
-        {/* Descrição do material */}
-        {activeMaterial && (
-          <motion.div 
-            className="mt-5 bg-black/30 backdrop-blur-md p-6 rounded-lg border border-white/5"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <p className="text-white/80 text-sm leading-relaxed font-sans">
-              {activeMaterial.description[language === 'pt' ? 'pt' : 'es']}
-            </p>
-          </motion.div>
-        )}
-      </div>
-      
-      {/* Grade de materiais - 5 colunas em desktop */}
-      <div className="lg:col-span-5 order-2 lg:order-2">
-        <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/5 h-full">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-white text-xl font-serif font-light">
-              {activeCategory === 0 && (language === 'pt' ? 'Madeiras Premium' : 'Maderas Premium')}
-              {activeCategory === 1 && (language === 'pt' ? 'Tecidos Exclusivos' : 'Tejidos Exclusivos')}
-              {activeCategory === 2 && (language === 'pt' ? 'Metais Nobres' : 'Metales Nobles')}
-              {activeCategory === 3 && (language === 'pt' ? 'Pedras Naturais' : 'Piedras Naturales')}
-              {activeCategory === 4 && (language === 'pt' ? 'Vidros Especiais' : 'Vidrios Especiales')}
-              {activeCategory === 5 && (language === 'pt' ? 'Couros Selecionados' : 'Cueros Seleccionados')}
-              {activeCategory === 6 && (language === 'pt' ? 'Acabamentos Refinados' : 'Acabados Refinados')}
-            </h3>
-            <span className="text-accent/90 text-xs px-4 py-1.5 rounded-full border border-accent/20 font-sans">
-              {activeCategory === 0 && allMaterials.woods.length}
-              {activeCategory === 1 && allMaterials.fabrics.length}
-              {activeCategory === 2 && allMaterials.metals.length}
-              {activeCategory === 3 && allMaterials.stones.length}
-              {language === 'pt' ? ' opções' : ' opciones'}
-            </span>
-          </div>
-          
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`category-${activeCategory}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="h-[400px] overflow-y-auto hide-scrollbar pr-2"
-            >
-              {/* Grid de cartões de material */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Materiais de madeira */}
-                {activeCategory === 0 && allMaterials.woods.map((material, idx) => (
-                  <MaterialCard 
-                    key={material.id} 
-                    material={material} 
-                    isActive={activeMaterial?.id === material.id}
-                    onSelect={() => setActiveMaterial({ ...material, furniture: material.furniture || null, properties: material.properties || null })}
-                    index={idx} 
-                  />
-                ))}
-                
-                {/* Materiais de tecido */}
-                {activeCategory === 1 && allMaterials.fabrics.map((material, idx) => (
-                  <MaterialCard 
-                    key={material.id} 
-                    material={material} 
-                    isActive={activeMaterial?.id === material.id}
-                    onSelect={() => setActiveMaterial(material)}
-                    index={idx} 
-                    isFabric={true}
-                  />
-                ))}
-                
-                {/* Materiais de metal */}
-                {activeCategory === 2 && allMaterials.metals.map((material, idx) => (
-                  <MaterialCard 
-                    key={material.id} 
-                    material={material} 
-                    isActive={activeMaterial?.id === material.id}
-                    onSelect={() => setActiveMaterial(material)}
-                    index={idx} 
-                  />
-                ))}
-                
-                {/* Materiais de pedra */}
-                {activeCategory === 3 && allMaterials.stones.map((material, idx) => (
-                  <MaterialCard 
-                    key={material.id} 
-                    material={material} 
-                    isActive={activeMaterial?.id === material.id}
-                    onSelect={() => setActiveMaterial(material)}
-                    index={idx} 
-                  />
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-          
-          {/* Seção de informações do material */}
-          <motion.div 
-            className="mt-8 pt-8 border-t border-white/5"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            {activeMaterial ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <div className="flex items-baseline justify-between mb-4">
-                    <h4 className="text-accent text-xs uppercase tracking-widest font-sans">
-                      {language === 'pt' ? 'Especificações' : 'Especificaciones'}
-                    </h4>
-                    <span className="text-white/40 text-xs font-sans">{activeMaterial.origin}</span>
-                  </div>
-                  
-                  <div className="space-y-5 mt-6">
-                    {[
-                      {name: language === 'pt' ? 'Durabilidade' : 'Durabilidad', value: activeMaterial.durability},
-                      {name: language === 'pt' ? 'Manutenção' : 'Mantenimiento', value: activeMaterial.maintenance},
-                      {name: language === 'pt' ? 'Sustentabilidade' : 'Sostenibilidad', value: activeMaterial.sustainability}
-                    ].map((stat, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-xs mb-2 font-sans">
-                          <span className="text-white/80">{stat.name}</span>
-                          <div className="flex space-x-1.5">
-                            {[1, 2, 3, 4, 5].map(dot => (
-                              <motion.div 
-                                key={dot}
-                                className={`w-1.5 h-1.5 rounded-full ${dot <= stat.value ? 'bg-accent' : 'bg-white/10'}`}
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.5 + (i * 0.1) + (dot * 0.05) }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                          <motion.div 
-                            className="h-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(stat.value/5) * 100}%` }}
-                            transition={{ duration: 0.7, delay: 0.2 + (i * 0.1) }}
-                            style={{
-                              background: "linear-gradient(90deg, rgba(211,161,126,0.7) 0%, rgba(211,161,126,1) 50%, rgba(211,161,126,0.7) 100%)"
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="text-accent text-xs uppercase tracking-widest font-sans mb-4">
-                    {language === 'pt' ? 'Aplicações Ideais' : 'Aplicaciones Ideales'}
-                  </h4>
-                  <ul className="mt-4 space-y-3">
-                    {activeMaterial.applications.map((app, i) => (
-                      <motion.li 
-                        key={i} 
-                        className="flex items-center text-white/80 text-sm font-sans"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + (i * 0.1) }}
-                      >
-                        <motion.div 
-                          className="w-1.5 h-1.5 rounded-full bg-accent mr-3"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.4 + (i * 0.1) }}
-                        />
-                        {app[language === 'pt' ? 'pt' : 'en']}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-white/60 py-6 font-sans italic">
-                {language === 'pt' ? 'Selecione um material para ver detalhes' : 'Seleccione un material para ver detalles'}
-              </div>
-            )}
-          </motion.div>
-        </div>
-      </div>
-    </div>
-    
-    {/* Barra de ação aprimorada */}
-    <motion.div 
-      className="mt-16 bg-gradient-to-r from-black/50 via-black/40 to-black/30 rounded-lg backdrop-blur-xl flex flex-col sm:flex-row justify-between items-center border border-white/5 overflow-hidden"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8, delay: 0.4 }}
-    >
-      <div className="p-8 border-r border-white/5 flex-1">
-        <h4 className="text-white text-lg font-serif font-light flex items-center">
-          <motion.div 
-            className="w-5 h-5 flex items-center justify-center mr-3 text-accent"
-            animate={{ rotate: [0, 180] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10-10-4.5 10-10 10z"></path>
-              <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6-6-2.7 6-6 6z"></path>
-              <path d="M12 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path>
-            </svg>
-          </motion.div>
-          {language === 'pt' ? 'Materiais Certificados' : 'Materiales Certificados'}
-        </h4>
-        <p className="text-white/70 text-sm mt-3 max-w-xl font-sans leading-relaxed">
-          {language === 'pt' 
-            ? 'Trabalhamos apenas com fornecedores certificados que garantem a origem sustentável e a qualidade excepcional dos materiais.' 
-            : 'Trabajamos solo con proveedores certificados que garantizan el origen sostenible y la calidad excepcional de los materiales.'}
-        </p>
-      </div>
-      
-      <div className="p-8 flex flex-col items-center sm:items-end">
-        <div className="flex space-x-4 mb-6">
-          {[
-            {id: 'fsc', name: 'FSC Certified'},
-            {id: 'greenguard', name: 'GREENGUARD'},
-            {id: 'eco', name: 'ECO Certified'}
-          ].map((cert, idx) => (
-            <motion.div 
-              key={cert.id} 
-              className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center border border-white/10"
-              whileHover={{ y: -5, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + (idx * 0.1) }}
-            >
-              <img 
-                src={`/images/certifications/${cert.id}.svg`} 
-                alt={cert.name} 
-                className="w-8 h-8 object-contain opacity-70"
-              />
-            </motion.div>
-          ))}
-        </div>
-        
-        <button 
-          className="bg-accent hover:bg-accent/90 px-6 py-3.5 text-black text-sm font-medium rounded-full transition-colors duration-300 flex items-center space-x-2 group shadow-lg shadow-accent/10"
-          onClick={() => scrollToSection(contactRef)}
-        >
-          <span className="font-sans tracking-wide">{language === 'pt' ? 'Consultar disponibilidade' : 'Consultar disponibilidad'}</span>
-          <motion.div 
-            className="transition-transform group-hover:translate-x-1"
-            animate={{ x: [0, 3, 0] }}
-            transition={{ duration: 2, repeat: Infinity, repeatType: "loop" }}
-          >
-            <ChevronRight size={14} />
-          </motion.div>
-        </button>
-      </div>
-    </motion.div>
-  </div>
-</motion.div>
-<motion.section 
-  ref={processRef}
-  className="py-40 md:py-60 bg-gradient-to-b from-[#0C0A09] to-[#171413] relative overflow-hidden"
->
-  {/* Elementos de background aprimorados */}
-  <motion.div 
-    className="absolute inset-0 opacity-5 pointer-events-none"
-    style={{ 
-      backgroundImage: 'url(/images/grid-pattern.svg)',
-      backgroundSize: '50px',
-    }}
-  />
-  
-  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-accent/30 to-transparent opacity-50"></div>
-  <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-transparent via-accent/30 to-transparent opacity-50"></div>
-  
-  {/* Elementos circulares ornamentais */}
-  <motion.div 
-    className="absolute -top-32 -right-32 w-64 h-64 border border-accent/10 rounded-full opacity-20"
-    initial={{ scale: 0.8, rotate: 45 }}
-    whileInView={{ scale: 1, rotate: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
-  />
-  
-  <motion.div 
-    className="absolute -bottom-40 -left-40 w-80 h-80 border border-accent/10 rounded-full opacity-20"
-    initial={{ scale: 0.8, rotate: -45 }}
-    whileInView={{ scale: 1, rotate: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
-  />
-  
-  <div className="container mx-auto px-6 md:px-24 relative z-10">
-    {/* Cabeçalho da seção */}
-    <div className="text-center max-w-4xl mx-auto mb-24">
-      <motion.div 
-        className="text-accent uppercase tracking-[0.35em] text-xs font-light mb-6"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        {language === 'pt' ? 'Metodologia' : 'Metodología'}
-      </motion.div>
-      
-      <motion.h2 
-        className="text-5xl md:text-6xl font-serif font-light text-white mb-6"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-      >
-        {language === 'pt' ? 'Nosso Processo Criativo' : 'Nuestro Proceso Creativo'}
-      </motion.h2>
-      
-      <motion.div 
-        className="h-[1.5px] w-20 bg-accent mx-auto mb-12"
-        initial={{ scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1, delay: 0.4 }}
-      />
-      
-      <motion.p 
-        className="text-white/70 text-lg max-w-2xl mx-auto font-sans leading-relaxed"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-      >
-        {language === 'pt' 
-          ? 'Da concepção à execução, cada etapa é tratada com extremo cuidado para garantir que cada peça expresse perfeitamente a visão do cliente e os valores da nossa marca.'
-          : 'De la concepción a la ejecución, cada etapa se trata con sumo cuidado para garantizar que cada pieza exprese perfectamente la visión del cliente y los valores de nuestra marca.'}
-      </motion.p>
-    </div>
-    
-    {/* Etapas do processo aprimoradas */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-      {[
-        { 
-          number: '01', 
-          title: { pt: 'Consulta & Briefing', es: 'Consulta & Briefing' },
-          description: { pt: 'Entendemos suas necessidades, preferências e visão para o projeto.', es: 'Entendemos sus necesidades, preferencias y visión para el proyecto.' },
-          icon: 'chat-bubble'
-        },
-        { 
-          number: '02', 
-          title: { pt: 'Design & Conceito', es: 'Diseño & Concepto' },
-          description: { pt: 'Criamos esboços e visualizações 3D para materializar a proposta.', es: 'Creamos bocetos y visualizaciones 3D para materializar la propuesta.' },
-          icon: 'pen-tool'
-        },
-        { 
-          number: '03', 
-          title: { pt: 'Produção Artesanal', es: 'Producción Artesanal' },
-          description: { pt: 'Nossas mãos experientes transformam os materiais selecionados em peças únicas.', es: 'Nuestras manos expertas transforman los materiales seleccionados en piezas únicas.' },
-          icon: 'hammer'
-        },
-        { 
-          number: '04', 
-          title: { pt: 'Entrega & Instalação', es: 'Entrega & Instalación' },
-          description: { pt: 'Garantimos que cada detalhe seja perfeito em seu espaço final.', es: 'Garantizamos que cada detalle sea perfecto en su espacio final.' },
-          icon: 'package'
-        }
-      ].map((step, index) => (
+          {/* Featured Projects Section */}
+          <FeaturedProjects
+            galleryRef={galleryRef}
+            setCursorVariant={setCursorVariant}
+        />
+
         <motion.div
-          key={index}
-          className={`relative p-8 ${activeProcessStep === index ? 'bg-accent/5 border border-accent/20' : 'bg-white/5 border border-white/5'} rounded-xl backdrop-blur-sm transition-all duration-500`}
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          className="relative mb-32 overflow-hidden rounded-2xl shadow-2xl bg-[#0C0A09]/70 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.1 * index }}
+          transition={{ duration: 1.5 }}
         >
-          {/* Número da etapa */}
-          <motion.div 
-            className={`absolute -top-5 -right-5 w-14 h-14 rounded-full flex items-center justify-center text-lg font-serif ${activeProcessStep === index ? 'bg-accent text-black' : 'bg-white/10 text-white/90'} transition-all duration-500`}
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.2 + (0.1 * index) }}
-          >
-            {step.number}
-          </motion.div>
-          
-          {/* Ícone */}
-          <div className={`h-16 w-16 rounded-full ${activeProcessStep === index ? 'bg-accent/20' : 'bg-white/5'} flex items-center justify-center mb-6 transition-all duration-500`}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={activeProcessStep === index ? "#D4B798" : "rgba(255,255,255,0.7)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              {step.icon === 'chat-bubble' && (
-                <>
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                </>
-              )}
-              {step.icon === 'pen-tool' && (
-                <>
-                  <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-                  <path d="M2 2l7.586 7.586"></path>
-                  <circle cx="11" cy="11" r="2"></circle>
-                </>
-              )}
-              {step.icon === 'hammer' && (
-                <>
-                  <path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"></path>
-                  <path d="M17.64 15L22 10.64"></path>
-                  <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"></path>
-                </>
-              )}
-              {step.icon === 'package' && (
-                <>
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                  <polyline points="3.29 7 12 12 20.71 7"></polyline>
-                  <line x1="12" y1="22" x2="12" y2="12"></line>
-                </>
-              )}
-            </svg>
-          </div>
-          
-          {/* Título e descrição */}
-          <h3 className={`text-xl mb-4 font-serif font-light ${activeProcessStep === index ? 'text-accent' : 'text-white'} transition-colors duration-500`}>
-            {step.title[language === 'pt' ? 'pt' : 'es']}
-          </h3>
-          
-          <p className="text-white/70 font-sans leading-relaxed">
-            {step.description[language === 'pt' ? 'pt' : 'es']}
-          </p>
-          
-          {/* Indicador ativo */}
-          {activeProcessStep === index && (
-            <motion.div 
-              className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.5 }}
-              style={{ transformOrigin: 'left' }}
-            />
-          )}
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</motion.section>
-      
-      {/* About Section with Dynamic Parallax */}
-      <motion.section 
-        ref={aboutRef}
-        className="py-40 md:py-72 overflow-hidden relative bg-gradient-to-b from-[#1a1713]/95 to-[#23201C]/70"
-        onViewportEnter={() => setIsInView({...isInView, about: true})}
-      >
-        {/* Parallax background image */}
-        <motion.div 
-          className="absolute inset-0 z-0"
-          style={{ 
-            y: useTransform(smoothAboutProgress, [0, 1], ['-10%', '10%']),
-            scale: useTransform(smoothAboutProgress, [0, 1], [1.1, 1])
-          }}
-        >
-          <div className="absolute inset-0 bg-black/40 z-10"></div>
-          <img 
-            src="/images/atelier-background.jpg" 
-            alt="Atelier background"
-            className="w-full h-full object-cover" 
+          {/* Textura de fundo refinada */}
+          <div className="absolute inset-0 bg-[url('/images/elegant-texture.jpg')] opacity-10 mix-blend-overlay z-0"></div>
+
+          {/* Elementos gradientes dinâmicos */}
+          <motion.div
+            className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-accent/5 blur-[120px] z-0"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.05, 0.12, 0.05]
+            }}
+            transition={{ duration: 15, repeat: Infinity }}
           />
-        </motion.div>
-        
-        {/* Content wrapper with backdrop blur */}
-        <div className="container relative z-10 mx-auto px-6 md:px-20">
-          <div className="grid grid-cols-12 gap-y-20 md:gap-x-16 items-center">
-            {/* Image column */}
-            <motion.div 
-              className="col-span-12 md:col-span-6"
-              initial={{ opacity: 0, y: 60 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="relative">
-                <motion.div 
-                  className="absolute -top-6 -left-6 w-full h-full border border-accent/20"
-                  initial={{ opacity: 0, x: -20, y: -20 }}
-                  whileInView={{ opacity: 1, x: 0, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                />
-                
-                <div className="overflow-hidden">
-                  <motion.img 
-                    src="/images/craftsman-working.jpg" 
-                    alt="Craftsman at work"
-                    className="w-full h-full object-cover"
-                    initial={{ scale: 1.2 }}
-                    whileInView={{ scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                </div>
-                
-                <motion.div 
-                  className="absolute -bottom-6 -right-6 w-24 h-24 bg-accent/10 backdrop-blur-sm flex items-center justify-center"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  >
-                    <svg viewBox="0 0 100 100" width="64" height="64">
-                      <path 
-                        d="M 50 0 A 50 50 0 1 1 49.9 0" 
-                        fill="none" 
-                        stroke="rgba(211, 161, 126, 0.8)" 
-                        strokeWidth="0.5"
-                        strokeDasharray="0.5 3"
-                      />
-                      <text 
-                        x="50%" 
-                        y="50%" 
-                        fontSize="8" 
-                        fill="rgba(211, 161, 126, 0.9)" 
-                        textAnchor="middle" 
-                        dominantBaseline="middle"
-                        style={{ fontFamily: 'serif', letterSpacing: '1px' }}
-                      >
-                        DESDE 1997
-                      </text>
-                    </svg>
-                  </motion.div>
-                </motion.div>
-              </div>
-            </motion.div>
-            
-            {/* Text column with backdrop blur */}
-            <motion.div 
-              className="col-span-12 md:col-span-6"
-              initial={{ opacity: 0, y: 60 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="bg-white/[0.06] backdrop-filter backdrop-blur-[7px] p-10 md:p-14 relative border border-white/10 rounded-2xl shadow-lg">
-                <div className="text-accent uppercase tracking-[0.25em] text-xs font-medium mb-6">
-                  {language === 'pt' ? '03 — Nossa História' : '03 — Nuestra Historia'}
-                </div>
-                
-                <h2 className="text-4xl md:text-5xl xl:text-6xl font-serif leading-[1.1] mb-8 tracking-tight text-white">
-                
-                </h2>
-                
-                <motion.div 
-                  className="h-[2.5px] w-32 bg-accent mb-12 rounded-full shadow-md"
-                  initial={{ scaleX: 0 }}
-                  whileInView={{ scaleX: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformOrigin: "left" }}
-                />
-                
-                <div className="overflow-hidden">
-                  <motion.p 
-                    className="text-white/90 leading-relaxed mb-12 text-lg"
-                    initial={{ y: 40, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    {language === 'pt' 
-                      ? 'Por mais de duas décadas, aperfeiçoamos a arte de criar mobiliário que harmoniza métodos tradicionais com design contemporâneo, resultando em peças que não apenas ocupam espaços, mas contam histórias e evocam emoções.'
-                      : 'Por más de dos décadas, hemos perfeccionado el arte de crear mobiliario que armoniza métodos tradicionales con diseño contemporáneo, resultando en piezas que no solo ocupan espacios, sino que cuentan historias y evocan emociones.'}
-                  </motion.p>
-                </div>
-                
-                {/* Dynamic CTA Button */}
+          <motion.div
+            className="absolute -bottom-20 -left-20 w-[500px] h-[500px] rounded-full bg-accent/5 blur-[100px] z-0"
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.08, 0.15, 0.08]
+            }}
+            transition={{ duration: 12, repeat: Infinity }}
+          />
+
+          <div className="relative z-10 p-12 md:p-16 lg:p-20">
+            {/* Cabeçalho da seção */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-20">
+              <div>
                 <motion.div
+                  className="text-accent uppercase tracking-[0.35em] text-xs font-light mb-6"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.8 }}
                 >
-                  <Link
-                    to="/sobre"
-                    className="group inline-flex items-center justify-center overflow-hidden relative"
-                    onMouseEnter={() => handleCtaHover(true)}
-                    onMouseLeave={() => handleCtaHover(false)}
-                  >
-                    <motion.div 
-                      className="relative z-10 bg-[#D4B798] px-8 py-4 text-black font-medium tracking-wide overflow-hidden group-hover:text-black transition-colors duration-300"
-                      whileHover={{ 
-                        scale: 1.05,
-                        transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
-                      }}
-                    >
-                      <span className="relative z-20">
-                        {language === 'pt' ? 'Conheça nossa história' : 'Conozca nuestra historia'}
-                      </span>
-                      
-                      {/* Radial expansion background effect */}
-                      <motion.div 
-                        className="absolute inset-0 z-10 bg-white/20"
-                        initial={{ scale: 0, opacity: 0 }}
-                        whileHover={{ 
-                          scale: 1.5, 
-                          opacity: 1,
-                          transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
-                        }}
-                        style={{ borderRadius: "50%", transformOrigin: "center" }}
-                      />
-                      
-                      {/* Glow effect on hover */}
-                      <motion.div 
-                        className="absolute inset-0 z-0"
-                        initial={{ boxShadow: "0 0 0 rgba(212, 183, 152, 0)" }}
-                        whileHover={{ 
-                          boxShadow: "0 0 20px rgba(212, 183, 152, 0.6)" 
-                        }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </motion.div>
-                    
-                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <motion.div
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          duration: 1.5, 
-                          ease: "easeInOut" 
-                        }}
-                      >
-                        <ArrowRight size={16} className="text-black" />
-                      </motion.div>
-                    </div>
-                  </Link>
+                  {language === 'pt' ? 'Materiais Selecionados' : 'Materiales Seleccionados'}
                 </motion.div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-        
-        {/* Subtle overlay pattern */}
-        <div className="absolute inset-0 bg-black/40 z-1 pointer-events-none opacity-40 mix-blend-overlay rounded-t-3xl" 
-          style={{ 
-            backgroundImage: 'url(/images/noise-pattern.png)', 
-            backgroundSize: '120px 120px' 
-          }}
-        />
-      </motion.section>
-      
-      {/* Client Testimonials with Smooth Scroll */}
-      <motion.section 
-        className="py-32 md:py-44 bg-gradient-to-b from-[#f5ede4] via-[#f0ece7] to-[#e6e1db] relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        {/* Background accent elements */}
-        <div className="absolute inset-0 opacity-[0.045] pointer-events-none">
-          <div className="h-full w-full grid grid-cols-6 md:grid-cols-12">
-            {Array(12).fill(0).map((_, i) => (
-              <div key={`grid-col-${i}`} className="h-full border-l border-black/30 last:border-r"></div>
-            ))}
-          </div>
-        </div>
-        
-        <motion.div 
-          className="absolute top-0 left-0 w-screen h-[1px] bg-black/5"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-          style={{ transformOrigin: 'left' }}
-        />
-        
-        <div className="container mx-auto px-6 md:px-20">
-          {/* Section header */}
-          <div className="mb-24 max-w-2xl">
-            <div className="text-accent uppercase tracking-[0.28em] text-sm font-semibold mb-8">
-              {language === 'pt' ? '04 — Depoimentos' : '04 — Testimonios'}
-            </div>
-            <h2 className="text-5xl md:text-6xl font-serif leading-[1.1] mb-10 tracking-tight text-neutral-900/90">
-              <div className="overflow-hidden">
-                <motion.div
-                  initial={{ y: 80 }}
-                  whileInView={{ y: 0 }}
+                <motion.h2
+                  className="text-5xl md:text-6xl font-serif font-light leading-tight text-white"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 1, delay: 0.1 }}
                 >
-                  {language === 'pt' ? 'O que nossos clientes dizem' : 'Lo que dicen nuestros clientes'}
-                </motion.div>
-              </div>
-            </h2>
-            <motion.div 
-              className="h-[2.5px] w-32 bg-accent mb-10 rounded-full shadow-md"
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              style={{ transformOrigin: "left" }}
-            />
-          </div>
-          
-          {/* Testimonials scroll container */}
-          <div 
-            className="overflow-y-auto max-h-[650px] pb-8 hide-scrollbar"
-            style={{ scrollSnapType: 'y mandatory' }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  className="relative bg-white shadow-lg rounded-sm p-10 scroll-snap-align-start overflow-hidden"
-                  initial={{ opacity: 0, x: -50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.5, delay: 0.1 * index }}
-                  whileHover={{ 
-                    y: -8,
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
-                  }}
-                >
-                  {/* Decorative elements */}
-                  <motion.div 
-                    className="absolute -top-10 -right-10 w-20 h-20 rounded-full bg-accent/5"
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                  />
-                  
-                  <motion.div 
-                    className="absolute -bottom-14 -left-14 w-28 h-28 rounded-full bg-accent/3"
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                  />
-                  
-                  {/* Quote icon with elegant animation */}
-                  <div className="relative mb-8">
-                    <motion.div 
-                      className="font-serif text-7xl text-accent/10 absolute -top-6 -left-2"
-                      initial={{ opacity: 0, y: -20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: 0.1 }}
-                    >
-                      "
-                    </motion.div>
-                    <motion.div 
-                      className="h-px w-16 bg-accent/40"
+                  <span className="block">{language === 'pt' ? 'Biblioteca de' : 'Biblioteca de'}</span>
+                  <span className="text-6xl md:text-7xl relative">
+                    {language === 'pt' ? 'Materiais Nobres' : 'Materiales Nobles'}
+                    <motion.div
+                      className="absolute -bottom-4 left-0 h-[1.5px] w-40 bg-gradient-to-r from-accent via-accent/50 to-transparent"
                       initial={{ scaleX: 0 }}
                       whileInView={{ scaleX: 1 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: 0.3 }}
+                      transition={{ duration: 1.2, delay: 0.4 }}
                       style={{ transformOrigin: "left" }}
                     />
-                  </div>
-                  
-                  {/* Premium quote text with letter animation */}
-                  <div className="relative z-10">
-                    <p className="text-neutral-700 text-lg italic mb-10 leading-relaxed">
-                      {testimonial.quote[language].split('').map((char, i) => (
-                        <motion.span
-                          key={i}
-                          initial={{ opacity: 0 }}
-                          whileInView={{ opacity: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ 
-                            duration: 0.01, 
-                            delay: 0.3 + (i * 0.005),
-                            ease: "linear"
-                          }}
-                          style={{ 
-                            display: char === ' ' ? 'inline' : 'inline-block',
-                            whiteSpace: char === ' ' ? 'pre' : 'normal'
-                          }}
-                        >
-                          {char}
-                        </motion.span>
-                      ))}
-                    </p>
-                  </div>
-                  
-                  {/* Client info with enhanced layout */}
-                  <div className="flex items-center relative z-10">
-                    <motion.div 
-                      className="w-16 h-16 rounded-full overflow-hidden mr-5 border-2 border-accent/10"
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.5 }}
+                  </span>
+                </motion.h2>
+              </div>
+
+              <motion.p
+                className="text-white/70 md:max-w-md mt-10 md:mt-0 text-sm md:text-base leading-relaxed font-sans"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                {language === 'pt'
+                  ? 'Cada material é cuidadosamente selecionado e utilizado com precisão artesanal para criar móveis que transcendem gerações, combinando beleza atemporal e durabilidade excepcional.'
+                  : 'Cada material es cuidadosamente seleccionado y utilizado con precisión artesanal para crear muebles que trascienden generaciones, combinando belleza atemporal y durabilidad excepcional.'}
+              </motion.p>
+            </div>
+
+            {/* Abas de categoria de material com estilo premium */}
+            <div className="mb-16">
+              <motion.div
+                className="flex space-x-4 overflow-x-auto hide-scrollbar pb-6 -mx-2 px-2"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                {[
+                  { id: 'woods', icon: 'wood-grain', label: { pt: 'Madeiras', es: 'Maderas' } },
+                  { id: 'fabrics', icon: 'fabric', label: { pt: 'Tecidos', es: 'Tejidos' } },
+                  { id: 'metals', icon: 'metal', label: { pt: 'Metais', es: 'Metales' } },
+                  { id: 'stones', icon: 'stone', label: { pt: 'Pedras', es: 'Piedras' } },
+                  { id: 'glass', icon: 'glass', label: { pt: 'Vidros', es: 'Vidrios' } },
+                  { id: 'leathers', icon: 'leather', label: { pt: 'Couros', es: 'Cueros' } },
+                  { id: 'finishes', icon: 'finish', label: { pt: 'Acabamentos', es: 'Acabados' } },
+                ].map((category, index) => (
+                  <motion.button
+                    key={category.id}
+                    className={`px-6 py-4 rounded-full whitespace-nowrap text-sm flex items-center space-x-3 ${activeCategory === index
+                      ? 'bg-accent text-black font-normal shadow-lg shadow-accent/20'
+                      : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/5'
+                      } transition-all duration-300`}
+                    onClick={() => setActiveCategory(index)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 + (index * 0.08) }}
+                  >
+                    <span className="w-4 h-4 flex items-center justify-center">
+                      <MaterialIcon type={category.icon} active={activeCategory === index} />
+                    </span>
+                    <span className="font-sans tracking-wide">{category.label[language === 'pt' ? 'pt' : 'es']}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Layout aprimorado: grade de materiais e visualização 3D */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+              {/* Visualização 3D - 7 colunas em desktop */}
+              <div className="lg:col-span-7 order-1 lg:order-1">
+                <motion.div
+                  className="bg-black/40 rounded-xl overflow-hidden backdrop-blur-md border border-white/10 h-[550px] relative"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <Canvas shadows camera={{ position: [0, 0, 5], fov: 40 }}>
+                    <ambientLight intensity={0.5} />
+                    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.8} castShadow />
+                    <directionalLight position={[-5, 5, -5]} intensity={0.7} />
+                    <ContactShadows
+                      position={[0, -1.5, 0]}
+                      opacity={0.7}
+                      scale={10}
+                      blur={2}
+                      far={4}
+                    />
+                    <OrbitControls
+                      enableZoom={false}
+                      enablePan={false}
+                      maxPolarAngle={Math.PI / 2}
+                      minPolarAngle={Math.PI / 4}
+                      autoRotate={autoRotate}
+                      autoRotateSpeed={2}
+                    />
+                    <EnhancedMaterialShowcase
+                      material={activeMaterial || allMaterials.woods[0]}
+                      currentFurniture={currentFurniture}
+                    />
+                    <Environment preset="apartment" />
+                  </Canvas>
+
+                  {/* Controles de visualização premium */}
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-4 z-10">
+                    <motion.div
+                      className="bg-black/70 backdrop-blur-xl px-6 py-3 rounded-full flex items-center space-x-5 border border-white/5"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
                     >
-                      <motion.img 
-                        src={testimonial.image} 
-                        alt={testimonial.name} 
-                        className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.15 }}
-                        transition={{ duration: 0.4 }}
-                      />
+                      <motion.button
+                        className="bg-white/10 hover:bg-accent hover:text-black text-white/90 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
+                        onClick={() => setAutoRotate(!autoRotate)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {autoRotate ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                            <path d="M11 8l6 4-6 4V8z"></path>
+                          </svg>
+                        )}
+                      </motion.button>
+
+                      <div className="h-6 w-px bg-white/10"></div>
+
+                      <div className="flex space-x-3">
+                        {furnitureLabels.map((item, idx) => (
+                          <motion.button
+                            key={idx}
+                            onClick={() => setCurrentFurniture(idx)}
+                            className={`px-4 py-2 rounded-full text-xs flex items-center space-x-2 transition-all duration-300 ${currentFurniture === idx
+                                ? 'bg-accent text-black font-medium shadow-md shadow-accent/10'
+                                : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
+                              }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.7 + (idx * 0.1) }}
+                          >
+                            <span className="font-sans tracking-wide">{item[language === 'pt' ? 'pt' : 'en']}</span>
+                          </motion.button>
+                        ))}
+                      </div>
                     </motion.div>
-                    <div>
-                      <motion.div 
-                        className="font-serif text-xl text-neutral-900 mb-1"
+                  </div>
+
+                  {/* Sobreposição de título de material */}
+                  <div className="absolute top-8 left-8 right-8 flex justify-between z-10">
+                    <motion.div
+                      className="bg-black/60 backdrop-blur-xl px-5 py-3 rounded-full border border-white/5"
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <h3 className="text-white font-serif font-light text-lg">
+                        {activeMaterial?.name || (language === 'pt' ? 'Selecione um material' : 'Seleccione un material')}
+                      </h3>
+                    </motion.div>
+
+                    {activeMaterial && (
+                      <motion.div
+                        className="bg-accent text-black px-5 py-3 rounded-full flex items-center space-x-2 shadow-lg shadow-accent/20"
                         initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 }}
                       >
-                        {testimonial.name}
-                      </motion.div>
-                      <motion.div 
-                        className="text-neutral-500 text-sm flex items-center"
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.7 }}
-                      >
-                        <span className="mr-2">{testimonial.title}</span>
-                        <motion.div 
-                          className="h-[4px] w-[4px] rounded-full bg-accent"
-                          animate={{ scale: [1, 1.5, 1] }}
-                          transition={{ 
-                            duration: 2, 
-                            repeat: Infinity,
-                            ease: "easeInOut" 
+                        <span className="text-sm font-sans font-medium">{language === 'pt' ? 'Visualizando' : 'Visualizando'}</span>
+                        <motion.div
+                          className="w-2 h-2 bg-black/70 rounded-full"
+                          animate={{
+                            scale: [1, 1.5, 1],
+                            opacity: [0.5, 1, 0.5]
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity
                           }}
                         />
                       </motion.div>
-                    </div>
+                    )}
                   </div>
-                  
-                  {/* Subtle accent border */}
-                  <motion.div 
-                    className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-accent/50 to-accent/10"
-                    initial={{ scaleX: 0 }}
-                    whileInView={{ scaleX: 1 }}
+                </motion.div>
+
+                {/* Descrição do material */}
+                {activeMaterial && (
+                  <motion.div
+                    className="mt-5 bg-black/30 backdrop-blur-md p-6 rounded-lg border border-white/5"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <p className="text-white/80 text-sm leading-relaxed font-sans">
+                      {activeMaterial.description[language === 'pt' ? 'pt' : 'es']}
+                    </p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Grade de materiais - 5 colunas em desktop */}
+              <div className="lg:col-span-5 order-2 lg:order-2">
+                <div className="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/5 h-full">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-white text-xl font-serif font-light">
+                      {activeCategory === 0 && (language === 'pt' ? 'Madeiras Premium' : 'Maderas Premium')}
+                      {activeCategory === 1 && (language === 'pt' ? 'Tecidos Exclusivos' : 'Tejidos Exclusivos')}
+                      {activeCategory === 2 && (language === 'pt' ? 'Metais Nobres' : 'Metales Nobles')}
+                      {activeCategory === 3 && (language === 'pt' ? 'Pedras Naturais' : 'Piedras Naturales')}
+                      {activeCategory === 4 && (language === 'pt' ? 'Vidros Especiais' : 'Vidrios Especiales')}
+                      {activeCategory === 5 && (language === 'pt' ? 'Couros Selecionados' : 'Cueros Seleccionados')}
+                      {activeCategory === 6 && (language === 'pt' ? 'Acabamentos Refinados' : 'Acabados Refinados')}
+                    </h3>
+                    <span className="text-accent/90 text-xs px-4 py-1.5 rounded-full border border-accent/20 font-sans">
+                      {activeCategory === 0 && allMaterials.woods.length}
+                      {activeCategory === 1 && allMaterials.fabrics.length}
+                      {activeCategory === 2 && allMaterials.metals.length}
+                      {activeCategory === 3 && allMaterials.stones.length}
+                      {language === 'pt' ? ' opções' : ' opciones'}
+                    </span>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`category-${activeCategory}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="h-[400px] overflow-y-auto hide-scrollbar pr-2"
+                    >
+                      {/* Grid de cartões de material */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Materiais de madeira */}
+                        {activeCategory === 0 && allMaterials.woods.map((material, idx) => (
+                          <MaterialCard
+                            key={material.id}
+                            material={material}
+                            isActive={activeMaterial?.id === material.id}
+                            onSelect={() => setActiveMaterial({ ...material, furniture: material.furniture || null, properties: material.properties || null })}
+                            index={idx}
+                          />
+                        ))}
+
+                        {/* Materiais de tecido */}
+                        {activeCategory === 1 && allMaterials.fabrics.map((material, idx) => (
+                          <MaterialCard
+                            key={material.id}
+                            material={material}
+                            isActive={activeMaterial?.id === material.id}
+                            onSelect={() => setActiveMaterial(material)}
+                            index={idx}
+                            isFabric={true}
+                          />
+                        ))}
+
+                        {/* Materiais de metal */}
+                        {activeCategory === 2 && allMaterials.metals.map((material, idx) => (
+                          <MaterialCard
+                            key={material.id}
+                            material={material}
+                            isActive={activeMaterial?.id === material.id}
+                            onSelect={() => setActiveMaterial(material)}
+                            index={idx}
+                          />
+                        ))}
+
+                        {/* Materiais de pedra */}
+                        {activeCategory === 3 && allMaterials.stones.map((material, idx) => (
+                          <MaterialCard
+                            key={material.id}
+                            material={material}
+                            isActive={activeMaterial?.id === material.id}
+                            onSelect={() => setActiveMaterial(material)}
+                            index={idx}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Seção de informações do material */}
+                  <motion.div
+                    className="mt-8 pt-8 border-t border-white/5"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {activeMaterial ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                          <div className="flex items-baseline justify-between mb-4">
+                            <h4 className="text-accent text-xs uppercase tracking-widest font-sans">
+                              {language === 'pt' ? 'Especificações' : 'Especificaciones'}
+                            </h4>
+                            <span className="text-white/40 text-xs font-sans">{activeMaterial.origin}</span>
+                          </div>
+
+                          <div className="space-y-5 mt-6">
+                            {[
+                              { name: language === 'pt' ? 'Durabilidade' : 'Durabilidad', value: activeMaterial.durability },
+                              { name: language === 'pt' ? 'Manutenção' : 'Mantenimiento', value: activeMaterial.maintenance },
+                              { name: language === 'pt' ? 'Sustentabilidade' : 'Sostenibilidad', value: activeMaterial.sustainability }
+                            ].map((stat, i) => (
+                              <div key={i}>
+                                <div className="flex justify-between text-xs mb-2 font-sans">
+                                  <span className="text-white/80">{stat.name}</span>
+                                  <div className="flex space-x-1.5">
+                                    {[1, 2, 3, 4, 5].map(dot => (
+                                      <motion.div
+                                        key={dot}
+                                        className={`w-1.5 h-1.5 rounded-full ${dot <= stat.value ? 'bg-accent' : 'bg-white/10'}`}
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.5 + (i * 0.1) + (dot * 0.05) }}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                  <motion.div
+                                    className="h-full"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${(stat.value / 5) * 100}%` }}
+                                    transition={{ duration: 0.7, delay: 0.2 + (i * 0.1) }}
+                                    style={{
+                                      background: "linear-gradient(90deg, rgba(211,161,126,0.7) 0%, rgba(211,161,126,1) 50%, rgba(211,161,126,0.7) 100%)"
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="text-accent text-xs uppercase tracking-widest font-sans mb-4">
+                            {language === 'pt' ? 'Aplicações Ideais' : 'Aplicaciones Ideales'}
+                          </h4>
+                          <ul className="mt-4 space-y-3">
+                            {activeMaterial.applications.map((app, i) => (
+                              <motion.li
+                                key={i}
+                                className="flex items-center text-white/80 text-sm font-sans"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.3 + (i * 0.1) }}
+                              >
+                                <motion.div
+                                  className="w-1.5 h-1.5 rounded-full bg-accent mr-3"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ delay: 0.4 + (i * 0.1) }}
+                                />
+                                {app[language === 'pt' ? 'pt' : 'en']}
+                              </motion.li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-white/60 py-6 font-sans italic">
+                        {language === 'pt' ? 'Selecione um material para ver detalhes' : 'Seleccione un material para ver detalles'}
+                      </div>
+                    )}
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+
+            {/* Barra de ação aprimorada */}
+            <motion.div
+              className="mt-16 bg-gradient-to-r from-black/50 via-black/40 to-black/30 rounded-lg backdrop-blur-xl flex flex-col sm:flex-row justify-between items-center border border-white/5 overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <div className="p-8 border-r border-white/5 flex-1">
+                <h4 className="text-white text-lg font-serif font-light flex items-center">
+                  <motion.div
+                    className="w-5 h-5 flex items-center justify-center mr-3 text-accent"
+                    animate={{ rotate: [0, 180] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10-10-4.5 10-10 10z"></path>
+                      <path d="M12 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6-6-2.7 6-6 6z"></path>
+                      <path d="M12 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path>
+                    </svg>
+                  </motion.div>
+                  {language === 'pt' ? 'Materiais Certificados' : 'Materiales Certificados'}
+                </h4>
+                <p className="text-white/70 text-sm mt-3 max-w-xl font-sans leading-relaxed">
+                  {language === 'pt'
+                    ? 'Trabalhamos apenas com fornecedores certificados que garantem a origem sustentável e a qualidade excepcional dos materiais.'
+                    : 'Trabajamos solo con proveedores certificados que garantizan el origen sostenible y la calidad excepcional de los materiales.'}
+                </p>
+              </div>
+
+              <div className="p-8 flex flex-col items-center sm:items-end">
+                <div className="flex space-x-4 mb-6">
+                  {[
+                    { id: 'fsc', name: 'FSC Certified' },
+                    { id: 'greenguard', name: 'GREENGUARD' },
+                    { id: 'eco', name: 'ECO Certified' }
+                  ].map((cert, idx) => (
+                    <motion.div
+                      key={cert.id}
+                      className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center border border-white/10"
+                      whileHover={{ y: -5, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + (idx * 0.1) }}
+                    >
+                      <img
+                        src={`/images/certifications/${cert.id}.svg`}
+                        alt={cert.name}
+                        className="w-8 h-8 object-contain opacity-70"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+
+                <button
+                  className="bg-accent hover:bg-accent/90 px-6 py-3.5 text-black text-sm font-medium rounded-full transition-colors duration-300 flex items-center space-x-2 group shadow-lg shadow-accent/10"
+                  onClick={() => scrollToSection(contactRef)}
+                >
+                  <span className="font-sans tracking-wide">{language === 'pt' ? 'Consultar disponibilidade' : 'Consultar disponibilidad'}</span>
+                  <motion.div
+                    className="transition-transform group-hover:translate-x-1"
+                    animate={{ x: [0, 3, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatType: "loop" }}
+                  >
+                    <ChevronRight size={14} />
+                  </motion.div>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+        <motion.section
+          ref={processRef}
+          className="py-40 md:py-60 bg-gradient-to-b from-[#0C0A09] to-[#171413] relative overflow-hidden"
+        >
+          {/* Elementos de background aprimorados */}
+          <motion.div
+            className="absolute inset-0 opacity-5 pointer-events-none"
+            style={{
+              backgroundImage: 'url(/images/grid-pattern.svg)',
+              backgroundSize: '50px',
+            }}
+          />
+
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-accent/30 to-transparent opacity-50"></div>
+          <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-transparent via-accent/30 to-transparent opacity-50"></div>
+
+          {/* Elementos circulares ornamentais */}
+          <motion.div
+            className="absolute -top-32 -right-32 w-64 h-64 border border-accent/10 rounded-full opacity-20"
+            initial={{ scale: 0.8, rotate: 45 }}
+            whileInView={{ scale: 1, rotate: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+          />
+
+          <motion.div
+            className="absolute -bottom-40 -left-40 w-80 h-80 border border-accent/10 rounded-full opacity-20"
+            initial={{ scale: 0.8, rotate: -45 }}
+            whileInView={{ scale: 1, rotate: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+          />
+
+          <div className="container mx-auto px-6 md:px-24 relative z-10">
+            {/* Cabeçalho da seção */}
+            <div className="text-center max-w-4xl mx-auto mb-24">
+              <motion.div
+                className="text-accent uppercase tracking-[0.35em] text-xs font-light mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+              >
+                {language === 'pt' ? 'Metodologia' : 'Metodología'}
+              </motion.div>
+
+              <motion.h2
+                className="text-5xl md:text-6xl font-serif font-light text-white mb-6"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1 }}
+              >
+                {language === 'pt' ? 'Nosso Processo Criativo' : 'Nuestro Proceso Creativo'}
+              </motion.h2>
+
+              <motion.div
+                className="h-[1.5px] w-20 bg-accent mx-auto mb-12"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, delay: 0.4 }}
+              />
+
+              <motion.p
+                className="text-white/70 text-lg max-w-2xl mx-auto font-sans leading-relaxed"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                {language === 'pt'
+                  ? 'Da concepção à execução, cada etapa é tratada com extremo cuidado para garantir que cada peça expresse perfeitamente a visão do cliente e os valores da nossa marca.'
+                  : 'De la concepción a la ejecución, cada etapa se trata con sumo cuidado para garantizar que cada pieza exprese perfectamente la visión del cliente y los valores de nuestra marca.'}
+              </motion.p>
+            </div>
+
+            {/* Etapas do processo aprimoradas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+              {[
+                {
+                  number: '01',
+                  title: { pt: 'Consulta & Briefing', es: 'Consulta & Briefing' },
+                  description: { pt: 'Entendemos suas necessidades, preferências e visão para o projeto.', es: 'Entendemos sus necesidades, preferencias y visión para el proyecto.' },
+                  icon: 'chat-bubble'
+                },
+                {
+                  number: '02',
+                  title: { pt: 'Design & Conceito', es: 'Diseño & Concepto' },
+                  description: { pt: 'Criamos esboços e visualizações 3D para materializar a proposta.', es: 'Creamos bocetos y visualizaciones 3D para materializar la propuesta.' },
+                  icon: 'pen-tool'
+                },
+                {
+                  number: '03',
+                  title: { pt: 'Produção Artesanal', es: 'Producción Artesanal' },
+                  description: { pt: 'Nossas mãos experientes transformam os materiais selecionados em peças únicas.', es: 'Nuestras manos expertas transforman los materiales seleccionados en piezas únicas.' },
+                  icon: 'hammer'
+                },
+                {
+                  number: '04',
+                  title: { pt: 'Entrega & Instalação', es: 'Entrega & Instalación' },
+                  description: { pt: 'Garantimos que cada detalhe seja perfeito em seu espaço final.', es: 'Garantizamos que cada detalle sea perfecto en su espacio final.' },
+                  icon: 'package'
+                }
+              ].map((step, index) => (
+                <motion.div
+                  key={index}
+                  className={`relative p-8 ${activeProcessStep === index ? 'bg-accent/5 border border-accent/20' : 'bg-white/5 border border-white/5'} rounded-xl backdrop-blur-sm transition-all duration-500`}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.1 * index }}
+                >
+                  {/* Número da etapa */}
+                  <motion.div
+                    className={`absolute -top-5 -right-5 w-14 h-14 rounded-full flex items-center justify-center text-lg font-serif ${activeProcessStep === index ? 'bg-accent text-black' : 'bg-white/10 text-white/90'} transition-all duration-500`}
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    style={{ transformOrigin: "left" }}
-                  />
+                    transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.2 + (0.1 * index) }}
+                  >
+                    {step.number}
+                  </motion.div>
+
+                  {/* Ícone */}
+                  <div className={`h-16 w-16 rounded-full ${activeProcessStep === index ? 'bg-accent/20' : 'bg-white/5'} flex items-center justify-center mb-6 transition-all duration-500`}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={activeProcessStep === index ? "#D4B798" : "rgba(255,255,255,0.7)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      {step.icon === 'chat-bubble' && (
+                        <>
+                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </>
+                      )}
+                      {step.icon === 'pen-tool' && (
+                        <>
+                          <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                          <path d="M2 2l7.586 7.586"></path>
+                          <circle cx="11" cy="11" r="2"></circle>
+                        </>
+                      )}
+                      {step.icon === 'hammer' && (
+                        <>
+                          <path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"></path>
+                          <path d="M17.64 15L22 10.64"></path>
+                          <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"></path>
+                        </>
+                      )}
+                      {step.icon === 'package' && (
+                        <>
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                          <polyline points="3.29 7 12 12 20.71 7"></polyline>
+                          <line x1="12" y1="22" x2="12" y2="12"></line>
+                        </>
+                      )}
+                    </svg>
+                  </div>
+
+                  {/* Título e descrição */}
+                  <h3 className={`text-xl mb-4 font-serif font-light ${activeProcessStep === index ? 'text-accent' : 'text-white'} transition-colors duration-500`}>
+                    {step.title[language === 'pt' ? 'pt' : 'es']}
+                  </h3>
+
+                  <p className="text-white/70 font-sans leading-relaxed">
+                    {step.description[language === 'pt' ? 'pt' : 'es']}
+                  </p>
+
+                  {/* Indicador ativo */}
+                  {activeProcessStep === index && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 0.5 }}
+                      style={{ transformOrigin: 'left' }}
+                    />
+                  )}
                 </motion.div>
               ))}
             </div>
           </div>
-        </div>
-      </motion.section>
+        </motion.section>
       
-      {/* Premium Contact Section */}
-      <motion.section 
-        ref={contactRef}
-        className="py-40 md:py-64 overflow-hidden relative bg-gradient-to-b from-[#181617] via-[#23201C] to-[#1a1713]"
-        onViewportEnter={() => setIsInView({...isInView, contact: true})}
-      >
-        {/* Dynamic background with layered gradients */}
-        <motion.div 
-          className="absolute inset-0 z-0"
-          style={{ 
-            background: 'radial-gradient(circle at 30% 40%, rgba(0,0,0,0.8), rgba(0,0,0,0.95))',
-            y: useTransform(scrollY, [0, 1000], ['0%', '5%'])
-          }}
-        />
-        
-        <motion.div 
-          className="absolute inset-0 z-1 opacity-10"
-          style={{ 
-            backgroundImage: 'url(/images/texture-pattern.png)',
-            backgroundSize: '200px',
-            y: useTransform(scrollY, [0, 500], ['0%', '-5%'])
-          }}
-        />
-        
-        {/* Accent elements with parallax */}
-        <motion.div 
-          className="absolute top-[10%] right-[5%] w-[300px] h-[300px] opacity-5 hidden lg:block"
-          initial={{ opacity: 0, rotate: 25 }}
-          whileInView={{ opacity: 0.05, rotate: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
-          style={{ 
-            y: useTransform(scrollY, [0, 500], ['0%', '-10%'])
-          }}
+        {/* About Section with Dynamic Parallax */}
+        <motion.section
+          ref={aboutRef}
+          className="py-40 md:py-72 overflow-hidden relative bg-gradient-to-b from-[#1a1713]/95 to-[#23201C]/70"
+          onViewportEnter={() => setIsInView({ ...isInView, about: true })}
         >
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            <circle cx="50" cy="50" r="48" stroke="white" strokeWidth="0.2" fill="none" />
-            <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="0.1" fill="none" />
-          </svg>
-        </motion.div>
-        
-        <div className="container relative z-10 mx-auto px-6 md:px-20">
-          <div className="grid grid-cols-12 gap-y-20 md:gap-x-20">
-            {/* Form column */}
-            <motion.div 
-              className="col-span-12 md:col-span-7"
-              initial={{ opacity: 0, y: 60 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="bg-white/[0.07] backdrop-filter backdrop-blur-[8px] p-10 md:p-14 relative border border-white/10 rounded-2xl shadow-lg">
-                <div className="text-accent uppercase tracking-[0.25em] text-xs font-medium mb-6">
-                  {language === 'pt' ? '05 — Contato' : '05 — Contacto'}
+          {/* Parallax background image */}
+          <motion.div
+            className="absolute inset-0 z-0"
+            style={{
+              y: useTransform(smoothAboutProgress, [0, 1], ['-10%', '10%']),
+              scale: useTransform(smoothAboutProgress, [0, 1], [1.1, 1])
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40 z-10"></div>
+            <img
+              src="/images/atelier-background.jpg"
+              alt="Atelier background"
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+
+          {/* Content wrapper with backdrop blur */}
+          <div className="container relative z-10 mx-auto px-6 md:px-20">
+            <div className="grid grid-cols-12 gap-y-20 md:gap-x-16 items-center">
+              {/* Image column */}
+              <motion.div
+                className="col-span-12 md:col-span-6"
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="relative">
+                  <motion.div
+                    className="absolute -top-6 -left-6 w-full h-full border border-accent/20"
+                    initial={{ opacity: 0, x: -20, y: -20 }}
+                    whileInView={{ opacity: 1, x: 0, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  />
+
+                  <div className="overflow-hidden">
+                    <motion.img
+                      src="/images/craftsman-working.jpg"
+                      alt="Craftsman at work"
+                      className="w-full h-full object-cover"
+                      initial={{ scale: 1.2 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </div>
+
+                  <motion.div
+                    className="absolute -bottom-6 -right-6 w-24 h-24 bg-accent/10 backdrop-blur-sm flex items-center justify-center"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    >
+                      <svg viewBox="0 0 100 100" width="64" height="64">
+                        <path
+                          d="M 50 0 A 50 50 0 1 1 49.9 0"
+                          fill="none"
+                          stroke="rgba(211, 161, 126, 0.8)"
+                          strokeWidth="0.5"
+                          strokeDasharray="0.5 3"
+                        />
+                        <text
+                          x="50%"
+                          y="50%"
+                          fontSize="8"
+                          fill="rgba(211, 161, 126, 0.9)"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          style={{ fontFamily: 'serif', letterSpacing: '1px' }}
+                        >
+                          DESDE 1997
+                        </text>
+                      </svg>
+                    </motion.div>
+                  </motion.div>
                 </div>
-                
-                <h2 className="text-4xl md:text-5xl font-serif leading-[1.1] mb-8 tracking-tight text-white">
+              </motion.div>
+
+              {/* Text column with backdrop blur */}
+              <motion.div
+                className="col-span-12 md:col-span-6"
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="bg-white/[0.06] backdrop-filter backdrop-blur-[7px] p-10 md:p-14 relative border border-white/10 rounded-2xl shadow-lg">
+                  <div className="text-accent uppercase tracking-[0.25em] text-xs font-medium mb-6">
+                    {language === 'pt' ? '03 — Nossa História' : '03 — Nuestra Historia'}
+                  </div>
+
+                  <h2 className="text-4xl md:text-5xl xl:text-6xl font-serif leading-[1.1] mb-8 tracking-tight text-white">
+
+                  </h2>
+
+                  <motion.div
+                    className="h-[2.5px] w-32 bg-accent mb-12 rounded-full shadow-md"
+                    initial={{ scaleX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ transformOrigin: "left" }}
+                  />
+
                   <div className="overflow-hidden">
-                    <motion.div
-                      initial={{ y: 80 }}
-                      whileInView={{ y: 0 }}
+                    <motion.p
+                      className="text-white/90 leading-relaxed mb-12 text-lg"
+                      initial={{ y: 40, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      {language === 'pt' ? 'Vamos conversar sobre' : 'Hablemos sobre'}
-                    </motion.div>
+                      {language === 'pt'
+                        ? 'Por mais de duas décadas, aperfeiçoamos a arte de criar mobiliário que harmoniza métodos tradicionais com design contemporâneo, resultando em peças que não apenas ocupam espaços, mas contam histórias e evocam emoções.'
+                        : 'Por más de dos décadas, hemos perfeccionado el arte de crear mobiliario que armoniza métodos tradicionales con diseño contemporáneo, resultando en piezas que no solo ocupan espacios, sino que cuentan historias y evocan emociones.'}
+                    </motion.p>
                   </div>
-                  <div className="overflow-hidden">
-                    <motion.div
-                      initial={{ y: 80 }}
-                      whileInView={{ y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      {language === 'pt' ? 'seu próximo projeto' : 'su próximo proyecto'}
-                    </motion.div>
-                  </div>
-                </h2>
-                
-                <motion.div 
-                  className="h-[2.5px] w-32 bg-accent mb-12 rounded-full shadow-md"
-                  initial={{ scaleX: 0 }}
-                  whileInView={{ scaleX: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformOrigin: "left" }}
-                />
-                
-                {/* Premium Contact Form */}
-                <motion.form
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                  className="space-y-8"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-white/70 text-sm block">
-                        {language === 'pt' ? 'Nome' : 'Nombre'}
-                      </label>
-                      <input 
-                        type="text" 
-                        className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-accent/50 transition-colors duration-300"
-                        placeholder={language === 'pt' ? 'Seu nome' : 'Su nombre'}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-white/70 text-sm block">
-                        {language === 'pt' ? 'Email' : 'Email'}
-                      </label>
-                      <input 
-                        type="email" 
-                        className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-accent/50 transition-colors duration-300"
-                        placeholder={language === 'pt' ? 'Seu email' : 'Su email'}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-white/70 text-sm block">
-                      {language === 'pt' ? 'Assunto' : 'Asunto'}
-                    </label>
-                    <select className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-accent/50 transition-colors duration-300 appearance-none">
-                      <option value="" className="bg-neutral-900">
-                        {language === 'pt' ? 'Selecione um assunto' : 'Seleccione un asunto'}
-                      </option>
-                      <option value="projeto" className="bg-neutral-900">
-                        {language === 'pt' ? 'Novo projeto' : 'Nuevo proyecto'}
-                      </option>
-                      <option value="orçamento" className="bg-neutral-900">
-                        {language === 'pt' ? 'Solicitar orçamento' : 'Solicitar presupuesto'}
-                      </option>
-                      <option value="parceria" className="bg-neutral-900">
-                        {language === 'pt' ? 'Parceria' : 'Asociación'}
-                      </option>
-                      <option value="outro" className="bg-neutral-900">
-                        {language === 'pt' ? 'Outro assunto' : 'Otro asunto'}
-                      </option>
-                    </select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-white/70 text-sm block">
-                      {language === 'pt' ? 'Mensagem' : 'Mensaje'}
-                    </label>
-                    <textarea 
-                      className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 h-36 focus:outline-none focus:border-accent/50 transition-colors duration-300 resize-none"
-                      placeholder={language === 'pt' ? 'Sua mensagem' : 'Su mensaje'}
-                    ></textarea>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <button
-                      type="submit"
+
+                  {/* Dynamic CTA Button */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Link
+                      to="/sobre"
                       className="group inline-flex items-center justify-center overflow-hidden relative"
                       onMouseEnter={() => handleCtaHover(true)}
                       onMouseLeave={() => handleCtaHover(false)}
                     >
-                      <motion.div 
-                        className="relative z-10 bg-[#D4B798] px-10 py-4 text-black font-medium tracking-wide overflow-hidden group-hover:text-black transition-colors duration-300"
-                        whileHover={{ 
+                      <motion.div
+                        className="relative z-10 bg-[#D4B798] px-8 py-4 text-black font-medium tracking-wide overflow-hidden group-hover:text-black transition-colors duration-300"
+                        whileHover={{
                           scale: 1.05,
                           transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
                         }}
                       >
                         <span className="relative z-20">
-                          {language === 'pt' ? 'Enviar mensagem' : 'Enviar mensaje'}
+                          {language === 'pt' ? 'Conheça nossa história' : 'Conozca nuestra historia'}
                         </span>
-                        
+
                         {/* Radial expansion background effect */}
-                        <motion.div 
+                        <motion.div
                           className="absolute inset-0 z-10 bg-white/20"
                           initial={{ scale: 0, opacity: 0 }}
-                          whileHover={{ 
-                            scale: 1.5, 
+                          whileHover={{
+                            scale: 1.5,
                             opacity: 1,
                             transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
                           }}
                           style={{ borderRadius: "50%", transformOrigin: "center" }}
                         />
-                        
+
                         {/* Glow effect on hover */}
-                        <motion.div 
+                        <motion.div
                           className="absolute inset-0 z-0"
                           initial={{ boxShadow: "0 0 0 rgba(212, 183, 152, 0)" }}
-                          whileHover={{ 
-                          boxShadow: "0 0 20px rgba(212, 183, 152, 0.6)" 
+                          whileHover={{
+                            boxShadow: "0 0 20px rgba(212, 183, 152, 0.6)"
                           }}
                           transition={{ duration: 0.3 }}
                         />
                       </motion.div>
-                      
+
                       <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <motion.div
                           animate={{ x: [0, 5, 0] }}
-                          transition={{ 
-                            repeat: Infinity, 
-                            duration: 1.5, 
-                            ease: "easeInOut" 
+                          transition={{
+                            repeat: Infinity,
+                            duration: 1.5,
+                            ease: "easeInOut"
                           }}
                         >
                           <ArrowRight size={16} className="text-black" />
                         </motion.div>
                       </div>
-                    </button>
-                  </div>
-                </motion.form>
-              </div>
-            </motion.div>
-            
-            {/* Info column */}
-            <motion.div 
-              className="col-span-12 md:col-span-5"
-              initial={{ opacity: 0, y: 60 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="h-full flex flex-col">
-                <div className="bg-white/[0.06] backdrop-filter backdrop-blur-[8px] p-10 md:p-14 border border-white/10 mb-8 rounded-2xl shadow-lg">
-                  <h3 className="text-white font-medium text-lg mb-8">
-                    {language === 'pt' ? 'Informações de contato' : 'Información de contacto'}
-                  </h3>
-                  
-                  <ul className="space-y-8">
-                    <motion.li 
-                      className="flex items-start space-x-4"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.4 }}
-                    >
-                      <div className="mt-1 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4B798" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                          <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-white/50 text-sm mb-1">
-                          {language === 'pt' ? 'Endereço' : 'Dirección'}
-                        </div>
-                        <div className="text-white leading-relaxed">
-                          Rua Augusta, 1500<br />
-                          São Paulo, SP, Brasil
-                        </div>
-                      </div>
-                    </motion.li>
-                    
-                    <motion.li 
-                      className="flex items-start space-x-4"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.5 }}
-                    >
-                      <div className="mt-1 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4B798" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-white/50 text-sm mb-1">
-                          {language === 'pt' ? 'Telefone' : 'Teléfono'}
-                        </div>
-                        <div className="text-white">
-                          +55 (11) 3456-7890
-                        </div>
-                      </div>
-                    </motion.li>
-                    
-                    <motion.li 
-                      className="flex items-start space-x-4"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: 0.6 }}
-                    >
-                      <div className="mt-1 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4B798" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                          <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-white/50 text-sm mb-1">
-                          Email
-                        </div>
-                        <div className="text-white">
-                          contato@afettodesign.com
-                        </div>
-                      </div>
-                    </motion.li>
-                  </ul>
+                    </Link>
+                  </motion.div>
                 </div>
-                
-                {/* Working hours */}
-                <div className="bg-white/[0.06] backdrop-filter backdrop-blur-[8px] p-10 md:p-14 border border-white/10 flex-grow rounded-2xl shadow-lg">
-                  <h3 className="text-white font-medium text-lg mb-8">
-                    {language === 'pt' ? 'Horário de atendimento' : 'Horario de atención'}
-                  </h3>
-                  
-                  <ul className="space-y-4">
-                    <motion.li 
-                      className="flex justify-between text-white/80"
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: 0.7 }}
-                    >
-                      <span>{language === 'pt' ? 'Segunda - Sexta' : 'Lunes - Viernes'}</span>
-                      <span>9:00 - 18:00</span>
-                    </motion.li>
-                    <motion.li 
-                      className="flex justify-between text-white/80"
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: 0.8 }}
-                    >
-                      <span>{language === 'pt' ? 'Sábado' : 'Sábado'}</span>
-                      <span>10:00 - 15:00</span>
-                    </motion.li>
-                    <motion.li 
-                      className="flex justify-between text-white/80"
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: 0.9 }}
-                    >
-                      <span>{language === 'pt' ? 'Domingo' : 'Domingo'}</span>
-                      <span>{language === 'pt' ? 'Fechado' : 'Cerrado'}</span>
-                    </motion.li>
-                  </ul>
-                  
-                  <motion.div 
-                    className="mt-12"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Subtle overlay pattern */}
+          <div className="absolute inset-0 bg-black/40 z-1 pointer-events-none opacity-40 mix-blend-overlay rounded-t-3xl"
+            style={{
+              backgroundImage: 'url(/images/noise-pattern.png)',
+              backgroundSize: '120px 120px'
+            }}
+          />
+        </motion.section>
+
+        {/* Client Testimonials with Smooth Scroll */}
+        <motion.section
+          className="py-32 md:py-44 bg-gradient-to-b from-[#f5ede4] via-[#f0ece7] to-[#e6e1db] relative overflow-hidden"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          {/* Background accent elements */}
+          <div className="absolute inset-0 opacity-[0.045] pointer-events-none">
+            <div className="h-full w-full grid grid-cols-6 md:grid-cols-12">
+              {Array(12).fill(0).map((_, i) => (
+                <div key={`grid-col-${i}`} className="h-full border-l border-black/30 last:border-r"></div>
+              ))}
+            </div>
+          </div>
+
+          <motion.div
+            className="absolute top-0 left-0 w-screen h-[1px] bg-black/5"
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+            style={{ transformOrigin: 'left' }}
+          />
+
+          <div className="container mx-auto px-6 md:px-20">
+            {/* Section header */}
+            <div className="mb-24 max-w-2xl">
+              <div className="text-accent uppercase tracking-[0.28em] text-sm font-semibold mb-8">
+                {language === 'pt' ? '04 — Depoimentos' : '04 — Testimonios'}
+              </div>
+              <h2 className="text-5xl md:text-6xl font-serif leading-[1.1] mb-10 tracking-tight text-neutral-900/90">
+                <div className="overflow-hidden">
+                  <motion.div
+                    initial={{ y: 80 }}
+                    whileInView={{ y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: 1 }}
+                    transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <div className="text-white/50 text-sm mb-3">
-                      {language === 'pt' ? 'Siga-nos nas redes sociais' : 'Síganos en las redes sociales'}
+                    {language === 'pt' ? 'O que nossos clientes dizem' : 'Lo que dicen nuestros clientes'}
+                  </motion.div>
+                </div>
+              </h2>
+              <motion.div
+                className="h-[2.5px] w-32 bg-accent mb-10 rounded-full shadow-md"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                style={{ transformOrigin: "left" }}
+              />
+            </div>
+
+            {/* Testimonials scroll container */}
+            <div
+              className="overflow-y-auto max-h-[650px] pb-8 hide-scrollbar"
+              style={{ scrollSnapType: 'y mandatory' }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+                {testimonials.map((testimonial, index) => (
+                  <motion.div
+                    key={index}
+                    className="relative bg-white shadow-lg rounded-sm p-10 scroll-snap-align-start overflow-hidden"
+                    initial={{ opacity: 0, x: -50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.5, delay: 0.1 * index }}
+                    whileHover={{
+                      y: -8,
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                      transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
+                    }}
+                  >
+                    {/* Decorative elements */}
+                    <motion.div
+                      className="absolute -top-10 -right-10 w-20 h-20 rounded-full bg-accent/5"
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: 0.2 }}
+                    />
+
+                    <motion.div
+                      className="absolute -bottom-14 -left-14 w-28 h-28 rounded-full bg-accent/3"
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: 0.3 }}
+                    />
+
+                    {/* Quote icon with elegant animation */}
+                    <div className="relative mb-8">
+                      <motion.div
+                        className="font-serif text-7xl text-accent/10 absolute -top-6 -left-2"
+                        initial={{ opacity: 0, y: -20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.1 }}
+                      >
+                        "
+                      </motion.div>
+                      <motion.div
+                        className="h-px w-16 bg-accent/40"
+                        initial={{ scaleX: 0 }}
+                        whileInView={{ scaleX: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                        style={{ transformOrigin: "left" }}
+                      />
                     </div>
-                    <div className="flex space-x-4">
-                      {['instagram', 'facebook', 'pinterest', 'linkedin'].map((social, idx) => (
-                        <motion.a
-                          key={social}
-                          href={`https://${social}.com`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-[#D4B798] hover:border-[#D4B798] transition-colors duration-300"
-                          whileHover={{ 
-                            scale: 1.2,
-                            backgroundColor: 'rgba(212, 183, 152, 0.1)',
-                            transition: { duration: 0.3 }
-                          }}
+
+                    {/* Premium quote text with letter animation */}
+                    <div className="relative z-10">
+                      <p className="text-neutral-700 text-lg italic mb-10 leading-relaxed">
+                        {testimonial.quote[language].split('').map((char, i) => (
+                          <motion.span
+                            key={i}
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ once: true }}
+                            transition={{
+                              duration: 0.01,
+                              delay: 0.3 + (i * 0.005),
+                              ease: "linear"
+                            }}
+                            style={{
+                              display: char === ' ' ? 'inline' : 'inline-block',
+                              whiteSpace: char === ' ' ? 'pre' : 'normal'
+                            }}
+                          >
+                            {char}
+                          </motion.span>
+                        ))}
+                      </p>
+                    </div>
+
+                    {/* Client info with enhanced layout */}
+                    <div className="flex items-center relative z-10">
+                      <motion.div
+                        className="w-16 h-16 rounded-full overflow-hidden mr-5 border-2 border-accent/10"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                      >
+                        <motion.img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-full h-full object-cover"
+                          whileHover={{ scale: 1.15 }}
+                          transition={{ duration: 0.4 }}
+                        />
+                      </motion.div>
+                      <div>
+                        <motion.div
+                          className="font-serif text-xl text-neutral-900 mb-1"
                           initial={{ opacity: 0, x: 20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.3, delay: 1 + (idx * 0.1) }}
+                          transition={{ duration: 0.5, delay: 0.6 }}
                         >
-                          <Icon name={social} size={16} />
-                        </motion.a>
-                      ))}
+                          {testimonial.name}
+                        </motion.div>
+                        <motion.div
+                          className="text-neutral-500 text-sm flex items-center"
+                          initial={{ opacity: 0, x: 20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.7 }}
+                        >
+                          <span className="mr-2">{testimonial.title}</span>
+                          <motion.div
+                            className="h-[4px] w-[4px] rounded-full bg-accent"
+                            animate={{ scale: [1, 1.5, 1] }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                          />
+                        </motion.div>
+                      </div>
                     </div>
+
+                    {/* Subtle accent border */}
+                    <motion.div
+                      className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-accent/50 to-accent/10"
+                      initial={{ scaleX: 0 }}
+                      whileInView={{ scaleX: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.8, delay: 0.2 }}
+                      style={{ transformOrigin: "left" }}
+                    />
                   </motion.div>
-                </div>
+                ))}
               </div>
-            </motion.div>
+            </div>
           </div>
-        </div>
-        
-        {/* Subtle overlay pattern */}
-        <div className="absolute inset-0 bg-black/40 z-1 pointer-events-none opacity-40 mix-blend-overlay rounded-t-3xl" 
-          style={{ 
-            backgroundImage: 'url(/images/noise-pattern.png)', 
-            backgroundSize: '120px 120px' 
-          }}
-        />
-      </motion.section>
-      
-      {/* Elegant Footer with Parallax Effect */}
-      <motion.footer 
-        className="relative bg-neutral-900 overflow-hidden rounded-t-3xl shadow-2xl"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        {/* Parallax background */}
-        <motion.div 
-          className="absolute inset-0 z-0 opacity-20"
-          style={{ 
-            y: useTransform(scrollY, [0, 1000], ['0%', '10%'])
-          }}
+        </motion.section>
+
+        {/* Premium Contact Section */}
+        <motion.section
+          ref={contactRef}
+          className="py-40 md:py-64 overflow-hidden relative bg-gradient-to-b from-[#181617] via-[#23201C] to-[#1a1713]"
+          onViewportEnter={() => setIsInView({ ...isInView, contact: true })}
         >
-          <img 
-            src="/images/footer-background.jpg" 
-            alt="Footer background" 
-            className="w-full h-full object-cover"
+          {/* Dynamic background with layered gradients */}
+          <motion.div
+            className="absolute inset-0 z-0"
+            style={{
+              background: 'radial-gradient(circle at 30% 40%, rgba(0,0,0,0.8), rgba(0,0,0,0.95))',
+              y: useTransform(scrollY, [0, 1000], ['0%', '5%'])
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/70 to-transparent"></div>
-        </motion.div>
-        
-        {/* Top border accent */}
-        <div className="relative z-10 border-t-2 border-[#D4B798]/40 w-full"></div>
-        
-        {/* Main footer content */}
-        <div className="container mx-auto px-6 md:px-20 relative z-10 py-20 md:py-28">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-14 md:gap-10">
-            {/* Brand column */}
-            <div className="md:col-span-4">
-              <Link to="/" className="inline-block mb-6">
-                <div className="flex items-center">
-                  <svg width="50" height="24" viewBox="0 0 120 24" className="text-white">
-                    <path
-                      d="M10 4L18 12L10 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M30 6H50"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M30 12H60"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M30 18H50"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="ml-3 font-serif tracking-wider text-xl text-white">afetto</span>
-                </div>
-              </Link>
-              
-              <p className="text-white/60 mb-8 leading-relaxed">
-                {language === 'pt' 
-                  ? 'Criando experiências de design excepcionais, onde cada peça conta uma história única de artesanato e inovação.' 
-                  : 'Creando experiencias de diseño excepcionales, donde cada pieza cuenta una historia única de artesanía e innovación.'}
-              </p>
-              
-              {/* Social media links */}
-              <div className="flex space-x-4">
-                {['instagram', 'facebook', 'pinterest', 'linkedin'].map((social) => (
-                  <motion.a
-                    key={social}
-                    href={`https://${social}.com`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-[#D4B798] hover:border-[#D4B798] transition-colors duration-300"
-                    whileHover={{ 
-                      scale: 1.2,
-                      backgroundColor: 'rgba(212, 183, 152, 0.1)',
-                      transition: { duration: 0.3 }
-                    }}
+
+          <motion.div
+            className="absolute inset-0 z-1 opacity-10"
+            style={{
+              backgroundImage: 'url(/images/texture-pattern.png)',
+              backgroundSize: '200px',
+              y: useTransform(scrollY, [0, 500], ['0%', '-5%'])
+            }}
+          />
+
+          {/* Accent elements with parallax */}
+          <motion.div
+            className="absolute top-[10%] right-[5%] w-[300px] h-[300px] opacity-5 hidden lg:block"
+            initial={{ opacity: 0, rotate: 25 }}
+            whileInView={{ opacity: 0.05, rotate: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              y: useTransform(scrollY, [0, 500], ['0%', '-10%'])
+            }}
+          >
+            <svg viewBox="0 0 100 100" className="w-full h-full">
+              <circle cx="50" cy="50" r="48" stroke="white" strokeWidth="0.2" fill="none" />
+              <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="0.1" fill="none" />
+            </svg>
+          </motion.div>
+
+          <div className="container relative z-10 mx-auto px-6 md:px-20">
+            <div className="grid grid-cols-12 gap-y-20 md:gap-x-20">
+              {/* Form column */}
+              <motion.div
+                className="col-span-12 md:col-span-7"
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="bg-white/[0.07] backdrop-filter backdrop-blur-[8px] p-10 md:p-14 relative border border-white/10 rounded-2xl shadow-lg">
+                  <div className="text-accent uppercase tracking-[0.25em] text-xs font-medium mb-6">
+                    {language === 'pt' ? '05 — Contato' : '05 — Contacto'}
+                  </div>
+
+                  <h2 className="text-4xl md:text-5xl font-serif leading-[1.1] mb-8 tracking-tight text-white">
+                    <div className="overflow-hidden">
+                      <motion.div
+                        initial={{ y: 80 }}
+                        whileInView={{ y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        {language === 'pt' ? 'Vamos conversar sobre' : 'Hablemos sobre'}
+                      </motion.div>
+                    </div>
+                    <div className="overflow-hidden">
+                      <motion.div
+                        initial={{ y: 80 }}
+                        whileInView={{ y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        {language === 'pt' ? 'seu próximo projeto' : 'su próximo proyecto'}
+                      </motion.div>
+                    </div>
+                  </h2>
+
+                  <motion.div
+                    className="h-[2.5px] w-32 bg-accent mb-12 rounded-full shadow-md"
+                    initial={{ scaleX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ transformOrigin: "left" }}
+                  />
+
+                  {/* Premium Contact Form */}
+                  <motion.form
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.3 }}
+                    className="space-y-8"
                   >
-                    <Icon name={social} size={16} />
-                  </motion.a>
-                ))}
-              </div>
-            </div>
-            
-            {/* Navigation links */}
-            <div className="md:col-span-2">
-              <h3 className="text-white font-medium tracking-wider uppercase text-sm mb-6">{language === 'pt' ? 'Links' : 'Enlaces'}</h3>
-              <ul className="space-y-4">
-                {[
-                  { label: { pt: 'Início', es: 'Inicio' }, path: '/' },
-                  { label: { pt: 'Projetos', es: 'Proyectos' }, path: '/portfolio' },
-                  { label: { pt: 'Sobre', es: 'Sobre' }, path: '/sobre' },
-                  { label: { pt: 'Processo', es: 'Proceso' }, path: '/processo' },
-                  { label: { pt: 'Contato', es: 'Contacto' }, path: '/contato' }
-                ].map((link) => (
-                  <li key={link.path}>
-                    <Link 
-                      to={link.path} 
-                      className="text-white/60 hover:text-[#D4B798] transition-colors duration-300 group relative"
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-white/70 text-sm block">
+                          {language === 'pt' ? 'Nome' : 'Nombre'}
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-accent/50 transition-colors duration-300"
+                          placeholder={language === 'pt' ? 'Seu nome' : 'Su nombre'}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-white/70 text-sm block">
+                          {language === 'pt' ? 'Email' : 'Email'}
+                        </label>
+                        <input
+                          type="email"
+                          className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-accent/50 transition-colors duration-300"
+                          placeholder={language === 'pt' ? 'Seu email' : 'Su email'}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-white/70 text-sm block">
+                        {language === 'pt' ? 'Assunto' : 'Asunto'}
+                      </label>
+                      <select className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 focus:outline-none focus:border-accent/50 transition-colors duration-300 appearance-none">
+                        <option value="" className="bg-neutral-900">
+                          {language === 'pt' ? 'Selecione um assunto' : 'Seleccione un asunto'}
+                        </option>
+                        <option value="projeto" className="bg-neutral-900">
+                          {language === 'pt' ? 'Novo projeto' : 'Nuevo proyecto'}
+                        </option>
+                        <option value="orçamento" className="bg-neutral-900">
+                          {language === 'pt' ? 'Solicitar orçamento' : 'Solicitar presupuesto'}
+                        </option>
+                        <option value="parceria" className="bg-neutral-900">
+                          {language === 'pt' ? 'Parceria' : 'Asociación'}
+                        </option>
+                        <option value="outro" className="bg-neutral-900">
+                          {language === 'pt' ? 'Outro assunto' : 'Otro asunto'}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-white/70 text-sm block">
+                        {language === 'pt' ? 'Mensagem' : 'Mensaje'}
+                      </label>
+                      <textarea
+                        className="w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white px-4 py-3 h-36 focus:outline-none focus:border-accent/50 transition-colors duration-300 resize-none"
+                        placeholder={language === 'pt' ? 'Sua mensagem' : 'Su mensaje'}
+                      ></textarea>
+                    </div>
+
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        className="group inline-flex items-center justify-center overflow-hidden relative"
+                        onMouseEnter={() => handleCtaHover(true)}
+                        onMouseLeave={() => handleCtaHover(false)}
+                      >
+                        <motion.div
+                          className="relative z-10 bg-[#D4B798] px-10 py-4 text-black font-medium tracking-wide overflow-hidden group-hover:text-black transition-colors duration-300"
+                          whileHover={{
+                            scale: 1.05,
+                            transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+                          }}
+                        >
+                          <span className="relative z-20">
+                            {language === 'pt' ? 'Enviar mensagem' : 'Enviar mensaje'}
+                          </span>
+
+                          {/* Radial expansion background effect */}
+                          <motion.div
+                            className="absolute inset-0 z-10 bg-white/20"
+                            initial={{ scale: 0, opacity: 0 }}
+                            whileHover={{
+                              scale: 1.5,
+                              opacity: 1,
+                              transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+                            }}
+                            style={{ borderRadius: "50%", transformOrigin: "center" }}
+                          />
+
+                          {/* Glow effect on hover */}
+                          <motion.div
+                            className="absolute inset-0 z-0"
+                            initial={{ boxShadow: "0 0 0 rgba(212, 183, 152, 0)" }}
+                            whileHover={{
+                              boxShadow: "0 0 20px rgba(212, 183, 152, 0.6)"
+                            }}
+                            transition={{ duration: 0.3 }}
+                          />
+                        </motion.div>
+
+                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <motion.div
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{
+                              repeat: Infinity,
+                              duration: 1.5,
+                              ease: "easeInOut"
+                            }}
+                          >
+                            <ArrowRight size={16} className="text-black" />
+                          </motion.div>
+                        </div>
+                      </button>
+                    </div>
+                  </motion.form>
+                </div>
+              </motion.div>
+
+              {/* Info column */}
+              <motion.div
+                className="col-span-12 md:col-span-5"
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="h-full flex flex-col">
+                  <div className="bg-white/[0.06] backdrop-filter backdrop-blur-[8px] p-10 md:p-14 border border-white/10 mb-8 rounded-2xl shadow-lg">
+                    <h3 className="text-white font-medium text-lg mb-8">
+                      {language === 'pt' ? 'Informações de contato' : 'Información de contacto'}
+                    </h3>
+
+                    <ul className="space-y-8">
+                      <motion.li
+                        className="flex items-start space-x-4"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                      >
+                        <div className="mt-1 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4B798" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="text-white/50 text-sm mb-1">
+                            {language === 'pt' ? 'Endereço' : 'Dirección'}
+                          </div>
+                          <div className="text-white leading-relaxed">
+                            Rua Augusta, 1500<br />
+                            São Paulo, SP, Brasil
+                          </div>
+                        </div>
+                      </motion.li>
+
+                      <motion.li
+                        className="flex items-start space-x-4"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                      >
+                        <div className="mt-1 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4B798" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="text-white/50 text-sm mb-1">
+                            {language === 'pt' ? 'Telefone' : 'Teléfono'}
+                          </div>
+                          <div className="text-white">
+                            +55 (11) 3456-7890
+                          </div>
+                        </div>
+                      </motion.li>
+
+                      <motion.li
+                        className="flex items-start space-x-4"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.6 }}
+                      >
+                        <div className="mt-1 w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4B798" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="text-white/50 text-sm mb-1">
+                            Email
+                          </div>
+                          <div className="text-white">
+                            contato@afettodesign.com
+                          </div>
+                        </div>
+                      </motion.li>
+                    </ul>
+                  </div>
+
+                  {/* Working hours */}
+                  <div className="bg-white/[0.06] backdrop-filter backdrop-blur-[8px] p-10 md:p-14 border border-white/10 flex-grow rounded-2xl shadow-lg">
+                    <h3 className="text-white font-medium text-lg mb-8">
+                      {language === 'pt' ? 'Horário de atendimento' : 'Horario de atención'}
+                    </h3>
+
+                    <ul className="space-y-4">
+                      <motion.li
+                        className="flex justify-between text-white/80"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: 0.7 }}
+                      >
+                        <span>{language === 'pt' ? 'Segunda - Sexta' : 'Lunes - Viernes'}</span>
+                        <span>9:00 - 18:00</span>
+                      </motion.li>
+                      <motion.li
+                        className="flex justify-between text-white/80"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: 0.8 }}
+                      >
+                        <span>{language === 'pt' ? 'Sábado' : 'Sábado'}</span>
+                        <span>10:00 - 15:00</span>
+                      </motion.li>
+                      <motion.li
+                        className="flex justify-between text-white/80"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: 0.9 }}
+                      >
+                        <span>{language === 'pt' ? 'Domingo' : 'Domingo'}</span>
+                        <span>{language === 'pt' ? 'Fechado' : 'Cerrado'}</span>
+                      </motion.li>
+                    </ul>
+
+                    <motion.div
+                      className="mt-12"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: 1 }}
                     >
-                      <span>{link.label[language]}</span>
-                      <span className="absolute bottom-0 left-0 w-full h-[1px] bg-[#D4B798] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Latest projects */}
-            <div className="md:col-span-3">
-              <h3 className="text-white font-medium tracking-wider uppercase text-sm mb-6">{language === 'pt' ? 'Últimos Projetos' : 'Últimos Proyectos'}</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {featuredProjects.slice(0, 4).map((project) => (
-                  <Link key={project.id} to={`/projeto/${project.slug}`} className="block overflow-hidden">
-                    <motion.div 
-                      className="w-full aspect-square relative"
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <img 
-                        src={project.image} 
-                        alt={project.title} 
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <Plus size={20} className="text-white" />
+                      <div className="text-white/50 text-sm mb-3">
+                        {language === 'pt' ? 'Siga-nos nas redes sociais' : 'Síganos en las redes sociales'}
+                      </div>
+                      <div className="flex space-x-4">
+                        {['instagram', 'facebook', 'pinterest', 'linkedin'].map((social, idx) => (
+                          <motion.a
+                            key={social}
+                            href={`https://${social}.com`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-[#D4B798] hover:border-[#D4B798] transition-colors duration-300"
+                            whileHover={{
+                              scale: 1.2,
+                              backgroundColor: 'rgba(212, 183, 152, 0.1)',
+                              transition: { duration: 0.3 }
+                            }}
+                            initial={{ opacity: 0, x: 20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.3, delay: 1 + (idx * 0.1) }}
+                          >
+                            <Icon name={social} size={16} />
+                          </motion.a>
+                        ))}
                       </div>
                     </motion.div>
-                  </Link>
-                ))}
-              </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-            
-            {/* Contact info */}
-            <div className="md:col-span-3">
-              <h3 className="text-white font-medium tracking-wider uppercase text-sm mb-6">{language === 'pt' ? 'Contato' : 'Contacto'}</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start space-x-3">
-                  <div className="mt-1 text-[#D4B798]">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
+          </div>
+
+          {/* Subtle overlay pattern */}
+          <div className="absolute inset-0 bg-black/40 z-1 pointer-events-none opacity-40 mix-blend-overlay rounded-t-3xl"
+            style={{
+              backgroundImage: 'url(/images/noise-pattern.png)',
+              backgroundSize: '120px 120px'
+            }}
+          />
+        </motion.section>
+
+        {/* Elegant Footer with Parallax Effect */}
+        <motion.footer
+          className="relative bg-neutral-900 overflow-hidden rounded-t-3xl shadow-2xl"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          {/* Parallax background */}
+          <motion.div
+            className="absolute inset-0 z-0 opacity-20"
+            style={{
+              y: useTransform(scrollY, [0, 1000], ['0%', '10%'])
+            }}
+          >
+            <img
+              src="/images/footer-background.jpg"
+              alt="Footer background"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/70 to-transparent"></div>
+          </motion.div>
+
+          {/* Top border accent */}
+          <div className="relative z-10 border-t-2 border-[#D4B798]/40 w-full"></div>
+
+          {/* Main footer content */}
+          <div className="container mx-auto px-6 md:px-20 relative z-10 py-20 md:py-28">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-14 md:gap-10">
+              {/* Brand column */}
+              <div className="md:col-span-4">
+                <Link to="/" className="inline-block mb-6">
+                  <div className="flex items-center">
+                    <svg width="50" height="24" viewBox="0 0 120 24" className="text-white">
+                      <path
+                        d="M10 4L18 12L10 20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M30 6H50"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M30 12H60"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M30 18H50"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
+                    <span className="ml-3 font-serif tracking-wider text-xl text-white">afetto</span>
                   </div>
-                  <span className="text-white/60">
-                    Rua Augusta, 1500<br />
-                    São Paulo, SP, Brasil
-                  </span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <div className="mt-1 text-[#D4B798]">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                    </svg>
+                </Link>
+
+                <p className="text-white/60 mb-8 leading-relaxed">
+                  {language === 'pt'
+                    ? 'Criando experiências de design excepcionais, onde cada peça conta uma história única de artesanato e inovação.'
+                    : 'Creando experiencias de diseño excepcionales, donde cada pieza cuenta una historia única de artesanía e innovación.'}
+                </p>
+
+                {/* Social media links */}
+                <div className="flex space-x-4">
+                  {['instagram', 'facebook', 'pinterest', 'linkedin'].map((social) => (
+                    <motion.a
+                      key={social}
+                      href={`https://${social}.com`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-[#D4B798] hover:border-[#D4B798] transition-colors duration-300"
+                      whileHover={{
+                        scale: 1.2,
+                        backgroundColor: 'rgba(212, 183, 152, 0.1)',
+                        transition: { duration: 0.3 }
+                      }}
+                    >
+                      <Icon name={social} size={16} />
+                    </motion.a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Navigation links */}
+              <div className="md:col-span-2">
+                <h3 className="text-white font-medium tracking-wider uppercase text-sm mb-6">{language === 'pt' ? 'Links' : 'Enlaces'}</h3>
+                <ul className="space-y-4">
+                  {[
+                    { label: { pt: 'Início', es: 'Inicio' }, path: '/' },
+                    { label: { pt: 'Projetos', es: 'Proyectos' }, path: '/portfolio' },
+                    { label: { pt: 'Sobre', es: 'Sobre' }, path: '/sobre' },
+                    { label: { pt: 'Processo', es: 'Proceso' }, path: '/processo' },
+                    { label: { pt: 'Contato', es: 'Contacto' }, path: '/contato' }
+                  ].map((link) => (
+                    <li key={link.path}>
+                      <Link
+                        to={link.path}
+                        className="text-white/60 hover:text-[#D4B798] transition-colors duration-300 group relative"
+                      >
+                        <span>{link.label[language]}</span>
+                        <span className="absolute bottom-0 left-0 w-full h-[1px] bg-[#D4B798] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Latest projects */}
+              <div className="md:col-span-3">
+                <h3 className="text-white font-medium tracking-wider uppercase text-sm mb-6">{language === 'pt' ? 'Últimos Projetos' : 'Últimos Proyectos'}</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {featuredProjects.slice(0, 4).map((project) => (
+                    <Link key={project.id} to={`/projeto/${project.slug}`} className="block overflow-hidden">
+                      <motion.div
+                        className="w-full aspect-square relative"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <img
+                          src={project.image}
+                          alt={project.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <Plus size={20} className="text-white" />
+                        </div>
+                      </motion.div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Contact info */}
+              <div className="md:col-span-3">
+                <h3 className="text-white font-medium tracking-wider uppercase text-sm mb-6">{language === 'pt' ? 'Contato' : 'Contacto'}</h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start space-x-3">
+                    <div className="mt-1 text-[#D4B798]">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                    </div>
+                    <span className="text-white/60">
+                      Rua Augusta, 1500<br />
+                      São Paulo, SP, Brasil
+                    </span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <div className="mt-1 text-[#D4B798]">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                    </div>
+                    <span className="text-white/60">+55 (11) 3456-7890</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <div className="mt-1 text-[#D4B798]">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
+                    </div>
+                    <span className="text-white/60">contato@afettodesign.com</span>
+                  </li>
+                </ul>
+
+                {/* Newsletter subscription */}
+                <div className="mt-8">
+                  <h4 className="text-white text-sm mb-4">{language === 'pt' ? 'Assine nossa newsletter' : 'Suscríbase a nuestro boletín'}</h4>
+                  <div className="flex">
+                    <input
+                      type="email"
+                      placeholder={language === 'pt' ? 'Seu email' : 'Su email'}
+                      className="bg-white/10 border border-white/20 text-white px-4 py-2 flex-grow focus:outline-none focus:border-[#D4B798]"
+                    />
+                    <button className="bg-[#D4B798] px-4 text-black font-medium hover:bg-[#D4B798]/90 transition-colors duration-300">
+                      <ArrowRight size={16} />
+                    </button>
                   </div>
-                  <span className="text-white/60">+55 (11) 3456-7890</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <div className="mt-1 text-[#D4B798]">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                      <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                  </div>
-                  <span className="text-white/60">contato@afettodesign.com</span>
-                </li>
-              </ul>
-              
-              {/* Newsletter subscription */}
-              <div className="mt-8">
-                <h4 className="text-white text-sm mb-4">{language === 'pt' ? 'Assine nossa newsletter' : 'Suscríbase a nuestro boletín'}</h4>
-                <div className="flex">
-                  <input 
-                    type="email" 
-                    placeholder={language === 'pt' ? 'Seu email' : 'Su email'} 
-                    className="bg-white/10 border border-white/20 text-white px-4 py-2 flex-grow focus:outline-none focus:border-[#D4B798]"
-                  />
-                  <button className="bg-[#D4B798] px-4 text-black font-medium hover:bg-[#D4B798]/90 transition-colors duration-300">
-                    <ArrowRight size={16} />
-                  </button>
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* Copyright section */}
-          <div className="mt-20 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
-            <div className="text-white/40 text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} Afetto Design. {language === 'pt' ? 'Todos os direitos reservados.' : 'Todos los derechos reservados.'}
+
+            {/* Copyright section */}
+            <div className="mt-20 pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
+              <div className="text-white/40 text-sm mb-4 md:mb-0">
+                © {new Date().getFullYear()} Afetto Design. {language === 'pt' ? 'Todos os direitos reservados.' : 'Todos los derechos reservados.'}
+              </div>
+              <div className="text-white/40 text-sm">
+                <Link to="/privacidade" className="hover:text-[#D4B798] transition-colors duration-300 mr-6">
+                  {language === 'pt' ? 'Política de Privacidade' : 'Política de Privacidad'}
+                </Link>
+                <Link to="/termos" className="hover:text-[#D4B798] transition-colors duration-300">
+                  {language === 'pt' ? 'Termos de Uso' : 'Términos de Uso'}
+                </Link>
+              </div>
             </div>
-            <div className="text-white/40 text-sm">
-              <Link to="/privacidade" className="hover:text-[#D4B798] transition-colors duration-300 mr-6">
-                {language === 'pt' ? 'Política de Privacidade' : 'Política de Privacidad'}
-              </Link>
-              <Link to="/termos" className="hover:text-[#D4B798] transition-colors duration-300">
-                {language === 'pt' ? 'Termos de Uso' : 'Términos de Uso'}
-              </Link>
-            </div>
           </div>
-        </div>
-      </motion.footer>
-      
-      {/* Botão CTA Premium */}
-      <Link
-        to="/contato"
-        className="group relative overflow-hidden inline-flex items-center justify-center"
-        onMouseEnter={() => handleCtaHover(true)}
-        onMouseLeave={() => handleCtaHover(false)}
-      >
-        <motion.div 
-          className="relative z-10 bg-accent px-10 py-4 text-black font-sans font-medium tracking-wider overflow-hidden"
-          whileHover={{ 
-            scale: 1.02,
-            transition: { duration: 0.3 }
-          }}
-        >
-          <span className="relative z-20">
-            {language === 'pt' ? 'Comece seu projeto' : 'Comience su proyecto'}
-          </span>
-          
-          {/* Efeito de brilho */}
-          <motion.div 
-            className="absolute inset-0 z-10"
-            initial={{ background: "linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%)", backgroundSize: "200% 200%", backgroundPosition: "0% 0%" }}
-            whileHover={{ 
-              backgroundPosition: "200% 200%"
-            }}
-            transition={{ duration: 1, repeat: Infinity }}
-          />
-          
-          {/* Efeito de expansão radial */}
-          <motion.div 
-            className="absolute inset-0 z-0 opacity-0 bg-white/20"
-            initial={{ scale: 0, opacity: 0, x: "var(--x)", y: "var(--y)" }}
-            whileHover={{ 
-              scale: 4, 
-              opacity: 0.5,
-            }}
-            transition={{ duration: 0.4 }}
-            style={{ 
-              borderRadius: "50%", 
-              transformOrigin: "center",
-              left: "calc(var(--x) - 50px)",
-              top: "calc(var(--y) - 50px)",
-              width: "100px",
-              height: "100px"
-            }}
-          />
-        </motion.div>
-        
-        {/* Ícone de seta com animação */}
-        <motion.div 
-          className="absolute right-6 opacity-0 group-hover:opacity-100 z-20"
-          initial={{ x: -10 }}
-          whileHover={{ x: 0 }}
-          transition={{ duration: 0.3 }}
+        </motion.footer>
+
+        {/* Botão CTA Premium */}
+        <Link
+          to="/contato"
+          className="group relative overflow-hidden inline-flex items-center justify-center"
+          onMouseEnter={() => handleCtaHover(true)}
+          onMouseLeave={() => handleCtaHover(false)}
         >
           <motion.div
-            animate={{ x: [0, 5, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
+            className="relative z-10 bg-accent px-10 py-4 text-black font-sans font-medium tracking-wider overflow-hidden"
+            whileHover={{
+              scale: 1.02,
+              transition: { duration: 0.3 }
+            }}
           >
-            <ArrowRight size={16} className="text-black" />
+            <span className="relative z-20">
+              {language === 'pt' ? 'Comece seu projeto' : 'Comience su proyecto'}
+            </span>
+
+            {/* Efeito de brilho */}
+            <motion.div
+              className="absolute inset-0 z-10"
+              initial={{ background: "linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%)", backgroundSize: "200% 200%", backgroundPosition: "0% 0%" }}
+              whileHover={{
+                backgroundPosition: "200% 200%"
+              }}
+              transition={{ duration: 1, repeat: Infinity }}
+            />
+
+            {/* Efeito de expansão radial */}
+            <motion.div
+              className="absolute inset-0 z-0 opacity-0 bg-white/20"
+              initial={{ scale: 0, opacity: 0, x: "var(--x)", y: "var(--y)" }}
+              whileHover={{
+                scale: 4,
+                opacity: 0.5,
+              }}
+              transition={{ duration: 0.4 }}
+              style={{
+                borderRadius: "50%",
+                transformOrigin: "center",
+                left: "calc(var(--x) - 50px)",
+                top: "calc(var(--y) - 50px)",
+                width: "100px",
+                height: "100px"
+              }}
+            />
           </motion.div>
-        </motion.div>
-        
-        {/* Sombra */}
-        <motion.div 
-          className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100"
-          initial={{ boxShadow: "0 0 0 rgba(211, 161, 126, 0)" }}
-          whileHover={{ 
-            boxShadow: "0 8px 30px rgba(211, 161, 126, 0.3)"
-          }}
-          transition={{ duration: 0.3 }}
-        />
-      </Link>
+
+          {/* Ícone de seta com animação */}
+          <motion.div
+            className="absolute right-6 opacity-0 group-hover:opacity-100 z-20"
+            initial={{ x: -10 }}
+            whileHover={{ x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              animate={{ x: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            >
+              <ArrowRight size={16} className="text-black" />
+            </motion.div>
+          </motion.div>
+
+          {/* Sombra */}
+          <motion.div
+            className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100"
+            initial={{ boxShadow: "0 0 0 rgba(211, 161, 126, 0)" }}
+            whileHover={{
+              boxShadow: "0 8px 30px rgba(211, 161, 126, 0.3)"
+            }}
+            transition={{ duration: 0.3 }}
+          />
+        </Link>
     </motion.div>
   );
-} 
+}
 export default Home;
