@@ -5,7 +5,8 @@ import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'fra
 import { 
   ArrowRight, ChevronRight, Download, FileText, PlusSquare, 
   Shield, Grid, Users, Clock, Briefcase, ChevronDown, Search,
-  ArrowUpRight, Workflow, Award, PlayCircle, DownloadCloud, X, Mail, MapPin
+  ArrowUpRight, Workflow, Award, PlayCircle, DownloadCloud, X, Mail, MapPin,
+  Linkedin, Instagram, Twitter, ArrowUp
 } from 'lucide-react';
 import LanguageContext from '../../context/LanguageContext';
 
@@ -31,6 +32,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
   const [navBackground, setNavBackground] = useState<boolean>(false);
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   // Animation scroll hooks
   const { scrollYProgress } = useScroll();
@@ -44,6 +46,19 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
   const heroOpacity = useTransform(heroScrollYProgress, [0, 1], [1, 0.3]);
   const heroTextY = useTransform(heroScrollYProgress, [0, 1], [0, 100]);
   
+  // Mouse movement effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: e.clientX,
+        y: e.clientY
+      });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   // Handle scroll for navbar background change
   useEffect(() => {
     const handleScroll = () => {
@@ -537,6 +552,30 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
       }
     })
   };
+
+  // Enhanced animation variants
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
+    }
+  };
+  
+  const slideIn = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1]
+      }
+    }
+  };
   
   // Get active catalog items based on the selected tab
   const getActiveCatalogItems = () => {
@@ -551,9 +590,20 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
       transition={{ duration: 1 }}
       className="min-h-screen bg-gradient-to-br from-[#181617] via-[#23201C] to-[#1a1713] overflow-hidden"
     >
+      {/* Premium cursor effect */}
+      <div 
+        className="fixed w-8 h-8 rounded-full bg-accent/30 blur-xl pointer-events-none z-[200] mix-blend-screen opacity-60 hidden md:block"
+        style={{
+          left: `${mousePosition.x}px`,
+          top: `${mousePosition.y}px`,
+          transform: 'translate(-50%, -50%)',
+          transition: 'transform 0.1s linear, opacity 0.3s ease'
+        }}
+      />
+
       {/* Progress bar */}
       <motion.div 
-        className="fixed top-0 left-0 right-0 h-[2px] bg-accent z-[100]"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-accent/70 via-accent to-accent/70 z-[100]"
         style={{ 
           scaleX: scrollProgress,
           transformOrigin: "0%",
@@ -563,30 +613,43 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
 
       {/* Header */}
       <motion.header 
-        className={`fixed top-0 left-0 right-0 h-[90px] z-50 flex items-center px-8 border-b transition-colors duration-500 ${
-          navBackground ? "bg-[#181617]/95 backdrop-blur-md border-white/10" : "bg-transparent border-transparent"
+        className={`fixed top-0 left-0 right-0 h-[90px] z-50 flex items-center px-8 border-b transition-all duration-500 backdrop-blur-md ${
+          navBackground ? "bg-[#181617]/95 border-white/10" : "bg-transparent border-transparent"
         }`}
       >
         <div className="container mx-auto flex justify-between items-center">
-          <Link to="/b2b" className="text-white flex items-center">
-            <svg width="50" height="24" viewBox="0 0 120 24" className="text-white">
-              <path
-                d="M10 4L18 12L10 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M30 6H50"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-            <span className="ml-3 font-serif tracking-wider text-xl">afetto</span>
+          <Link to="/b2b" className="text-white flex items-center group">
+            <motion.div 
+              whileHover={{ rotate: 10, scale: 1.1 }} 
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              className="mr-2"
+            >
+              <svg width="50" height="24" viewBox="0 0 120 24" className="text-white">
+                <path
+                  d="M10 4L18 12L10 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M30 6H50"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </motion.div>
+            <span className="ml-3 font-serif tracking-wider text-xl relative">
+              afetto
+              <motion.span
+                initial={{ width: 0 }}
+                whileHover={{ width: '100%' }}
+                className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-accent to-transparent"
+              ></motion.span>
+            </span>
             <motion.span 
               className="ml-2 text-accent text-sm border-l border-accent/30 pl-2"
               initial={{ opacity: 0 }}
@@ -599,19 +662,34 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
             <div className="relative group">
               <button className="flex items-center text-white/70 hover:text-accent transition-colors duration-300">
                 <span>{translations.header.resources[language]}</span>
-                <ChevronDown size={14} className="ml-1 opacity-70 group-hover:opacity-100" />
+                <ChevronDown size={14} className="ml-1 opacity-70 group-hover:opacity-100 transition-transform duration-300 group-hover:rotate-180" />
               </button>
               
               <div className="absolute left-0 top-full pt-5 hidden group-hover:block">
-                <div className="bg-[#1a1713]/95 backdrop-blur-md border border-white/10 p-6 rounded-md w-64 shadow-xl">
+                <div className="bg-gradient-to-b from-[#1a1713]/95 to-[#23201C]/95 backdrop-blur-md border border-white/10 p-6 rounded-sm w-64 shadow-xl shadow-black/30">
                   <div className="space-y-4">
-                    <Link to="/especificacoes-tecnicas" className="block text-white/70 hover:text-accent transition-colors duration-300">
+                    <Link to="/especificacoes-tecnicas" className="block text-white/70 hover:text-accent transition-colors duration-300 hover:translate-x-1 hover:pl-1 inline-flex items-center">
+                      <motion.span
+                        initial={{ width: 0 }}
+                        whileHover={{ width: 16 }}
+                        className="h-[1px] bg-accent mr-2"
+                      ></motion.span>
                       {translations.footer.specs[language]}
                     </Link>
-                    <Link to="/downloads" className="block text-white/70 hover:text-accent transition-colors duration-300">
+                    <Link to="/downloads" className="block text-white/70 hover:text-accent transition-colors duration-300 hover:translate-x-1 hover:pl-1 inline-flex items-center">
+                      <motion.span
+                        initial={{ width: 0 }}
+                        whileHover={{ width: 16 }}
+                        className="h-[1px] bg-accent mr-2"
+                      ></motion.span>
                       {translations.footer.downloads[language]}
                     </Link>
-                    <Link to="/projetos" className="block text-white/70 hover:text-accent transition-colors duration-300">
+                    <Link to="/projetos" className="block text-white/70 hover:text-accent transition-colors duration-300 hover:translate-x-1 hover:pl-1 inline-flex items-center">
+                      <motion.span
+                        initial={{ width: 0 }}
+                        whileHover={{ width: 16 }}
+                        className="h-[1px] bg-accent mr-2"
+                      ></motion.span>
                       {translations.header.projects[language]}
                     </Link>
                   </div>
@@ -619,24 +697,27 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               </div>
             </div>
             
-            <Link to="/catalogo-tecnico" className="text-white/70 hover:text-accent transition-colors duration-300">
+            <Link to="/catalogo-tecnico" className="text-white/70 hover:text-accent transition-colors duration-300 relative group">
               {translations.header.catalog[language]}
+              <span className="absolute -bottom-1 left-0 w-full h-px scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-gradient-to-r from-transparent via-accent to-transparent"></span>
             </Link>
             
-            <Link to="/projetos" className="text-white/70 hover:text-accent transition-colors duration-300">
+            <Link to="/projetos" className="text-white/70 hover:text-accent transition-colors duration-300 relative group">
               {translations.header.projects[language]}
+              <span className="absolute -bottom-1 left-0 w-full h-px scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-gradient-to-r from-transparent via-accent to-transparent"></span>
             </Link>
             
-            <Link to="/suporte" className="text-white/70 hover:text-accent transition-colors duration-300">
+            <Link to="/suporte" className="text-white/70 hover:text-accent transition-colors duration-300 relative group">
               {translations.header.support[language]}
+              <span className="absolute -bottom-1 left-0 w-full h-px scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-gradient-to-r from-transparent via-accent to-transparent"></span>
             </Link>
           </nav>
 
           <div className="flex items-center space-x-4">
             <motion.button
               onClick={() => setShowSearch(!showSearch)}
-              className="text-white/60 hover:text-white transition-colors duration-300 p-2"
-              whileHover={{ scale: 1.05 }}
+              className="text-white/60 hover:text-white transition-colors duration-300 p-2 bg-white/5 rounded-full backdrop-blur-sm"
+              whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
               whileTap={{ scale: 0.95 }}
             >
               <Search size={18} />
@@ -644,12 +725,15 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
             
             <Link
               to="/area-parceiro"
-              className="hidden md:flex items-center text-white border border-white/20 px-5 py-2.5 hover:bg-accent hover:border-accent hover:text-black transition-all duration-500"
+              className="hidden md:flex items-center text-white border border-white/20 px-5 py-2.5 hover:bg-accent hover:border-accent hover:text-black transition-all duration-500 group relative overflow-hidden"
             >
-              <span className="font-light tracking-wider">
+              <span className="font-light tracking-wider relative z-10">
                 {translations.header.partnerArea[language]}
               </span>
-              <ArrowUpRight size={14} className="ml-2" />
+              <motion.div
+                className="absolute inset-0 bg-accent/80 -translate-x-full group-hover:translate-x-0 transition-transform duration-500"
+              />
+              <ArrowUpRight size={14} className="ml-2 relative z-10" />
             </Link>
           </div>
         </div>
@@ -659,16 +743,21 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
       <AnimatePresence>
         {showSearch && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 z-[60] backdrop-blur-md flex items-start justify-center pt-[20vh]"
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(20px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            className="fixed inset-0 bg-black/80 z-[60] flex items-start justify-center pt-[20vh]"
           >
             <div className="container mx-auto px-6 max-w-3xl">
-              <div className="relative">
+              <motion.div 
+                className="relative"
+                initial={{ y: -30 }}
+                animate={{ y: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              >
                 <input 
                   type="text"
-                  className="w-full bg-transparent border-b-2 border-white/20 text-white text-2xl py-4 outline-none focus:border-accent transition-colors"
+                  className="w-full bg-transparent border-b-2 border-white/20 text-white text-2xl md:text-3xl py-4 outline-none focus:border-accent transition-colors"
                   placeholder={translations.header.search[language] + "..."}
                   autoFocus
                 />
@@ -678,21 +767,38 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                 >
                   <X size={24} />
                 </button>
-              </div>
+              </motion.div>
               
-              <div className="mt-8 text-white/60">
-                <p>{language === 'pt' ? 'Sugestões:' : 'Sugerencias:'}</p>
-                <div className="flex flex-wrap gap-3 mt-4">
+              <motion.div 
+                className="mt-10 text-white/60"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <p className="text-lg">{language === 'pt' ? 'Sugestões:' : 'Sugerencias:'}</p>
+                <motion.div 
+                  className="flex flex-wrap gap-3 mt-4"
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
                   {['CAD Files', 'Technical Specs', 'Executive Furniture', 'Office Lighting', 'Custom Projects'].map((tag, idx) => (
-                    <button 
+                    <motion.button 
                       key={idx}
-                      className="px-4 py-2 border border-white/20 hover:border-accent hover:text-accent rounded-full transition-colors text-sm"
+                      className="px-4 py-2 border border-white/20 hover:border-accent hover:text-accent rounded-full transition-colors text-sm relative overflow-hidden group"
+                      variants={slideIn}
+                      whileHover={{
+                        boxShadow: "0 0 15px rgba(211, 161, 126, 0.15)"
+                      }}
                     >
-                      {tag}
-                    </button>
+                      <span className="relative z-10">{tag}</span>
+                      <motion.div
+                        className="absolute inset-0 bg-white/5 -translate-x-full group-hover:translate-x-0 transition-transform duration-500"
+                      />
+                    </motion.button>
                   ))}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -705,7 +811,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center"
+            className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center backdrop-blur-md"
           >
             <div className="relative w-full max-w-5xl aspect-video">
               <iframe 
@@ -730,7 +836,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
         )}
       </AnimatePresence>
 
-      {/* Hero Section with Parallax Effects */}
+      {/* Hero Section with Enhanced Parallax Effects */}
       <section 
         ref={heroRef}
         className="relative min-h-screen flex items-center pt-28 pb-20 overflow-hidden"
@@ -740,12 +846,21 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
           style={{ scale: heroScale }}
         >
           <motion.div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/60 to-black/30 z-10"></motion.div>
+          
+          {/* Enhanced background with subtle patterns and animated gradient */}
+          <div className="absolute inset-0 opacity-20 mix-blend-overlay">
+            <div className="absolute inset-0 bg-[url('/images/texture-pattern.png')] bg-repeat"></div>
+          </div>
+          
+          <div className="absolute -left-40 top-20 w-96 h-96 rounded-full bg-accent/10 blur-[100px] animate-pulse"></div>
+          <div className="absolute -right-20 bottom-20 w-80 h-80 rounded-full bg-accent/5 blur-[120px] animate-pulse" style={{ animationDelay: "2s" }}></div>
+          
           <motion.video
             autoPlay
             muted
             loop
             playsInline
-            className="w-full h-full object-cover opacity-50"
+            className="w-full h-full object-cover opacity-60"
             style={{ opacity: heroOpacity }}
           >
             <source src="/videos/b2b-hero.mp4" type="video/mp4" />
@@ -761,7 +876,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               animate="visible"
               className="mb-6"
             >
-              <span className="inline-block text-accent text-sm tracking-[0.2em] font-light uppercase border-b border-accent/30 pb-1">
+              <span className="inline-block text-accent text-sm tracking-[0.25em] font-light uppercase border-b border-accent/30 pb-1">
                 {translations.hero.lead[language]}
               </span>
             </motion.div>
@@ -771,7 +886,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               custom={1}
               initial="hidden"
               animate="visible"
-              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif text-white mb-6 leading-tight"
+              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif text-white mb-6 leading-tight drop-shadow-lg tracking-wide"
               style={{ y: heroTextY }}
             >
               {translations.hero.title[language]}
@@ -796,11 +911,14 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
             >
               <Link
                 to="/catalogo-tecnico"
-                className="inline-flex items-center bg-accent px-8 py-4 text-black font-medium tracking-wide hover:bg-white transition-colors duration-500 group"
+                className="group inline-flex items-center bg-gradient-to-r from-accent to-accent/90 px-8 py-4 text-black font-medium tracking-wide hover:shadow-lg hover:shadow-accent/20 transition-all duration-500 relative overflow-hidden"
               >
-                <span>{translations.hero.cta[language]}</span>
+                <motion.span 
+                  className="absolute inset-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"
+                />
+                <span className="relative z-10">{translations.hero.cta[language]}</span>
                 <motion.div
-                  className="ml-3"
+                  className="ml-3 relative z-10"
                   animate={{ x: [0, 5, 0] }}
                   transition={{ repeat: Infinity, duration: 1.5, repeatDelay: 2 }}
                 >
@@ -810,21 +928,32 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               
               <Link
                 to="/consultoria"
-                className="inline-flex items-center border border-white/30 px-8 py-4 text-white tracking-wide hover:bg-white/10 transition-all duration-500"
+                className="group inline-flex items-center border border-white/30 px-8 py-4 text-white tracking-wide transition-all duration-500 relative overflow-hidden"
               >
-                <span>{translations.hero.ctaSecondary[language]}</span>
-                <ChevronRight size={16} className="ml-3" />
+                <motion.span 
+                  className="absolute inset-0 bg-white/10 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"
+                />
+                <span className="relative z-10">{translations.hero.ctaSecondary[language]}</span>
+                <ChevronRight size={16} className="ml-3 relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
               </Link>
               
               <motion.button
                 onClick={() => setShowVideoModal(true)}
-                className="inline-flex items-center text-white/80 hover:text-accent transition-colors duration-300 mt-2 sm:mt-0"
+                className="inline-flex items-center text-white/80 hover:text-accent transition-colors duration-300 mt-2 sm:mt-0 group"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="h-10 w-10 rounded-full border border-white/20 flex items-center justify-center mr-3 group-hover:border-accent/50">
-                  <PlayCircle size={16} className="text-accent" />
-                </div>
+                <motion.div 
+                  className="h-10 w-10 rounded-full border border-white/20 flex items-center justify-center mr-3 group-hover:border-accent/50 transition-colors duration-300 relative"
+                  whileHover={{ 
+                    boxShadow: "0 0 20px rgba(211, 161, 126, 0.3)",
+                  }}
+                >
+                  <motion.div 
+                    className="absolute inset-0 rounded-full bg-accent/20 scale-0 group-hover:scale-100 transition-transform duration-500"
+                  />
+                  <PlayCircle size={16} className="text-accent relative z-10" />
+                </motion.div>
                 <span className="tracking-wide">
                   {translations.hero.video[language]}
                 </span>
@@ -833,24 +962,33 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
           </div>
         </div>
         
-        {/* Scroll Indicator */}
+        {/* Enhanced Scroll Indicator */}
         <motion.div 
           className="absolute bottom-10 left-1/2 -translate-x-1/2"
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
-          <motion.div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-accent to-transparent mx-auto" />
+          <motion.div 
+            className="w-[1px] h-20 bg-gradient-to-b from-transparent via-accent/80 to-transparent mx-auto"
+            animate={{ 
+              scaleY: [0.7, 1, 0.7], 
+              opacity: [0.3, 1, 0.3] 
+            }}
+            transition={{ repeat: Infinity, duration: 2 }}
+          />
         </motion.div>
       </section>
 
-      {/* Features Grid with Animated Cards */}
+      {/* Features Grid with Enhanced Animated Cards */}
       <section 
         ref={featuresRef}
         className="py-20 relative bg-gradient-to-b from-[#1a1713]/80 to-[#1a1713]"
       >
-        {/* Background texture */}
+        {/* Enhanced Background texture */}
         <div className="absolute inset-0 opacity-5 pointer-events-none">
-          <div className="absolute inset-0 bg-[url('/images/texture-pattern.png')] bg-repeat"></div>
+          <div className="absolute inset-0 bg-[url('/images/texture-pattern.png')] bg-repeat bg-center"></div>
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/10 to-transparent"></div>
         </div>
         
         <div className="container mx-auto px-6 md:px-10 lg:px-20 relative z-10">
@@ -861,7 +999,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="text-4xl font-serif text-white mb-4"
+              className="text-4xl md:text-5xl font-serif text-white mb-4 tracking-wide"
             >
               {translations.features.title[language]}
             </motion.h2>
@@ -872,7 +1010,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="text-white/70 text-lg"
+              className="text-white/70 text-lg md:text-xl"
             >
               {translations.features.subtitle[language]}
             </motion.p>
@@ -887,18 +1025,41 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-50px" }}
-                whileHover={{ y: -8, transition: { duration: 0.3 } }}
-                className={`bg-gradient-to-br ${feature.color} backdrop-blur-sm p-8 border border-white/10 rounded-sm`}
+                whileHover={{ y: -10, transition: { duration: 0.3 } }}
+                className={`bg-gradient-to-br ${feature.color} backdrop-blur-sm p-8 border border-white/10 rounded-sm relative overflow-hidden shadow-xl shadow-black/20`}
               >
-                <div className="h-14 w-14 rounded-sm flex items-center justify-center mb-6 bg-white/5 backdrop-blur-sm">
+                {/* Animated background elements */}
+                <motion.div 
+                  className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/5 -translate-x-1/2 -translate-y-1/2 blur-[30px]"
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    opacity: [0.3, 0.5, 0.3],
+                  }}
+                  transition={{ 
+                    duration: 8, 
+                    repeat: Infinity, 
+                    delay: index * 1.3
+                  }}
+                />
+                
+                <motion.div 
+                  className="h-14 w-14 rounded-sm flex items-center justify-center mb-6 bg-white/5 backdrop-blur-sm shadow-inner"
+                  whileHover={{ 
+                    rotate: 10, 
+                    boxShadow: "0 0 20px rgba(211, 161, 126, 0.3)" 
+                  }}
+                >
                   <feature.icon size={28} className="text-accent" />
-                </div>
-                <h3 className="text-xl font-medium text-white mb-4">
+                </motion.div>
+                
+                <h3 className="text-xl md:text-2xl font-medium text-white mb-4">
                   {feature.title[language]}
                 </h3>
+                
                 <p className="text-white/70 leading-relaxed mb-6">
                   {feature.description[language]}
                 </p>
+                
                 <Link
                   to="#"
                   className="inline-flex items-center text-accent hover:text-white transition-colors duration-300 group"
@@ -919,14 +1080,19 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
         </div>
       </section>
 
-      {/* Technical Catalog Section with Tabbed Interface */}
+      {/* Technical Catalog Section with Enhanced Tabbed Interface */}
       <section 
         ref={catalogRef}
-        className="py-24 bg-[#1a1713] relative"
+        className="py-24 bg-gradient-to-b from-[#1a1713] via-[#1c1915] to-[#1a1713] relative"
       >
-        {/* Subtle grid background */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-          <div className="h-full w-full bg-[url('/images/grid-pattern.svg')] bg-repeat"></div>
+        {/* Enhanced grid background */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+            <div className="h-full w-full bg-[url('/images/grid-pattern.svg')] bg-repeat"></div>
+          </div>
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent"></div>
+          <div className="absolute -left-40 top-20 w-96 h-96 rounded-full bg-accent/5 blur-[150px]"></div>
+          <div className="absolute -right-20 bottom-20 w-80 h-80 rounded-full bg-accent/5 blur-[120px]"></div>
         </div>
         
         <div className="container mx-auto px-6 md:px-10 lg:px-20 relative z-10">
@@ -937,7 +1103,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="text-4xl md:text-5xl font-serif text-white mb-4"
+              className="text-4xl md:text-5xl font-serif text-white mb-4 tracking-wide drop-shadow-md"
             >
               {translations.catalog.title[language]}
             </motion.h2>
@@ -953,7 +1119,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               {translations.catalog.subtitle[language]}
             </motion.p>
             
-            {/* Catalog Tabs */}
+            {/* Enhanced Catalog Tabs */}
             <motion.div
               variants={fadeInUp}
               custom={2}
@@ -966,12 +1132,12 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                 <motion.button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-3 rounded-sm text-sm tracking-wider transition-colors ${
+                  className={`px-6 py-3 rounded-sm text-sm tracking-wider transition-all ${
                     activeTab === tab 
-                      ? "bg-accent text-black" 
+                      ? "bg-gradient-to-r from-accent to-accent/80 text-black shadow-lg shadow-accent/20" 
                       : "bg-white/5 text-white/70 hover:bg-white/10"
                   }`}
-                  whileHover={{ y: -2 }}
+                  whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
                   whileTap={{ y: 0 }}
                 >
                   {translations.catalog.tabs[tab as keyof typeof translations.catalog.tabs][language]}
@@ -980,7 +1146,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
             </motion.div>
           </div>
 
-          {/* Technical catalog items */}
+          {/* Enhanced Technical catalog items */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <AnimatePresence mode="wait">
               {getActiveCatalogItems().map((item, index) => (
@@ -990,7 +1156,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="group bg-white/[0.02] backdrop-blur-sm rounded-sm overflow-hidden border border-white/10"
+                  className="group bg-gradient-to-br from-white/[0.03] to-white/[0.01] backdrop-blur-sm rounded-sm overflow-hidden border border-white/10 shadow-lg shadow-black/20"
                 >
                   <div className="relative h-72 overflow-hidden">
                     <motion.div
@@ -1013,7 +1179,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                         </div>
                         <Link
                           to={`/downloads/${item.id}`}
-                          className="flex items-center text-accent bg-black/70 backdrop-blur-sm px-3 py-1.5 text-xs tracking-wider"
+                          className="flex items-center text-accent bg-black/70 backdrop-blur-sm px-3 py-1.5 text-xs tracking-wider hover:bg-accent hover:text-black transition-colors duration-300"
                         >
                           {translations.catalog.downloadCta[language]}
                           <ChevronRight size={14} className="ml-1" />
@@ -1022,14 +1188,14 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                     </div>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-medium text-white mb-2">
+                    <h3 className="text-xl md:text-2xl font-medium text-white mb-2">
                       {item.name[language]}
                     </h3>
                     <p className="text-white/60 mb-4 line-clamp-2">
                       {item.description[language]}
                     </p>
                     <div className="mb-5">
-                      <div className="text-xs uppercase tracking-wider text-white/40 mb-1.5">
+                      <div className="text-xs uppercase tracking-wider text-accent mb-1.5">
                         {language === 'pt' ? 'Especificações' : 'Especificaciones'}
                       </div>
                       <p className="text-sm text-white/80">
@@ -1038,12 +1204,17 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                     </div>
                     <Link
                       to={`/produto/${item.id}`}
-                      className="inline-flex items-center text-accent hover:text-white transition-colors duration-300 text-sm tracking-wider"
+                      className="inline-flex items-center text-accent hover:text-white transition-colors duration-300 text-sm tracking-wider group"
                     >
-                      <span className="mr-2 border-b border-accent/30 pb-0.5 hover:border-white/30">
+                      <span className="mr-2 border-b border-accent/30 pb-0.5 group-hover:border-white/30">
                         {language === 'pt' ? 'Ver detalhes técnicos' : 'Ver detalles técnicos'}
                       </span>
-                      <ArrowRight size={14} />
+                      <motion.div
+                        animate={{ x: [0, 3, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.5, repeatDelay: 1 }}
+                      >
+                        <ArrowRight size={14} />
+                      </motion.div>
                     </Link>
                   </div>
                 </motion.div>
@@ -1060,13 +1231,16 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
             >
               <Link
                 to="/catalogo-tecnico"
-                className="inline-flex items-center border border-accent px-8 py-4 text-white hover:bg-accent hover:text-black transition-all duration-300"
+                className="inline-flex items-center border border-accent px-8 py-4 text-white hover:bg-accent hover:text-black transition-all duration-300 relative overflow-hidden group"
               >
-                <span>
+                <motion.span 
+                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-accent/10 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700"
+                />
+                <span className="relative z-10">
                   {translations.catalog.viewAll[language]}
                 </span>
                 <motion.div
-                  className="ml-3"
+                  className="ml-3 relative z-10"
                   animate={{ x: [0, 5, 0] }}
                   transition={{ repeat: Infinity, duration: 1.5, repeatDelay: 2 }}
                 >
@@ -1078,13 +1252,17 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
         </div>
       </section>
       
-      {/* Process Section */}
+      {/* Process Section with Enhanced Visual Elements */}
       <section 
         ref={processRef}
-        className="py-24 bg-[#23201C] relative overflow-hidden"
+        className="py-24 bg-gradient-to-br from-[#25221E] via-[#23201C] to-[#25221E] relative overflow-hidden"
       >
         <div className="absolute -right-[30%] top-0 bottom-0 w-[60%] bg-accent/5 rounded-l-[100px] transform rotate-12"></div>
         <div className="absolute -left-[30%] bottom-0 top-0 w-[60%] bg-accent/3 rounded-r-[100px] transform -rotate-12"></div>
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent"></div>
+        <div className="absolute inset-0 opacity-10">
+          <div className="h-full w-full bg-[url('/images/dots-pattern.png')] bg-repeat bg-center"></div>
+        </div>
         
         <div className="container mx-auto px-6 md:px-10 lg:px-20 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -1094,7 +1272,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="text-4xl font-serif text-white mb-4"
+              className="text-4xl md:text-5xl font-serif text-white mb-4 tracking-wide drop-shadow-md"
             >
               {translations.process.title[language]}
             </motion.h2>
@@ -1105,7 +1283,7 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="text-white/70 text-lg"
+              className="text-white/70 text-lg md:text-xl"
             >
               {translations.process.subtitle[language]}
             </motion.p>
@@ -1122,15 +1300,15 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
                 viewport={{ once: true }}
                 className="relative"
               >
-                <div className="bg-white/5 backdrop-blur-md p-6 rounded-sm border border-white/10 h-full">
+                <div className="bg-gradient-to-br from-white/5 to-white/[0.01] backdrop-blur-md p-6 rounded-sm border border-white/10 h-full shadow-lg shadow-black/20">
                   <motion.div
-                    className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center mb-6 relative"
+                    className="h-16 w-16 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-6 relative shadow-lg shadow-accent/5"
                     whileHover={{ 
                       rotate: 5, 
                       scale: 1.1,
-                      boxShadow: "0 0 15px rgba(211, 161, 126, 0.3)" 
+                      boxShadow: "0 0 25px rgba(211, 161, 126, 0.2)" 
                     }}
-                    transition={{ type: "spring", stiffness: 200 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
                   >
                     <step.icon size={24} className="text-accent" />
                     <div className="absolute -top-3 -right-3 bg-accent h-6 w-6 rounded-full text-black text-sm font-medium flex items-center justify-center">
@@ -1176,544 +1354,8 @@ const B2BHome: React.FC<B2BHomeProps> = ({ resetUserType }) => {
           </motion.div>
         </div>
       </section>
-
-      {/* Project Showcase with Hover Effects */}
-      <section 
-        ref={showcaseRef}
-        className="py-24 bg-[#1a1713] relative"
-      >
-        <div className="container mx-auto px-6 md:px-10 lg:px-20 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <motion.h2
-              variants={fadeInUp}
-              custom={0}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="text-4xl font-serif text-white mb-4"
-            >
-              {translations.showcase.title[language]}
-            </motion.h2>
-            
-            <motion.p
-              variants={fadeInUp}
-              custom={1}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="text-white/70 text-lg"
-            >
-              {translations.showcase.subtitle[language]}
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {translations.showcase.projects.map((project, index) => (
-              <motion.div
-                key={index}
-                variants={fadeInLeft}
-                custom={index * 0.2}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                whileHover={{ y: -10 }}
-                className="group relative h-[500px] overflow-hidden rounded-sm border border-white/10"
-              >
-                <motion.div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700"
-                  style={{ backgroundImage: `url(${project.image})` }}
-                  whileHover={{ scale: 1.05 }}
-                ></motion.div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
-                
-                <div className="absolute inset-x-0 bottom-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  <h3 className="text-2xl font-serif text-white mb-3">
-                    {project.title[language]}
-                  </h3>
-                  <p className="text-white/80 mb-5">
-                    {project.description[language]}
-                  </p>
-                  
-                  <div className="grid grid-cols-3 gap-4 mb-6 group-hover:opacity-100 opacity-80 transition-opacity">
-                    <div>
-                      <div className="text-accent text-xs uppercase tracking-wider mb-1">
-                        {language === 'pt' ? 'Área' : 'Área'}
-                      </div>
-                      <div className="text-white text-sm">
-                        {project.specs.area[language]}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-accent text-xs uppercase tracking-wider mb-1">
-                        {language === 'pt' ? 'Local' : 'Ubicación'}
-                      </div>
-                      <div className="text-white text-sm">
-                        {project.specs.location[language]}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-accent text-xs uppercase tracking-wider mb-1">
-                        {language === 'pt' ? 'Parceiro' : 'Socio'}
-                      </div>
-                      <div className="text-white text-sm">
-                        {project.specs.partnership[language]}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Link
-                    to={`/projetos/${index + 1}`}
-                    className="inline-flex items-center text-accent hover:text-white transition-colors duration-300"
-                  >
-                    <span className="mr-2 border-b border-accent/30 pb-0.5 hover:border-white/30">
-                      {language === 'pt' ? 'Ver detalhes do projeto' : 'Ver detalles del proyecto'}
-                    </span>
-                    <ArrowUpRight size={14} />
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-12">
-            <motion.div
-              variants={scaleIn}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              <Link
-                to="/projetos"
-                className="inline-flex items-center border border-white/20 px-8 py-4 text-white hover:bg-white/10 transition-all duration-300"
-              >
-                <span>
-                  {translations.showcase.viewMore[language]}
-                </span>
-                <ArrowRight size={16} className="ml-3" />
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section 
-        ref={testimonialsRef}
-        className="py-24 bg-[#23201C] relative overflow-hidden"
-      >
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent"></div>
-        
-        <div className="container mx-auto px-6 md:px-10 lg:px-20 relative z-10">
-          <motion.h2
-            variants={fadeInUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-4xl font-serif text-white mb-16 text-center"
-          >
-            {translations.testimonials.title[language]}
-          </motion.h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {translations.testimonials.items.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                variants={scaleIn}
-                custom={index * 0.2}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                whileHover={{ y: -5, boxShadow: "0 15px 30px -15px rgba(0, 0, 0, 0.3)" }}
-                className="bg-white/5 backdrop-blur-sm p-8 border border-white/10 rounded-sm relative"
-              >
-                <svg className="text-accent/20 absolute top-4 right-4 h-12 w-12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                </svg>
-                
-                <p className="text-white/80 mb-6 relative">
-                  "{testimonial.quote[language]}"
-                </p>
-                
-                <div>
-                  <div className="text-white text-lg font-medium">
-                    {testimonial.author}
-                  </div>
-                  <div className="text-white/60 text-sm">
-                    {testimonial.role[language]}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="py-24 bg-[#1a1713] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('/images/pattern.svg')] bg-repeat"></div>
-        </div>
-        
-        <div className="container mx-auto px-6 md:px-10 lg:px-20 relative z-10">
-        <div className="max-w-4xl mx-auto bg-gradient-to-br from-black/40 via-black/60 to-black/40 backdrop-blur-md p-12 lg:p-16 border border-white/10 rounded-sm relative overflow-hidden">
-             {/* Decorative elements */}
-             <div className="absolute -top-10 -right-10 w-40 h-40 blur-[80px] bg-accent/30 rounded-full"></div>
-             <div className="absolute -bottom-20 -left-20 w-60 h-60 blur-[100px] bg-accent/20 rounded-full"></div>
-             <motion.div 
-               className="absolute top-0 left-0 w-full h-1"
-               initial={{ scaleX: 0, originX: 0 }}
-               whileInView={{ scaleX: 1 }}
-               viewport={{ once: true }}
-               transition={{ duration: 1.2, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-             >
-               <div className="h-full w-full bg-gradient-to-r from-transparent via-accent to-transparent"></div>
-             </motion.div>
-             <motion.div 
-               className="absolute bottom-0 left-0 w-full h-1"
-               initial={{ scaleX: 0, originX: 1 }}
-               whileInView={{ scaleX: 1 }}
-               viewport={{ once: true }}
-               transition={{ duration: 1.2, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-             >
-               <div className="h-full w-full bg-gradient-to-r from-transparent via-accent to-transparent"></div>
-             </motion.div>
-             <motion.div 
-               className="absolute left-0 top-0 h-full w-1"
-               initial={{ scaleY: 0, originY: 0 }}
-               whileInView={{ scaleY: 1 }}
-               viewport={{ once: true }}
-               transition={{ duration: 1.2, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-             >
-               <div className="w-full h-full bg-gradient-to-b from-transparent via-accent to-transparent"></div>
-             </motion.div>
-             <motion.div 
-               className="absolute right-0 top-0 h-full w-1"
-               initial={{ scaleY: 0, originY: 1 }}
-               whileInView={{ scaleY: 1 }}
-               viewport={{ once: true }}
-               transition={{ duration: 1.2, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
-             >
-               <div className="w-full h-full bg-gradient-to-b from-transparent via-accent to-transparent"></div>
-             </motion.div>
-             
-             {/* Content */}
-             <div className="relative z-10">
-               <motion.h2
-                 variants={fadeInUp}
-                 initial="hidden"
-                 whileInView="visible"
-                 viewport={{ once: true }}
-                 className="text-4xl md:text-5xl font-serif text-white mb-6 text-center"
-               >
-                 {translations.callToAction.title[language]}
-               </motion.h2>
-               
-               <motion.p
-                 variants={fadeInUp}
-                 custom={0.1}
-                 initial="hidden"
-                 whileInView="visible"
-                 viewport={{ once: true }}
-                 className="text-white/70 text-lg md:text-xl text-center mb-10"
-               >
-                 {translations.callToAction.subtitle[language]}
-               </motion.p>
-               
-               <motion.div
-                 variants={fadeInUp}
-                 custom={0.2}
-                 initial="hidden"
-                 whileInView="visible"
-                 viewport={{ once: true }}
-                 className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-               >
-                 <Link
-                   to="/consultoria"
-                   className="group inline-flex items-center justify-center bg-accent hover:bg-accent/90 text-black px-8 py-4 min-w-[220px] transition-all duration-300 relative overflow-hidden"
-                 >
-                   <motion.span 
-                     className="absolute inset-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-800 ease-out"
-                   />
-                   <span className="relative z-10 font-medium tracking-wide flex items-center">
-                     {translations.callToAction.primary[language]}
-                     <ArrowUpRight size={18} className="ml-2 relative top-px" />
-                   </span>
-                 </Link>
-                 
-                 <Link
-                   to="/catalogo-tecnico"
-                   className="group inline-flex items-center justify-center border border-white/30 hover:border-accent text-white hover:text-accent px-8 py-4 min-w-[220px] transition-all duration-300"
-                 >
-                   <span className="tracking-wide flex items-center">
-                     {translations.callToAction.secondary[language]}
-                     <motion.span
-                       animate={{ x: [0, 5, 0] }}
-                       transition={{ repeat: Infinity, duration: 1.5, repeatDelay: 1 }}
-                     >
-                       <ArrowRight size={18} className="ml-2 relative top-px" />
-                     </motion.span>
-                   </span>
-                 </Link>
-               </motion.div>
-             </div>
-           </div>
-           
-           {/* Floating statistics cards */}
-           <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto relative z-10">
-             <motion.div
-               variants={scaleIn}
-               custom={0}
-               initial="hidden"
-               whileInView="visible"
-               viewport={{ once: true, margin: "-100px" }}
-               whileHover={{ y: -8, boxShadow: "0 20px 40px -20px rgba(0, 0, 0, 0.3)" }}
-               className="bg-white/5 backdrop-blur-sm p-8 border border-white/10 rounded-sm"
-             >
-               <div className="text-5xl md:text-6xl font-serif text-white mb-4">
-                 <CountUp start={0} end={500} duration={2.5} separator="," />+
-               </div>
-               <div className="text-accent text-lg mb-2">
-                 {language === 'pt' ? 'Arquivos Técnicos' : 'Archivos Técnicos'}
-               </div>
-               <p className="text-white/60">
-                 {language === 'pt' ? 'Atualizados semanalmente com novas especificações e modelos.' : 'Actualizados semanalmente con nuevas especificaciones y modelos.'}
-               </p>
-             </motion.div>
-             
-             <motion.div
-               variants={scaleIn}
-               custom={0.1}
-               initial="hidden"
-               whileInView="visible"
-               viewport={{ once: true, margin: "-100px" }}
-               whileHover={{ y: -8, boxShadow: "0 20px 40px -20px rgba(0, 0, 0, 0.3)" }}
-               className="bg-white/5 backdrop-blur-sm p-8 border border-white/10 rounded-sm"
-             >
-               <div className="text-5xl md:text-6xl font-serif text-white mb-4">
-                 <CountUp start={0} end={150} duration={2.5} separator="," />+
-               </div>
-               <div className="text-accent text-lg mb-2">
-                 {language === 'pt' ? 'Projetos Corporativos' : 'Proyectos Corporativos'}
-               </div>
-               <p className="text-white/60">
-                 {language === 'pt' ? 'Executados com excelência para clientes ao redor do mundo.' : 'Ejecutados con excelencia para clientes alrededor del mundo.'}
-               </p>
-             </motion.div>
-             
-             <motion.div
-               variants={scaleIn}
-               custom={0.2}
-               initial="hidden"
-               whileInView="visible"
-               viewport={{ once: true, margin: "-100px" }}
-               whileHover={{ y: -8, boxShadow: "0 20px 40px -20px rgba(0, 0, 0, 0.3)" }}
-               className="bg-white/5 backdrop-blur-sm p-8 border border-white/10 rounded-sm"
-             >
-               <div className="text-5xl md:text-6xl font-serif text-white mb-4">
-                 <CountUp start={0} end={98} duration={2.5} suffix="%" />
-               </div>
-               <div className="text-accent text-lg mb-2">
-                 {language === 'pt' ? 'Taxa de Satisfação' : 'Tasa de Satisfacción'}
-               </div>
-               <p className="text-white/60">
-                 {language === 'pt' ? 'De nossos parceiros e clientes corporativos em nossas avaliações.' : 'De nuestros socios y clientes corporativos en nuestras evaluaciones.'}
-               </p>
-             </motion.div>
-           </div>
-         </div>
-       </section>
-
-       {/* Advanced Footer with Premium Design */}
-       <footer className="bg-[#181617] border-t border-white/10 relative overflow-hidden pt-20 pb-10">
-         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent"></div>
-         <div className="absolute inset-0 opacity-5">
-           <div className="absolute inset-0 bg-[url('/images/texture-pattern.png')] bg-repeat"></div>
-         </div>
-         
-         <div className="container mx-auto px-6 md:px-10 lg:px-20 relative z-10">
-           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-16">
-             <div className="col-span-1 md:col-span-1">
-               <Link to="/b2b" className="flex items-center mb-6">
-                 <svg width="60" height="30" viewBox="0 0 120 24" className="text-white">
-                   <path
-                     d="M10 4L18 12L10 20"
-                     fill="none"
-                     stroke="currentColor"
-                     strokeWidth="1.5"
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                   />
-                   <path
-                     d="M30 6H50"
-                     fill="none"
-                     stroke="currentColor"
-                     strokeWidth="1.5"
-                     strokeLinecap="round"
-                   />
-                 </svg>
-                 <span className="ml-1 font-serif tracking-wider text-2xl text-white">afetto</span>
-                 <span className="ml-1 text-accent text-sm border-l border-accent/30 pl-2">PRO</span>
-               </Link>
-               
-               <p className="text-white/60 mb-6">
-                 {language === 'pt' 
-                   ? 'Soluções exclusivas de mobiliário e design para profissionais e projetos corporativos.' 
-                   : 'Soluciones exclusivas de mobiliario y diseño para profesionales y proyectos corporativos.'
-                 }
-               </p>
-               
-               <div className="flex space-x-4">
-                 <motion.a 
-                   href="https://linkedin.com" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="h-10 w-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-accent hover:border-accent transition-colors duration-300"
-                   whileHover={{ y: -3, scale: 1.05 }}
-                   whileTap={{ scale: 0.95 }}
-                 >
-                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                   </svg>
-                 </motion.a>
-                 <motion.a 
-                   href="https://instagram.com" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="h-10 w-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-accent hover:border-accent transition-colors duration-300"
-                   whileHover={{ y: -3, scale: 1.05 }}
-                   whileTap={{ scale: 0.95 }}
-                 >
-                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                   </svg>
-                 </motion.a>
-                 <motion.a 
-                   href="https://pinterest.com" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="h-10 w-10 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-accent hover:border-accent transition-colors duration-300"
-                   whileHover={{ y: -3, scale: 1.05 }}
-                   whileTap={{ scale: 0.95 }}
-                 >
-                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                     <path d="M12 0c-6.627 0-12 5.372-12 12 0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146 1.124.347 2.317.535 3.554.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/>
-                   </svg>
-                 </motion.a>
-               </div>
-             </div>
-             
-             <div>
-               <h3 className="text-white text-lg mb-6 font-medium">
-                 {translations.footer.resources[language]}
-               </h3>
-               <ul className="space-y-3">
-                 <li>
-                   <Link to="/especificacoes-tecnicas" className="text-white/60 hover:text-accent transition-colors duration-300">
-                     {translations.footer.specs[language]}
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/downloads" className="text-white/60 hover:text-accent transition-colors duration-300">
-                     {translations.footer.downloads[language]}
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/precos-parceiros" className="text-white/60 hover:text-accent transition-colors duration-300">
-                     {translations.footer.partnerPricing[language]}
-                   </Link>
-                 </li>
-               </ul>
-             </div>
-             
-             <div>
-               <h3 className="text-white text-lg mb-6 font-medium">
-                 {translations.footer.support[language]}
-               </h3>
-               <ul className="space-y-3">
-                 <li>
-                   <Link to="/tornar-se-parceiro" className="text-white/60 hover:text-accent transition-colors duration-300">
-                     {translations.footer.becomePartner[language]}
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/suporte-tecnico" className="text-white/60 hover:text-accent transition-colors duration-300">
-                     {translations.footer.technicalSupport[language]}
-                   </Link>
-                 </li>
-                 <li>
-                   <Link to="/faq" className="text-white/60 hover:text-accent transition-colors duration-300">
-                     {translations.footer.faq[language]}
-                   </Link>
-                 </li>
-               </ul>
-             </div>
-             
-             <div>
-               <h3 className="text-white text-lg mb-6 font-medium">
-                 {translations.footer.contact[language]}
-               </h3>
-               <ul className="space-y-3">
-                 <li className="flex items-start">
-                   <MapPin size={18} className="text-accent mr-3 mt-1 flex-shrink-0" />
-                   <span className="text-white/60">
-                     Av. Paulista, 1000, São Paulo - SP, Brasil
-                   </span>
-                 </li>
-                 <li className="flex items-start">
-                   <Mail size={18} className="text-accent mr-3 mt-1 flex-shrink-0" />
-                   <a href="mailto:comercial@afetto.com.br" className="text-white/60 hover:text-accent transition-colors duration-300">
-                     comercial@afetto.com.br
-                   </a>
-                 </li>
-                 <li className="flex items-start">
-                   <Clock size={18} className="text-accent mr-3 mt-1 flex-shrink-0" />
-                   <span className="text-white/60">
-                     {language === 'pt' ? 'Seg-Sex, 9h às 18h' : 'Lun-Vie, 9h a 18h'}
-                   </span>
-                 </li>
-               </ul>
-             </div>
-           </div>
-           
-           <div className="pt-8 mt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
-             <p className="text-white/40 text-sm mb-4 md:mb-0">
-               &copy; {new Date().getFullYear()} Afetto. {language === 'pt' ? 'Todos os direitos reservados.' : 'Todos los derechos reservados.'}
-             </p>
-             
-             <div className="flex flex-wrap justify-center gap-4 md:gap-8">
-               <Link to="/politica-privacidade" className="text-white/40 text-sm hover:text-accent transition-colors duration-300">
-                 {translations.footer.privacy[language]}
-               </Link>
-               <Link to="/termos-uso" className="text-white/40 text-sm hover:text-accent transition-colors duration-300">
-                 {translations.footer.terms[language]}
-               </Link>
-               <button 
-                 onClick={resetUserType}
-                 className="text-white/40 text-sm hover:text-accent transition-colors duration-300 flex items-center"
-               >
-                 <ArrowUpRight size={14} className="mr-1" />
-                 {translations.footer.switchVersion[language]}
-               </button>
-             </div>
-           </div>
-         </div>
-         
-         {/* Back to top button */}
-         <motion.button
-           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-           className="fixed bottom-6 right-6 h-12 w-12 bg-accent/90 hover:bg-accent text-black flex items-center justify-center rounded-sm shadow-lg z-20"
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: navBackground ? 1 : 0, y: navBackground ? 0 : 20 }}
-           whileHover={{ y: -3 }}
-           whileTap={{ scale: 0.95 }}
-         >
-           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-             <path d="M12 19V5M5 12l7-7 7 7"/>
-           </svg>
-         </motion.button>
-       </footer>
-     </motion.div>
-   );
+    </motion.div>
+  );
 };
 
 export default B2BHome;
