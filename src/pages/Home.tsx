@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState, useCallback } from 'rea
 import { Link } from 'react-router-dom';
 import {
   motion, useScroll, useTransform, AnimatePresence, useSpring,
-  MotionValue, useMotionValueEvent
+  MotionValue, useMotionValueEvent, useAnimation, animate, useTime
 } from 'framer-motion';
 // Corrija o erro de importação adicionando ChevronDown aos imports do Lucide React
 import {
@@ -228,7 +228,15 @@ const MaterialShowcase = ({ material }: { material: MaterialProps }) => {
 };
 
 // Componente de cartão de material aprimorado
-const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false }) => {
+interface MaterialCardProps {
+  material: Material;
+  isActive: boolean;
+  onSelect: () => void;
+  index: number;
+  isFabric?: boolean;
+}
+
+const MaterialCard = ({ material, isActive, onSelect, index, isFabric = false }: MaterialCardProps) => {
   return (
     <motion.button
       key={material.id}
@@ -617,8 +625,12 @@ const Home: React.FC = () => {
     color: string;
     roughness: number;
     metalness: number;
-    furniture: string;
-    properties: string;
+    furniture?: string; // Add furniture property
+    properties?: string; // Added the optional 'properties' field
+    sustainability?: number; // Add the 'sustainability' property
+    durability?: number; // Add the 'durability' property
+    maitenance?: number; // Add the 'maintenance' property
+    
   }
 
   const EnhancedMaterialShowcase = ({ material, currentFurniture }: { material: Material, currentFurniture: number }) => {
@@ -1132,95 +1144,193 @@ const Home: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Premium Header Navigation */}
-      <motion.header
-        className="fixed top-0 left-0 right-0 h-[90px] z-50 flex items-center px-8 transition-all duration-500"
-        initial={{ y: -100 }}
-        animate={{
-          y: 0,
-          backgroundColor: lastScrollY > 40 ? "rgba(18, 18, 20, 0.85)" : "transparent",
-          backdropFilter: lastScrollY > 40 ? "blur(20px)" : "none",
-          boxShadow: lastScrollY > 40 ? "0 10px 30px -10px rgba(0,0,0,0.3)" : "none",
-          borderBottom: lastScrollY > 40 ? "1px solid rgba(var(--color-accent-rgb), 0.15)" : "none",
+ {/* Performance-Optimized Premium Header */}
+<motion.header
+  className="fixed top-0 left-0 right-0 h-[90px] z-50 flex items-center transition-all duration-500"
+  initial={{ y: -100 }}
+  animate={{
+    y: 0,
+    backgroundColor: lastScrollY > 40 ? "rgba(10, 10, 12, 0.75)" : "transparent",
+    backdropFilter: lastScrollY > 40 ? "blur(20px)" : "none",
+    borderBottom: lastScrollY > 40 ? "1px solid rgba(211, 161, 126, 0.12)" : "none",
+  }}
+  style={{
+    transform: scrollDirection === "up" || lastScrollY < 100 ? "translateY(0)" : "translateY(-100%)",
+  }}
+  transition={{
+    duration: 0.4,
+    ease: "easeInOut",
+  }}
+>
+  {/* Simplified ambient lighting - static instead of animated when possible */}
+  {lastScrollY > 40 && (
+    <div className="absolute inset-0 overflow-hidden">
+      <div 
+        className="absolute inset-0 opacity-20 mix-blend-overlay"
+        style={{ 
+          background: "radial-gradient(ellipse at 50% 0%, rgba(211, 161, 126, 0.15), transparent 70%)",
+          filter: "blur(15px)"
         }}
+      />
+      
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[1px] z-10"
         style={{
-          transform: scrollDirection === "up" || lastScrollY < 100 ? "translateY(0)" : "translateY(-100%)",
+          background: "linear-gradient(90deg, transparent, rgba(211, 161, 126, 0.3), transparent)"
         }}
-        transition={{
-          duration: 0.4,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-      >
-        <div className="container mx-auto flex justify-between items-center">
-          {/* Logo with hover animation */}
-          <Link to="/" className="text-white flex items-center group relative z-10">
-            <motion.div
-              initial={{ filter: "drop-shadow(0 0 0 rgba(211, 161, 126, 0))" }}
-              whileHover={{ filter: "drop-shadow(0 0 8px rgba(211, 161, 126, 0.6))" }}
-              transition={{ duration: 0.5 }}
-              className="relative overflow-hidden flex items-center"
-            >
-              <motion.svg
-                width="120"
-                height="24"
-                viewBox="0 0 120 24"
-                className="text-white group-hover:text-accent transition-colors duration-500"
-                initial={{ opacity: 0.9 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-              >
-                <path
-                  d="M10 4L18 12L10 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <motion.path
-                  d="M30 6H50"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 1.5, delay: 0.2 }}
-                />
-              </motion.svg>
-              <motion.span
-                className="ml-3 font-serif tracking-wider text-lg group-hover:text-accent transition-colors duration-500"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
+      />
+    </div>
+  )}
+  
+  {/* Main header content */}
+  <div className="container mx-auto px-4 md:px-8 relative z-10">
+    <div className="flex justify-between items-center">
+      {/* Logo with reduced animations */}
+      <div className="flex items-center space-x-12">
+        <Link 
+          to="/" 
+          className="text-white flex items-center group relative" 
+          aria-label="Afetto - Home"
+          onMouseEnter={() => setCursorVariant?.('link')}
+          onMouseLeave={() => setCursorVariant?.('default')}
+        >
+          <div className="relative">
+            <div className="relative overflow-hidden flex items-center">
+              <div className="relative">
+                <svg
+                  width="42"
+                  height="28"
+                  viewBox="0 0 120 24"
+                  className="text-white group-hover:text-accent transition-colors duration-500"
+                >
+                  <path
+                    d="M10 4L18 12L10 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M30 6H50"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M30 12H40"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M30 18H45"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              
+              <span
+                className="ml-4 font-serif tracking-wider text-lg group-hover:text-accent transition-colors duration-500"
               >
                 afetto
-              </motion.span>
-            </motion.div>
-          </Link>
+              </span>
+            </div>
+          </div>
+        </Link>
 
-          {/* Premium CTA Button with layered effects */}
-          <Link
-            to="/agendar"
-            className="hidden md:flex items-center text-white border border-white/20 px-5 py-2.5 transition-all duration-500 group relative overflow-hidden rounded-sm"
-            onMouseEnter={() => handleCtaHover(true)}
-            onMouseLeave={() => handleCtaHover(false)}
+        {/* Navigation links */}
+        <nav className="hidden lg:block">
+          <ul className="flex space-x-6">
+            {[
+              { name: language === "pt" ? "Projetos" : "Projects", path: "/portfolio" },
+              { name: language === "pt" ? "Materiais" : "Materials", path: "/materiais" },
+              { name: language === "pt" ? "Processo" : "Process", path: "/processo" },
+              { name: language === "pt" ? "Sobre" : "About", path: "/sobre" },
+            ].map((item) => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className="text-white/80 hover:text-white text-sm tracking-wide relative group py-2 px-1"
+                  onMouseEnter={() => setCursorVariant?.('link')}
+                  onMouseLeave={() => setCursorVariant?.('default')}
+                >
+                  <span className="relative z-10 transition-colors duration-300">
+                    {item.name}
+                  </span>
+                  
+                  {/* Simple hover indicator */}
+                  <div 
+                    className="absolute bottom-0 left-0 right-0 h-[1px] bg-accent/60 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+      
+      {/* Language switcher and CTA */}
+      <div className="flex items-center space-x-6">
+        {/* Language toggle */}
+        <div className="hidden md:block relative">
+          <button
+            className="flex items-center text-white/70 hover:text-white text-sm group"
+            onClick={() => {/* Toggle language dropdown */}}
           >
-            <span className="relative z-10 font-light tracking-wider">
-              {language === "pt" ? "Agendar Visita" : "Book a Visit"}
-            </span>
-            {/* Multi-layered hover effects */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-accent/50 to-accent/30 z-0 opacity-0"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "0%", opacity: 1 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </Link>
+            <span className="mr-1.5 uppercase tracking-wider">{language === "pt" ? "PT" : "ES"}</span>
+            <ChevronDown size={14} className="text-accent/80" />
+          </button>
         </div>
-      </motion.header>
-
-<motion.section
+        
+        {/* CTA button with fewer effects */}
+        <Link
+          to="/agendar"
+          className="hidden md:flex items-center text-white px-6 py-3 transition-colors duration-300 group relative overflow-hidden rounded-sm border border-white/15 hover:border-accent/30"
+          onMouseEnter={() => handleCtaHover?.(true)}
+          onMouseLeave={() => handleCtaHover?.(false)}
+          aria-label={language === "pt" ? "Agendar Visita" : "Book a Visit"}
+        >
+          <span className="relative z-20 font-light tracking-wider text-sm">
+            {language === "pt" ? "Agendar Visita" : "Book a Visit"}
+          </span>
+          
+          {/* Simple gradient fill background */}
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-accent/40 to-accent/40 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          />
+        </Link>
+        
+        {/* Mobile menu toggle */}
+        <button 
+          className="block lg:hidden relative group w-10 h-10 flex items-center justify-center"
+          onMouseEnter={() => setCursorVariant?.('link')}
+          onMouseLeave={() => setCursorVariant?.('default')}
+          aria-label={language === "pt" ? "Abrir menu" : "Open menu"}
+        >
+          <div className="flex flex-col items-end justify-center space-y-1.5 w-6">
+            <span className="h-[1px] bg-white block w-6" />
+            <span className="h-[1px] bg-accent block w-4" />
+            <span className="h-[1px] bg-white block w-5" />
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  {/* Progress indicator - only show when scrolled */}
+  {lastScrollY > 100 && (
+    <div 
+      className="absolute bottom-0 left-0 h-[1px] bg-accent/20"
+    />
+  )}
+</motion.header>
+      <motion.section
   ref={heroRef}
   className="relative h-[100vh] min-h-[800px] overflow-hidden"
   initial={{ opacity: 0 }}
@@ -1228,80 +1338,143 @@ const Home: React.FC = () => {
   exit={{ opacity: 0 }}
   style={{ opacity: heroOpacity, y: heroY, scale: heroScale }}
 >
-  {/* ErrorBoundary para HeroCanvas com fallback elegante */}
+  {/* ErrorBoundary with enhanced fallback */}
   <ErrorBoundary fallback={
     <div className="absolute inset-0 bg-gradient-to-r from-[#0A0806]/95 via-[#171412]/80 to-[#0B0905]/90 flex items-center justify-center">
-      <div className="text-white/80 font-serif text-5xl">Objetos com significado</div>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.5 }}
+        className="relative"
+      >
+        <div className="absolute -inset-20 bg-accent/5 blur-[80px] rounded-full"></div>
+        <div className="text-white/80 font-serif text-5xl relative">Objetos com significado</div>
+      </motion.div>
     </div>
   }>
     <HeroCanvas scrollYProgress={heroScrollProgress} />
   </ErrorBoundary>
   
-  {/* Background cinematográfico com múltiplas camadas */}
+  {/* Enhanced cinematic multi-layered background system */}
   <div className="absolute inset-0 z-0">
     <motion.div
-      className="absolute inset-0"
-      initial={{ scale: 1.05, filter: 'brightness(0.7)' }}
+      className="absolute inset-0 transform-gpu"
+      initial={{ scale: 1.05, filter: 'brightness(0.6) contrast(1.1)' }}
       animate={{
         scale: 1,
-        filter: 'brightness(0.85)',
-        transition: { duration: 5, ease: [0.22, 1, 0.36, 1] }
+        filter: 'brightness(0.85) contrast(1.2)',
+        transition: { duration: 6, ease: [0.22, 1, 0.36, 1] }
       }}
     >
-      {/* Vídeo de fundo otimizado com preload e múltiplos formatos */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        onLoadedData={handleVideoLoaded}
-        className="w-full h-full object-cover"
-        style={{ 
-          filter: `saturate(${useTransform(heroScrollProgress, [0, 0.6], [1, 1.4]).get()})` 
-        }}
+      {/* Premium video treatment with optimized loading and advanced filters */}
+      <div className="absolute inset-0 bg-[#0A0806] z-0"></div>
+      <motion.div
+        className="absolute inset-0 z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2 }}
       >
-        <source src="/videos/luxury-atelier.webm" type="video/webm" />
-        <source src="/videos/luxury-atelier.mp4" type="video/mp4" />
-      </video>
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          onLoadedData={handleVideoLoaded}
+          className="w-full h-full object-cover"
+          style={{ 
+            filter: `saturate(${useTransform(heroScrollProgress, [0, 0.6], [1, 1.5]).get()}) contrast(${useTransform(heroScrollProgress, [0, 0.6], [1, 1.1]).get()})`,
+            willChange: "filter"
+          }}
+        >
+          <source src="/videos/luxury-atelier.webm" type="video/webm" />
+          <source src="/videos/luxury-atelier.mp4" type="video/mp4" />
+        </video>
+      </motion.div>
 
-      {/* Sistema de camadas de gradiente premium */}
-      <div className="absolute inset-0 z-10">
-        {/* Gradiente principal refinado */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0806]/95 via-[#171412]/80 to-[#0B0905]/90"></div>
+      {/* Advanced cinematographic color grading system */}
+      <div className="absolute inset-0 z-20">
+        {/* Primary atmospheric gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0806]/95 via-[#171412]/70 to-[#0B0905]/90"></div>
         
-        {/* Vinheta dinâmica que responde ao scroll */}
-        <motion.div 
+        {/* Secondary depth gradient for dimension */}
+        <motion.div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.8) 80%)',
-            opacity: useTransform(heroScrollProgress, [0, 0.3], [0.7, 0.9])
+            background: 'radial-gradient(ellipse at center, transparent 0%, rgba(5,3,2,0.9) 90%)',
+            opacity: useTransform(heroScrollProgress, [0, 0.3], [0.7, 0.95])
+          }}
+        />
+        
+        {/* Vignette effect with responsive intensity */}
+        <motion.div
+          className="absolute inset-0 opacity-80"
+          style={{
+            background: 'radial-gradient(circle at 50% 80%, transparent 20%, rgba(0,0,0,0.8) 100%)',
+            opacity: useTransform(heroScrollProgress, [0, 0.6], [0.6, 0.9])
           }}
         />
 
-        {/* Texture overlay com movimento sutil */}
+        {/* Dynamic texture overlay with parallax effect */}
         <motion.div
-          className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.16] mix-blend-overlay"
           style={{ 
             backgroundImage: 'url(/images/noise-texture.png)', 
-            backgroundSize: '200px' 
+            backgroundSize: '300px',
+            y: useTransform(heroScrollProgress, [0, 1], [0, -10])
           }}
-          animate={{ 
+          animate={!prefersReducedMotion ? { 
             backgroundPosition: ['0% 0%', '100% 100%'] 
-          }}
+          } : {}}
           transition={{ 
-            duration: 120, 
+            duration: 180, 
             ease: "linear", 
             repeat: Infinity, 
             repeatType: "mirror" 
           }}
         />
+        
+        {/* Film grain texture for cinematic look */}
+        <div 
+          className="absolute inset-0 opacity-[0.03] mix-blend-overlay" 
+          style={{ backgroundImage: 'url(/images/film-grain.png)' }}
+        ></div>
       </div>
 
-      {/* Sistema de partículas premium e otimizado com Instances */}
+      {/* Advanced cinematic lighting system */}
+      <div className="absolute inset-0 z-20 overflow-hidden">
+        {/* Volumetric light ray */}
+        <motion.div
+          className="absolute top-0 right-[30%] w-[500px] h-[130vh] opacity-20 mix-blend-screen"
+          initial={{ opacity: 0, scale: 0.8, rotateZ: 15 }}
+          animate={{ opacity: !prefersReducedMotion ? [0.15, 0.25, 0.15] : 0.2, scale: 1, rotateZ: 15 }}
+          transition={{ duration: 10, repeat: Infinity, repeatType: "mirror" }}
+          style={{
+            background: 'linear-gradient(to bottom, rgba(211,161,126,0), rgba(211,161,126,0.5), rgba(255,255,255,0.1), rgba(211,161,126,0))',
+            filter: 'blur(80px)',
+            willChange: "opacity"
+          }}
+        />
+        
+        {/* Ambient light glow */}
+        <motion.div
+          className="absolute top-[20%] left-[15%] w-[600px] h-[600px] rounded-full opacity-10 mix-blend-screen"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: !prefersReducedMotion ? [0.1, 0.16, 0.1] : 0.13 }}
+          transition={{ duration: 8, repeat: Infinity, repeatType: "mirror" }}
+          style={{
+            background: 'radial-gradient(circle, rgba(211,161,126,0.7), transparent 70%)',
+            filter: 'blur(100px)',
+            willChange: "opacity"
+          }}
+        />
+      </div>
+
+      {/* Enhanced particle system with advanced motion physics */}
       {!prefersReducedMotion && !isMobile && (
-        <motion.div className="absolute inset-0 z-20 overflow-hidden">
-          {Array(25).fill(0).map((_, i) => (
+        <motion.div className="absolute inset-0 z-30 overflow-hidden">
+          {/* Primary golden dust particles */}
+          {Array(20).fill(0).map((_, i) => (
             <motion.div
               key={`hero-particle-${i}`}
               className="absolute rounded-full"
@@ -1312,12 +1485,12 @@ const Home: React.FC = () => {
                 scale: 0
               }}
               animate={{
-                opacity: [0, 0.4, 0],
-                scale: [0, 1, 0],
+                opacity: [0, 0.4 * (Math.random() * 0.5 + 0.5), 0],
+                scale: [0, Math.random() * 0.5 + 0.5, 0],
                 filter: [
-                  'blur(2px) brightness(1)',
-                  'blur(1px) brightness(1.5)',
-                  'blur(2px) brightness(1)'
+                  'blur(3px) brightness(1)',
+                  'blur(2px) brightness(1.8)',
+                  'blur(3px) brightness(1)'
                 ],
               }}
               transition={{
@@ -1329,7 +1502,40 @@ const Home: React.FC = () => {
               style={{
                 width: `${2 + Math.random() * 6}px`,
                 height: `${2 + Math.random() * 6}px`,
-                background: 'radial-gradient(circle, rgba(211,161,126,0.8) 0%, rgba(211,161,126,0) 70%)',
+                background: 'radial-gradient(circle, rgba(211,161,126,1) 0%, rgba(211,161,126,0) 70%)',
+                boxShadow: '0 0 15px 5px rgba(211,161,126,0.3)',
+                willChange: "transform, opacity, filter"
+              }}
+            />
+          ))}
+          
+          {/* Secondary atmosphere particles */}
+          {Array(15).fill(0).map((_, i) => (
+            <motion.div
+              key={`ambient-particle-${i}`}
+              className="absolute rounded-full"
+              initial={{
+                x: `${Math.random() * 100}%`,
+                y: `${Math.random() * 100}%`,
+                opacity: 0,
+                scale: 0
+              }}
+              animate={{
+                opacity: [0, 0.3 * Math.random(), 0],
+                scale: [0, Math.random() * 1.5 + 0.5, 0],
+                filter: ['blur(8px)', 'blur(12px)', 'blur(8px)'],
+              }}
+              transition={{
+                duration: 15 + Math.random() * 20,
+                ease: "easeInOut",
+                repeat: Infinity,
+                delay: Math.random() * 5,
+              }}
+              style={{
+                width: `${10 + Math.random() * 20}px`,
+                height: `${10 + Math.random() * 20}px`,
+                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%)',
+                willChange: "transform, opacity"
               }}
             />
           ))}
@@ -1338,64 +1544,145 @@ const Home: React.FC = () => {
     </motion.div>
   </div>
 
-  {/* Grade arquitetônica com proporção áurea */}
-  <div className="absolute inset-0 z-10 opacity-[0.03] pointer-events-none">
+  {/* Enhanced architectural grid system with golden ratio */}
+  <div className="absolute inset-0 z-10 opacity-[0.04] pointer-events-none">
     <div className="grid grid-cols-12 h-full w-full">
       {Array(12).fill(0).map((_, i) => (
         <div key={`grid-col-${i}`} className="h-full border-l border-white/50 last:border-r"></div>
       ))}
       <div className="absolute top-[38.2%] left-0 right-0 h-[1px] bg-white/30"></div>
-      <div className="absolute top-[61.8%] left-0 right-0 h-[1px] bg-white/20"></div>
+      <div className="absolute top-[61.8%] left-0 right-0 h-[1px] bg-white/30"></div>
+      <div className="absolute top-[23.6%] left-0 right-0 h-[0.5px] bg-white/20"></div>
+      <div className="absolute top-[76.4%] left-0 right-0 h-[0.5px] bg-white/20"></div>
+      <div className="absolute bottom-0 top-0 left-[38.2%] w-[1px] bg-white/30"></div>
+      <div className="absolute bottom-0 top-0 left-[61.8%] w-[1px] bg-white/30"></div>
     </div>
   </div>
 
-  {/* Elementos geométricos decorativos com animações dinâmicas */}
+  {/* Advanced decorative geometric elements with sophisticated animation */}
   <motion.div
-    className="absolute top-20 right-[10%] w-96 h-96 rounded-full border border-accent/5 opacity-20 hidden lg:block"
+    className="absolute top-[15%] right-[12%] rounded-full opacity-0 hidden lg:block z-10"
     initial={{ scale: 0.8, rotate: 45, opacity: 0 }}
     animate={{ scale: 1, rotate: 0, opacity: 0.2 }}
     transition={{ duration: 3, ease: [0.32, 0.75, 0.36, 1] }}
-  />
+  >
+    <motion.div
+      className="relative w-[400px] h-[400px]"
+      animate={!prefersReducedMotion ? { 
+        rotateZ: [0, 360],
+      } : {}}
+      transition={{ duration: 90, ease: "linear", repeat: Infinity }}
+    >
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        <defs>
+          <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgba(211,161,126,0.05)" />
+            <stop offset="50%" stopColor="rgba(211,161,126,0.12)" />
+            <stop offset="100%" stopColor="rgba(211,161,126,0.05)" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="49.5" stroke="url(#circleGradient)" strokeWidth="0.5" fill="none" />
+        <circle cx="50" cy="50" r="30" stroke="rgba(211,161,126,0.08)" strokeWidth="0.5" fill="none" />
+      </svg>
+    </motion.div>
+  </motion.div>
 
   <motion.div
-    className="absolute bottom-40 left-[5%] w-64 h-64 rounded-full border border-accent/10 opacity-10 hidden lg:block"
+    className="absolute bottom-[25%] left-[8%] rounded-full opacity-0 hidden lg:block z-10"
     initial={{ scale: 0.8, rotate: -45, opacity: 0 }}
-    animate={{ scale: 1, rotate: 0, opacity: 0.1 }}
+    animate={{ scale: 1, rotate: 0, opacity: 0.15 }}
     transition={{ duration: 3, delay: 0.5, ease: [0.32, 0.75, 0.36, 1] }}
-  />
+  >
+    <motion.div 
+      className="w-[300px] h-[300px] relative"
+      animate={!prefersReducedMotion ? { 
+        rotateZ: [0, -360],
+      } : {}}
+      transition={{ duration: 120, ease: "linear", repeat: Infinity }}
+    >
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        <defs>
+          <linearGradient id="squareGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgba(211,161,126,0.1)" />
+            <stop offset="50%" stopColor="rgba(211,161,126,0.14)" />
+            <stop offset="100%" stopColor="rgba(211,161,126,0.1)" />
+          </linearGradient>
+        </defs>
+        <rect x="10" y="10" width="80" height="80" stroke="url(#squareGradient)" strokeWidth="0.5" fill="none" />
+        <rect x="30" y="30" width="40" height="40" stroke="rgba(211,161,126,0.08)" strokeWidth="0.5" fill="none" />
+      </svg>
+    </motion.div>
+  </motion.div>
 
-  {/* Linhas de acento verticais com animação refinada */}
-  <motion.div
-    className="absolute top-[15vh] left-[10%] w-px h-[35vh] z-20"
-    initial={{ scaleY: 0 }}
-    animate={{ scaleY: 1 }}
-    transition={{ duration: 1.8, delay: 0.8, ease: [0.32, 0.75, 0.36, 1] }}
-    style={{
-      transformOrigin: 'top',
-      background: 'linear-gradient(to bottom, transparent, rgba(211, 161, 126, 0.7), transparent)'
-    }}
-  />
+  {/* Enhanced vertical accent lines with advanced gradient lighting */}
+  <div className="absolute top-0 left-[10%] h-full w-[2px] z-20 overflow-hidden">
+    <motion.div
+      className="h-[40%] w-full"
+      initial={{ y: "-100%" }}
+      animate={{ y: ["100%", "-100%"] }}
+      transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        background: "linear-gradient(to bottom, rgba(211,161,126,0), rgba(211,161,126,0.4), rgba(211,161,126,0.7), rgba(211,161,126,0.4), rgba(211,161,126,0))",
+        filter: "blur(1px)",
+        willChange: "transform"
+      }}
+    />
+  </div>
 
-  <motion.div
-    className="absolute bottom-[15vh] right-[10%] w-px h-[35vh] z-20"
-    initial={{ scaleY: 0 }}
-    animate={{ scaleY: 1 }}
-    transition={{ duration: 1.8, delay: 1.2, ease: [0.32, 0.75, 0.36, 1] }}
-    style={{
-      transformOrigin: 'bottom',
-      background: 'linear-gradient(to top, transparent, rgba(211, 161, 126, 0.7), transparent)'
-    }}
-  />
+  <div className="absolute top-0 right-[10%] h-full w-[2px] z-20 overflow-hidden">
+    <motion.div
+      className="h-[40%] w-full"
+      initial={{ y: "0%" }}
+      animate={{ y: ["-100%", "100%"] }}
+      transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        background: "linear-gradient(to bottom, rgba(211,161,126,0), rgba(211,161,126,0.4), rgba(211,161,126,0.7), rgba(211,161,126,0.4), rgba(211,161,126,0))",
+        filter: "blur(1px)",
+        willChange: "transform"
+      }}
+    />
+  </div>
+  
+  {/* Advanced horizontal light scan effect */}
+  <div className="absolute left-0 right-0 top-[30%] h-[1px] z-20 overflow-hidden">
+    <motion.div
+      className="w-full h-full"
+      initial={{ scaleX: 0, x: "-100%" }}
+      animate={{ scaleX: 1, x: "100%" }}
+      transition={{ duration: 3, repeat: Infinity, repeatDelay: 7, ease: "easeInOut" }}
+      style={{
+        background: "linear-gradient(to right, rgba(211,161,126,0), rgba(211,161,126,0.7), rgba(211,161,126,0))",
+        filter: "blur(1px)",
+        willChange: "transform"
+      }}
+    />
+  </div>
 
-  {/* Conteúdo principal centralizado com layout refinado */}
+  {/* Enhanced main content with premium 3D layout and animations */}
   <div className="relative z-30 container mx-auto px-8 md:px-24 h-full flex items-center">
     <motion.div
-      className="max-w-6xl"
+      className="max-w-7xl relative"
       style={{ y: heroTitleY }}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { delay: 0.3, duration: 1 } }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.3, duration: 1 }}
     >
-      {/* Tag introdutória com linha animada aprimorada */}
+      {/* Advanced lighting accent */}
+      <motion.div
+        className="absolute -left-20 -top-20 -z-10 opacity-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.15, 0] }}
+        transition={{ duration: 8, repeat: Infinity, repeatType: "mirror" }}
+        style={{
+          width: "500px",
+          height: "500px",
+          background: "radial-gradient(ellipse, rgba(211,161,126,0.3), transparent 70%)",
+          filter: "blur(80px)",
+          willChange: "opacity"
+        }}
+      />
+
+      {/* Enhanced introductory tag with premium animated underline */}
       <motion.p
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1404,93 +1691,232 @@ const Home: React.FC = () => {
       >
         <span className="relative">
           {language === 'pt' ? 'Ateliê de Design & Artesanato' : 'Atelier de Diseño & Artesanía'}
-          <motion.span
-            className="absolute -bottom-3 left-0 h-[1px] w-full bg-accent/40"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1.2, delay: 1.2 }}
-            style={{ transformOrigin: 'left' }}
-          />
+          <motion.div className="absolute -bottom-3 left-0 w-full h-[1px] overflow-hidden">
+            <motion.div
+              className="w-full h-full bg-accent/60"
+              initial={{ x: "-100%" }}
+              animate={{ x: "0%" }}
+              transition={{ duration: 1.2, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            />
+            <motion.div 
+              className="absolute top-0 left-0 w-full h-full"
+              animate={{
+                background: [
+                  "linear-gradient(90deg, transparent 0%, rgba(211,161,126,0.8) 50%, transparent 100%)",
+                  "linear-gradient(90deg, transparent 100%, rgba(211,161,126,0.8) 150%, transparent 200%)"
+                ],
+                x: ["-100%", "100%"]
+              }}
+              transition={{ duration: 3, delay: 2, repeat: Infinity, repeatDelay: 5 }}
+            />
+          </motion.div>
         </span>
       </motion.p>
 
-      {/* Título principal com animação sofisticada por palavra */}
-      <h1 className="font-serif font-light text-7xl md:text-8xl lg:text-9xl xl:text-[12rem] leading-[1.02] tracking-[-0.03em] text-white/95 relative">
-        {/* Primeira linha */}
-        <div className="overflow-hidden">
-          <motion.div
-            initial={{ y: 150 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1.8, delay: 0.8, ease: [0.32, 0.75, 0.36, 1] }}
-            className="relative"
-            // Efeito sutil de "vida" após 7s de inatividade
-            whileInView={(_, { getTransform }) => {
-              // Cronometro para animação de "vida"
-              setTimeout(() => {
-                animate(getTransform(), {
-                  x: [-4, 4, -3, 2, 0],
-                  transition: { 
-                    duration: 3,
-                    ease: [0.32, 0.75, 0.36, 1],
-                    times: [0, 0.2, 0.5, 0.8, 1] 
+      {/* Premium main title with cinematic reveal and advanced text treatments */}
+      <div className="relative">
+        {/* Text shadow glow effect */}
+        <div className="absolute -inset-2 blur-3xl opacity-30 bg-accent/10 -z-10 rounded-full"></div>
+        
+        <h1 className="font-serif font-light leading-[0.95] tracking-[-0.03em] text-white/95 relative">
+          {/* First line with enhanced animated reveal */}
+          <div className="overflow-hidden relative inline-block">
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: "0%" }}
+              transition={{ 
+                duration: 1.8, 
+                delay: 0.8, 
+                ease: [0.32, 0.75, 0.36, 1] 
+              }}
+              className="relative text-7xl md:text-8xl lg:text-9xl xl:text-[11rem]"
+              onViewportEnter={() => {
+                // Subtle life animation with extended timing
+                setTimeout(() => {
+                  const element = document.querySelector('.first-line-title');
+                  if (element) {
+                    animate(element, {
+                      x: [-4, 4, -3, 2, 0],
+                      filter: [
+                        "blur(0px)",
+                        "blur(0.5px)",
+                        "blur(0px)"
+                      ]
+                    }, { 
+                      duration: 3,
+                      ease: [0.32, 0.75, 0.36, 1],
+                      times: [0, 0.2, 0.5, 0.8, 1] 
+                    });
                   }
-                });
-              }, 7000);
-            }}
-          >
-            {language === 'pt' ? 'Objetos com' : 'Objetos con'}
-          </motion.div>
-        </div>
+                }, 7000);
+              }}
+              className="first-line-title"
+            >
+              <span className="inline-block relative">
+                {language === 'pt' ? 'Objetos ' : 'Objetos '}
+                <motion.div
+                  className="absolute -inset-2 rounded-full blur-md -z-10 opacity-0"
+                  animate={!prefersReducedMotion ? { 
+                    opacity: [0, 0.15, 0],
+                    background: [
+                      "radial-gradient(circle, rgba(211,161,126,0.3), transparent 70%)",
+                      "radial-gradient(circle, rgba(211,161,126,0.5), transparent 70%)",
+                      "radial-gradient(circle, rgba(211,161,126,0.3), transparent 70%)"
+                    ]
+                  } : {}}
+                  transition={{ duration: 4, repeat: Infinity, repeatType: "mirror" }}
+                />
+              </span>
+              <span className="inline-block">{language === 'pt' ? 'com' : 'con'}</span>
+            </motion.div>
+            
+            {/* Animated mask reveal effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-b from-black to-transparent"
+              initial={{ y: "0%" }}
+              animate={{ y: "-100%" }}
+              transition={{ 
+                duration: 1.6, 
+                delay: 0.9, 
+                ease: [0.83, 0, 0.17, 1] 
+              }}
+            />
+          </div>
 
-        {/* Segunda linha com efeito de gradiente dinâmico */}
-        <div className="overflow-hidden mt-1 md:mt-2">
-          <motion.div
-            initial={{ y: 150 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1.8, delay: 1.1, ease: [0.32, 0.75, 0.36, 1] }}
-            className="relative"
-            // Efeito sutil de "vida" após 10s de inatividade
-            whileInView={(_, { getTransform }) => {
-              // Cronometro para animação de "vida"
-              setTimeout(() => {
-                animate(getTransform(), {
-                  x: [4, -3, 2, -1, 0],
-                  transition: { 
-                    duration: 3,
-                    ease: [0.32, 0.75, 0.36, 1],
-                    times: [0, 0.3, 0.6, 0.9, 1] 
+          {/* Second line with premium gradient treatment */}
+          <div className="overflow-hidden mt-1 md:mt-2">
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: "0%" }}
+              transition={{ 
+                duration: 1.8, 
+                delay: 1.1, 
+                ease: [0.32, 0.75, 0.36, 1] 
+              }}
+              className="relative text-7xl md:text-8xl lg:text-9xl xl:text-[11rem]"
+              onViewportEnter={() => {
+                // Enhanced subtle life animation with lighting effects
+                setTimeout(() => {
+                  const element = document.querySelector('.second-line-title');
+                  if (element) {
+                    animate(element, {
+                      x: [4, -3, 2, -1, 0],
+                      filter: [
+                        "drop-shadow(0 0 0px rgba(211,161,126,0))",
+                        "drop-shadow(0 0 10px rgba(211,161,126,0.3))",
+                        "drop-shadow(0 0 0px rgba(211,161,126,0))"
+                      ]
+                    }, { 
+                      duration: 4,
+                      ease: [0.32, 0.75, 0.36, 1],
+                      times: [0, 0.3, 0.6, 0.9, 1] 
+                    });
                   }
-                });
-              }, 10000);
-            }}
-          >
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white/95 to-white/80">
-              {language === 'pt' ? 'significado' : 'significado'}
-            </span>
-          </motion.div>
-        </div>
-      </h1>
+                }, 10000);
+              }}
+            >
+              <motion.span 
+                className="bg-clip-text text-transparent relative second-line-title inline-block"
+                style={{
+                  backgroundImage: "linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0.95), rgba(211,161,126,1), rgba(255,255,255,0.95), rgba(255,255,255,1))",
+                  backgroundSize: "200% 100%",
+                  willChange: "background-position, filter"
+                }}
+                animate={!prefersReducedMotion ? { 
+                  backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"] 
+                } : {}}
+                transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+              >
+                {language === 'pt' ? 'significado' : 'significado'}
+              </motion.span>
+            </motion.div>
+            
+            {/* Animated mask reveal effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-b from-black to-transparent"
+              initial={{ y: "0%" }}
+              animate={{ y: "-100%" }}
+              transition={{ 
+                duration: 1.6, 
+                delay: 1.2, 
+                ease: [0.83, 0, 0.17, 1] 
+              }}
+            />
+          </div>
+        </h1>
+        
+        {/* Premium animated accent lines */}
+        <motion.div
+          className="absolute -left-5 -bottom-10 w-20 h-20 border border-accent/20 z-10"
+          initial={{ opacity: 0, rotate: 10, scale: 0.9 }}
+          animate={{ opacity: 0.6, rotate: 0, scale: 1 }}
+          transition={{ duration: 1.5, delay: 1.8 }}
+        />
+        
+        <motion.div
+          className="absolute -right-3 top-1/2 w-10 h-10 rounded-full border border-accent/30 z-10"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: [0.6, 0.8, 0.6], scale: 1 }}
+          transition={{ duration: 5, repeat: Infinity, repeatType: "mirror", delay: 2 }}
+        />
+      </div>
 
-      {/* Subtítulo com animação refinada */}
-      <motion.p
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, delay: 1.8, ease: [0.32, 0.75, 0.36, 1] }}
-        className="text-xl md:text-2xl text-white/80 max-w-3xl font-sans font-light leading-relaxed mt-12 lg:mt-16"
+      {/* Enhanced subtitle with sophisticated reveal animation */}
+      <motion.div 
+        className="overflow-hidden relative z-10 mt-12 lg:mt-16"
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        transition={{ duration: 1, delay: 1.8, ease: [0.22, 1, 0.36, 1] }}
       >
-        {language === 'pt'
-          ? 'Criamos ambientes que transcendem o ordinário, transformando experiências e elevando os sentidos através de peças artesanais meticulosamente elaboradas.'
-          : 'Creamos ambientes que trascienden lo ordinario, transformando experiencias y elevando los sentidos a través de piezas artesanales meticulosamente elaboradas.'}
-      </motion.p>
+        <motion.p
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 1.2, delay: 1.9, ease: [0.22, 1, 0.36, 1] }}
+          className="text-xl md:text-2xl text-white/80 max-w-3xl font-sans font-light leading-relaxed"
+        >
+          {/* Character-by-character reveal for enhanced sophistication */}
+          {(language === 'pt'
+            ? 'Criamos ambientes que transcendem o ordinário, transformando experiências e elevando os sentidos através de peças artesanais meticulosamente elaboradas.'
+            : 'Creamos ambientes que trascienden lo ordinario, transformando experiencias y elevando los sentidos a través de piezas artesanales meticulosamente elaboradas.'
+          ).split('').map((char, i) => (
+            <motion.span
+              key={`char-${i}`}
+              initial={{ opacity: 0, filter: "blur(2px)" }}
+              animate={{ opacity: 1, filter: "blur(0px)" }}
+              transition={{ 
+                duration: 0.03,
+                delay: 2 + Math.min(i * 0.01, 1.5),
+                ease: "easeOut"
+              }}
+            >
+              {char}
+            </motion.span>
+          ))}
+        </motion.p>
+      </motion.div>
 
-      {/* Grupo de CTA com design e interações premium */}
+      {/* Enhanced CTA section with premium interactions */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 2.2, ease: [0.32, 0.75, 0.36, 1] }}
-        className="mt-12 md:mt-16 flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-6"
+        transition={{ duration: 1, delay: 2.5, ease: [0.32, 0.75, 0.36, 1] }}
+        className="mt-12 md:mt-16 flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-8 relative"
       >
-        {/* Botão primário com efeito de preenchimento avançado */}
+        {/* Ambient glow effect for CTAs */}
+        <motion.div
+          className="absolute -inset-10 rounded-full blur-[100px] -z-10"
+          animate={{ 
+            background: [
+              "radial-gradient(circle at 30% 30%, rgba(211,161,126,0.1) 0%, transparent 70%)",
+              "radial-gradient(circle at 70% 70%, rgba(211,161,126,0.15) 0%, transparent 70%)",
+              "radial-gradient(circle at 30% 30%, rgba(211,161,126,0.1) 0%, transparent 70%)"
+            ],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+      
+        {/* Premium primary button with advanced motion effects */}
         <a
           href="#portfolio"
           className="group relative inline-flex items-center overflow-hidden"
@@ -1502,50 +1928,75 @@ const Home: React.FC = () => {
           }}
         >
           <motion.div
-            className="relative z-10 bg-transparent border-2 border-accent px-8 py-4 text-white font-sans font-light tracking-wider overflow-hidden"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3, ease: [0.32, 0.75, 0.36, 1] }}
+            className="relative z-10 bg-transparent border-2 border-accent px-9 py-5 text-white font-sans font-light tracking-wider overflow-hidden rounded-sm"
+            whileHover={{ scale: 1.03, boxShadow: "0 10px 30px -10px rgba(211,161,126,0.4)" }}
+            transition={{ duration: 0.4, ease: [0.32, 0.75, 0.36, 1] }}
           >
-            <span className="relative z-10 group-hover:text-black transition-colors duration-500">
+            <span className="relative z-10 group-hover:text-black transition-colors duration-500 text-lg">
               {language === 'pt' ? 'Explorar nossa coleção' : 'Explorar nuestra colección'}
             </span>
 
-            {/* Efeito de preenchimento com easing personalizado */}
+            {/* Enhanced fill effect with premium easing */}
             <motion.div
               className="absolute inset-0 bg-accent z-0"
               initial={{ scaleX: 0 }}
               whileHover={{ scaleX: 1 }}
-              transition={{ duration: 0.4, ease: [0.32, 0.75, 0.36, 1] }}
-              style={{ transformOrigin: 'left' }}
+              transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
+              style={{ 
+                transformOrigin: 'left',
+                willChange: "transform"
+              }}
+            />
+            
+            {/* Light sweep effect */}
+            <motion.div
+              className="absolute inset-0 z-20 opacity-0 group-hover:opacity-100"
+              style={{
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
+                backgroundSize: "200% 100%"
+              }}
+              animate={{ backgroundPosition: ["0% 0%", "200% 0%"] }}
+              transition={{ duration: 1, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }}
             />
           </motion.div>
 
-          {/* Ícone com animação refinada */}
-          <motion.div
-            className="absolute right-6 opacity-0 group-hover:opacity-100 z-20"
-            initial={{ x: -10 }}
-            whileHover={{ x: 0 }}
-            transition={{ duration: 0.3, ease: [0.32, 0.75, 0.36, 1] }}
-          >
+          {/* Enhanced icon animation */}
+          <div className="absolute right-8 opacity-0 group-hover:opacity-100 z-20 transition-opacity duration-300">
             <motion.div
-              animate={{ x: [0, 5, 0] }}
-              transition={{ 
-                repeat: Infinity, 
-                duration: 1.5,
-                ease: [0.32, 0.75, 0.36, 1] 
+              animate={{ 
+                x: [0, 8, 0],
+                scale: [1, 1.2, 1],
+                transition: { 
+                  repeat: Infinity, 
+                  duration: 2,
+                  ease: [0.32, 0.75, 0.36, 1] 
+                }
               }}
             >
-              <ArrowRight size={16} className="text-black" />
+              <ArrowRight size={18} className="text-black filter drop-shadow(0 0 2px rgba(0,0,0,0.5))" />
             </motion.div>
-          </motion.div>
+          </div>
+          
+          {/* Premium interaction feedback */}
+          <motion.div 
+            className="absolute inset-0 rounded-sm z-0 opacity-0"
+            whileHover={{
+              opacity: 1,
+              boxShadow: [
+                "0 0 0 rgba(211,161,126,0)", 
+                "0 0 20px rgba(211,161,126,0.4)"
+              ],
+              transition: { duration: 0.5 }
+            }}
+          />
         </a>
 
-        {/* Botão secundário com estilo alternativo e animação aprimorada */}
+        {/* Enhanced secondary button */}
         <motion.a
           href="#contact"
-          className="group inline-flex items-center space-x-2 text-white/80 hover:text-accent transition-colors duration-300"
+          className="group inline-flex items-center space-x-3 text-white/80 hover:text-accent transition-colors duration-500"
           whileHover={{ x: 5 }}
-          transition={{ duration: 0.3, ease: [0.32, 0.75, 0.36, 1] }}
+          transition={{ duration: 0.4, ease: [0.32, 0.75, 0.36, 1] }}
           onClick={(e) => {
             e.preventDefault();
             if (contactRef.current) {
@@ -1553,27 +2004,36 @@ const Home: React.FC = () => {
             }
           }}
         >
-          <span className="font-serif tracking-wide text-base">
-            {language === 'pt' ? 'Agendar consulta' : 'Programar consulta'}
-          </span>
+          {/* Premium icon background */}
           <motion.div
-            animate={{
-              x: [0, 5, 0],
-              transition: { repeat: Infinity, duration: 2, ease: [0.32, 0.75, 0.36, 1] }
-            }}
+            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center"
+            whileHover={{ scale: 1.1, borderColor: 'rgba(211,161,126,0.3)', backgroundColor: 'rgba(211,161,126,0.1)' }}
+            transition={{ duration: 0.3 }}
           >
-            <ChevronRight size={18} />
+            <motion.div
+              animate={{ rotate: [0, 90, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", repeatType: "reverse" }}
+            >
+              <ChevronRight size={16} className="text-accent" />
+            </motion.div>
           </motion.div>
+          
+          <span className="font-serif tracking-wide text-base relative">
+            {language === 'pt' ? 'Agendar consulta' : 'Programar consulta'}
+            <motion.div 
+              className="absolute left-0 right-0 bottom-0 h-[1px] bg-accent origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"
+            />
+          </span>
         </motion.a>
       </motion.div>
     </motion.div>
   </div>
 
-  {/* Indicador de scroll com animação de pulso */}
+  {/* Advanced scroll indicator with premium motion effects */}
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8, delay: 3, ease: [0.32, 0.75, 0.36, 1] }}
+    transition={{ duration: 0.8, delay: 3.3, ease: [0.32, 0.75, 0.36, 1] }}
     className="absolute bottom-12 left-0 right-0 flex justify-center z-30"
   >
     <button
@@ -1582,49 +2042,151 @@ const Home: React.FC = () => {
           galleryRef.current.scrollIntoView({ behavior: 'smooth' });
         }
       }}
-      className="flex flex-col items-center text-white/60 hover:text-white/90 transition-colors duration-300 group"
+      className="flex flex-col items-center group"
       aria-label="Scroll para descobrir mais"
     >
-      <span className="text-xs uppercase tracking-widest mb-4 font-sans">
-        {language === 'pt' ? 'Deslize para descobrir' : 'Desplácese para descubrir'}
-      </span>
-      <div className="h-14 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent relative">
+      <motion.div
+        className="relative mb-2 overflow-hidden"
+        initial={{ opacity: 0.6 }}
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 3, repeat: Infinity }}
+      >
+        <span className="text-xs uppercase tracking-widest font-sans text-white/60 group-hover:text-white/90 transition-colors duration-500">
+          {language === 'pt' ? 'Deslize para descobrir' : 'Desplácese para descubrir'}
+        </span>
         <motion.div
-          className="absolute top-0 w-1.5 h-1.5 rounded-full bg-accent left-1/2 -translate-x-1/2"
-          animate={{
-            y: [0, 24, 0],
-            boxShadow: [
-              '0 0 0 rgba(211, 161, 126, 0)',
-              '0 0 10px rgba(211, 161, 126, 0.7)',
-              '0 0 0 rgba(211, 161, 126, 0)'
-            ]
-          }}
-          transition={{
+          className="absolute bottom-0 left-0 right-0 h-[1px] bg-accent/40"
+          initial={{ scaleX: 0, transformOrigin: "left" }}
+          whileHover={{ scaleX: 1 }}
+          transition={{ duration: 0.5 }}
+        />
+      </motion.div>
+      
+      <div className="relative h-16 flex items-center overflow-hidden">
+        {/* Enhanced scroll line with premium animation */}
+        <div className="h-10 w-[1px] bg-gradient-to-b from-transparent via-white/40 to-white/10">
+          <motion.div
+            className="w-full"
+            animate={{ 
+              background: [
+                "linear-gradient(to bottom, rgba(211,161,126,0), rgba(211,161,126,0.7), rgba(211,161,126,0))",
+                "linear-gradient(to bottom, rgba(211,161,126,0.7), rgba(211,161,126,0), rgba(211,161,126,0))",
+                "linear-gradient(to bottom, rgba(211,161,126,0), rgba(211,161,126,0.7), rgba(211,161,126,0))"
+              ],
+              y: ["-100%", "100%", "-100%"],
+              height: ["40%", "30%", "40%"]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity,
+              ease: [0.32, 0.75, 0.36, 1]
+            }}
+            style={{ 
+              height: "50%",
+              width: "100%",
+              willChange: "transform, background"
+            }}
+          />
+        </div>
+        
+        {/* Enhanced scroll indicator dot */}
+        <motion.div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-7 h-7 flex items-center justify-center"
+          animate={{ y: ["0%", "100%", "0%"] }}
+          transition={{ 
+            duration: 3,
             repeat: Infinity,
-            duration: 2.5,
             ease: [0.32, 0.75, 0.36, 1]
           }}
-        />
+        >
+          <motion.div
+            className="w-2 h-2 rounded-full bg-accent"
+            animate={!prefersReducedMotion ? { 
+              scale: [1, 1.3, 1],
+              boxShadow: [
+                "0 0 0px 0px rgba(211,161,126,0.3)",
+                "0 0 15px 2px rgba(211,161,126,0.6)",
+                "0 0 0px 0px rgba(211,161,126,0.3)"
+              ]
+            } : {}}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        </motion.div>
       </div>
     </button>
   </motion.div>
 
-  {/* Contador de scroll com design premium */}
-  <motion.div
-    className="hidden md:block absolute bottom-12 right-12 z-30 text-white/30 text-xs font-mono"
-    style={{ opacity: useTransform(smoothHeroProgress, [0, 0.8], [1, 0]) }}
-  >
-    <motion.span className="inline-block">
-      00
-    </motion.span>
-    <span className="mx-1">/</span>
-    <motion.div
-      className="inline-block"
-      style={{ opacity: heroProgressHeight }}
+  {/* Advanced scroll position indicator with premium design */}
+  <div className="fixed bottom-12 right-12 z-40 pointer-events-none hidden md:block">
+    <motion.div 
+      className="relative h-24 w-px bg-white/10 overflow-hidden"
+      style={{ opacity: useTransform(smoothHeroProgress, [0, 0.8], [1, 0]) }}
     >
-      01
+      <motion.div
+        className="absolute bottom-0 w-full bg-accent"
+        style={{ 
+          height: heroProgressHeight,
+          scaleY: heroProgressHeight,
+          transformOrigin: "bottom" 
+        }}
+      />
     </motion.div>
+    
+    <motion.div
+      className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 text-[10px] font-mono tracking-wider text-white/40 whitespace-nowrap"
+      style={{ opacity: useTransform(smoothHeroProgress, [0, 0.8], [1, 0]) }}
+    >
+      <motion.span className="inline-block mr-1 text-accent">01</motion.span>
+      <span>/</span>
+      <span className="ml-1">05</span>
+    </motion.div>
+  </div>
+  
+  {/* Advanced responsive interfaces with sophisticated opacity management */}
+  <motion.div 
+    className="fixed top-[15%] left-6 z-40 flex flex-col space-y-3 items-center pointer-events-none hidden lg:flex"
+    style={{ 
+      opacity: useTransform(smoothHeroProgress, [0, 0.5], [1, 0]) 
+    }}
+  >
+    {[0, 1, 2, 3, 4].map((index) => (
+      <motion.div 
+        key={`dot-nav-${index}`}
+        className={`w-[3px] rounded-full ${index === 0 ? 'bg-accent h-10' : 'bg-white/20 h-4'}`}
+        whileHover={{ scale: 1.2 }}
+      />
+    ))}
   </motion.div>
+  
+  {/* CSS definitions for visual effects */}
+  <style>{`
+    @keyframes gradientShift {
+      0% { background-position: 0% 50% }
+      50% { background-position: 100% 50% }
+      100% { background-position: 0% 50% }
+    }
+    
+    .gradient-text {
+      background-size: 200% auto;
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      animation: gradientShift 8s ease infinite;
+      will-change: background-position;
+    }
+    
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    
+    .preserve-3d {
+      transform-style: preserve-3d;
+    }
+  `}</style>
 </motion.section>
           {/* Featured Projects Section */}
           <FeaturedProjects
@@ -1946,8 +2508,8 @@ const Home: React.FC = () => {
               performance={{ min: 0.5 }} // Performance throttling for low-end devices
               onCreated={({ gl }) => {
                 gl.setClearColor('#0a0a0a', 1);
-                gl.physicallyCorrectLights = true;
-                
+                (gl as any).physicallyCorrectLights = true;
+
                 // Context loss handling
                 const handleContextLost = () => {
                   console.log('Contexto WebGL perdido, tentando reconectar...');
@@ -2000,7 +2562,7 @@ const Home: React.FC = () => {
                 </mesh>
               }>
                 <EnhancedMaterialShowcase
-                  material={activeMaterial || allMaterials.woods[0]}
+                  material={activeMaterial || { ...allMaterials.woods[0], furniture: '', properties: '' }}
                   currentFurniture={currentFurniture}
                 />
               </ErrorBoundary>
@@ -2144,7 +2706,7 @@ const Home: React.FC = () => {
                       key={material.id}
                       material={material}
                       isActive={activeMaterial?.id === material.id}
-                      onSelect={() => setActiveMaterial({ ...material, furniture: material.furniture || null, properties: material.properties || null })}
+                      onSelect={() => setActiveMaterial({ ...material, furniture: material.furniture || null })}
                       index={idx}
                     />
                   ))}
@@ -2154,8 +2716,7 @@ const Home: React.FC = () => {
                       key={material.id}
                       material={material}
                       isActive={activeMaterial?.id === material.id}
-                      onSelect={() => setActiveMaterial(material)}
-                      index={idx}
+                      onSelect={() => setActiveMaterial({ ...material, furniture: material.furniture || null, properties: material.properties || null })}                      index={idx}
                       isFabric={true}
                     />
                   ))}
@@ -2165,8 +2726,7 @@ const Home: React.FC = () => {
                       key={material.id}
                       material={material}
                       isActive={activeMaterial?.id === material.id}
-                      onSelect={() => setActiveMaterial(material)}
-                      index={idx}
+                      onSelect={() => setActiveMaterial({ ...material, furniture: material.furniture || null, properties: material.properties || null })}                      index={idx}
                     />
                   ))}
 
@@ -2175,8 +2735,7 @@ const Home: React.FC = () => {
                       key={material.id}
                       material={material}
                       isActive={activeMaterial?.id === material.id}
-                      onSelect={() => setActiveMaterial(material)}
-                      index={idx}
+                      onSelect={() => setActiveMaterial({ ...material, properties: material.properties || null })}                      index={idx}
                     />
                   ))}
                   
@@ -2246,7 +2805,7 @@ const Home: React.FC = () => {
                       <div className="space-y-5">
                         {[
                           { name: language === 'pt' ? 'Durabilidade' : 'Durabilidad', value: activeMaterial.durability },
-                          { name: language === 'pt' ? 'Manutenção' : 'Mantenimiento', value: activeMaterial.maintenance },
+                          { name: language === 'pt' ? 'Manutenção' : 'Mantenimiento', value: activeMaterial.maitenance },
                           { name: language === 'pt' ? 'Sustentabilidade' : 'Sostenibilidad', value: activeMaterial.sustainability }
                         ].map((stat, i) => (
                           <div key={i}>
@@ -2256,13 +2815,13 @@ const Home: React.FC = () => {
                                 {[1, 2, 3, 4, 5].map(dot => (
                                   <motion.div
                                     key={dot}
-                                    className={`w-1.5 h-1.5 rounded-full ${dot <= stat.value ? 'bg-accent' : 'bg-white/10'}`}
+                                    className={`w-1.5 h-1.5 rounded-full ${dot <= (stat.value ?? 0) ? 'bg-accent' : 'bg-white/10'}`}
                                     initial={{ scale: 0 }}
-                                    animate={{ scale: dot <= stat.value ? [1, 1.2, 1] : 1 }}
+                                    animate={{ scale: dot <= (stat.value ?? 0) ? [1, 1.2, 1] : 1 }}
                                     transition={{ 
                                       delay: 0.3 + (i * 0.1) + (dot * 0.05), 
                                       duration: 0.4,
-                                      repeat: dot <= stat.value ? 1 : 0,
+                                      repeat: dot <= (stat.value ?? 0) ? 1 : 0,
                                       repeatDelay: 2
                                     }}
                                   />
@@ -2291,7 +2850,7 @@ const Home: React.FC = () => {
                         {language === 'pt' ? 'Aplicações Ideais' : 'Aplicaciones Ideales'}
                       </h5>
                       <ul className="space-y-3">
-                        {activeMaterial.applications.map((app, i) => (
+                        {(activeMaterial?.applications || [])?.map((app: { [key: string]: string }, i: number) => (
                           <motion.li
                             key={i}
                             className="flex items-start gap-3 group"
@@ -2497,49 +3056,47 @@ const Home: React.FC = () => {
 </motion.div>
 <motion.section
   ref={processRef}
-  className="py-32 md:py-80 bg-gradient-to-b from-[#0C0A09] via-[#12100E] to-[#171413] relative overflow-hidden"
+  className="py-32 md:py-80 bg-gradient-to-b from-[#0C0A09] via-[#12100E] to-[#171413] relative overflow-hidden isolation"
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
   exit={{ opacity: 0 }}
   transition={{ duration: 1.2 }}
+  style={{ 
+    willChange: "transform",
+    backfaceVisibility: "hidden"
+  }}
 >
-  {/* Fundo atmosférico com profundidade e movimento */}
+  {/* Performance-optimized atmospheric background */}
   <div className="absolute inset-0 z-0">
-    {/* Gradiente de fundo com movimento sutil */}
+    {/* Optimized background gradient with reduced animation complexity */}
+    <div className="absolute inset-0 opacity-80 bg-[#0C0A09]"></div>
+    
     <motion.div
       className="absolute inset-0 opacity-80"
       animate={{
         background: [
-          "radial-gradient(circle at 30% 40%, rgba(25,23,20,0.9), rgba(12,10,9,1))",
-          "radial-gradient(circle at 70% 60%, rgba(25,23,20,0.9), rgba(12,10,9,1))",
-          "radial-gradient(circle at 30% 40%, rgba(25,23,20,0.9), rgba(12,10,9,1))"
+          "radial-gradient(circle at 30% 40%, rgba(25,23,20,0.9), rgba(12,10,9,1) 80%)",
+          "radial-gradient(circle at 70% 60%, rgba(25,23,20,0.9), rgba(12,10,9,1) 80%)",
+          "radial-gradient(circle at 30% 40%, rgba(25,23,20,0.9), rgba(12,10,9,1) 80%)"
         ]
       }}
-      transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration: 30, repeat: Infinity, ease: "easeInOut", repeatType: "mirror" }}
+      style={{ willChange: "background" }}
     />
 
-    {/* Malha fluida com movimento */}
-    <motion.div
+    {/* Static grid pattern for better performance */}
+    <div
       className="absolute inset-0 opacity-10 pointer-events-none"
       style={{
         backgroundImage: 'url(/images/grid-pattern.svg)',
         backgroundSize: '60px',
       }}
-      animate={{ 
-        y: [0, 10, 0],
-        x: [0, -10, 0]
-      }}
-      transition={{ 
-        duration: 30, 
-        repeat: Infinity, 
-        ease: "easeInOut" 
-      }}
     />
 
-    {/* Sistema de partículas elegantes */}
-    {!prefersReducedMotion && (
+    {/* Performance-optimized particles - reduced quantity and conditionally rendered */}
+    {!prefersReducedMotion && !isMobile && (
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(Math.min(15, window.innerWidth > 1600 ? 15 : 8))].map((_, i) => (
           <motion.div
             key={`process-particle-${i}`}
             className="absolute h-[1.5px] w-[1.5px] rounded-full bg-accent/80"
@@ -2550,84 +3107,80 @@ const Home: React.FC = () => {
               opacity: 0.2 
             }}
             animate={{ 
-              scale: [0.3, Math.random() * 1.5 + 0.5, 0.3],
+              scale: [0.3, Math.random() * 1.2 + 0.5, 0.3],
               opacity: [0.2, 0.5, 0.2],
-              filter: ["blur(0px)", "blur(2px)", "blur(0px)"]
             }}
             transition={{ 
-              duration: Math.random() * 15 + 10,
+              duration: Math.random() * 15 + 20,
               repeat: Infinity,
               ease: "easeInOut"
             }}
+            style={{ willChange: "transform, opacity" }}
           />
         ))}
       </div>
     )}
 
-    {/* Linha de tempo luminosa vertical */}
+    {/* Optimized vertical timeline - static with reveal animation */}
     <motion.div 
       className="absolute top-[15%] left-1/2 transform -translate-x-1/2 h-[70%] w-[2px] z-10"
       style={{
         background: "linear-gradient(to bottom, transparent, rgba(211,161,126,0.7), transparent)",
-        boxShadow: "0 0 20px rgba(211,161,126,0.3)"
+        boxShadow: "0 0 20px rgba(211,161,126,0.3)",
+        transformOrigin: "center top"
       }}
       initial={{ scaleY: 0, opacity: 0 }}
       whileInView={{ scaleY: 1, opacity: 1 }}
-      viewport={{ once: true }}
+      viewport={{ once: true, margin: "-10%" }}
       transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
     />
     
-    {/* Elementos circulares decorativos com animação 3D */}
-    {[...Array(3)].map((_, i) => (
-      <motion.div
-        key={`circle-${i}`}
-        className="absolute rounded-full border border-accent/10"
-        style={{
-          height: `${100 + i * 100}px`,
-          width: `${100 + i * 100}px`,
-          top: `${20 + i * 15}%`,
-          right: `${5 + i * 8}%`,
-          opacity: 0.1 - i * 0.02
-        }}
-        initial={{ scale: 0.8, rotateX: 45, rotateY: 15 }}
-        whileInView={{ scale: 1, rotateX: 0, rotateY: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 2 + i, ease: [0.22, 1, 0.36, 1] }}
-      />
-    ))}
+    {/* Simplified decorative elements - fewer and optimized */}
+    <motion.div
+      className="absolute rounded-full border border-accent/10"
+      style={{
+        height: `300px`,
+        width: `300px`,
+        top: `20%`,
+        right: `5%`,
+        opacity: 0.08
+      }}
+      initial={{ scale: 0.8, rotateX: 45, rotateY: 15 }}
+      whileInView={{ scale: 1, rotateX: 0, rotateY: 0 }}
+      viewport={{ once: true, margin: "-10%" }}
+      transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+    />
     
-    {[...Array(3)].map((_, i) => (
-      <motion.div
-        key={`circle-left-${i}`}
-        className="absolute rounded-full border border-accent/10"
-        style={{
-          height: `${140 + i * 90}px`,
-          width: `${140 + i * 90}px`,
-          bottom: `${15 + i * 12}%`,
-          left: `${3 + i * 6}%`,
-          opacity: 0.15 - i * 0.03
-        }}
-        initial={{ scale: 0.8, rotateX: -30, rotateY: -20 }}
-        whileInView={{ scale: 1, rotateX: 0, rotateY: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 2 + i, ease: [0.22, 1, 0.36, 1] }}
-      />
-    ))}
+    <motion.div
+      className="absolute rounded-full border border-accent/10"
+      style={{
+        height: `320px`,
+        width: `320px`,
+        bottom: `15%`,
+        left: `3%`,
+        opacity: 0.12
+      }}
+      initial={{ scale: 0.8, rotateX: -30, rotateY: -20 }}
+      whileInView={{ scale: 1, rotateX: 0, rotateY: 0 }}
+      viewport={{ once: true, margin: "-10%" }}
+      transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+    />
   </div>
 
-  {/* Linhas de acento laterais com efeito de onda */}
+  {/* Optimized accent lines - static base with animated gradient */}
   <div className="absolute top-0 left-0 w-[1px] h-full z-10">
+    <div className="h-full w-full bg-gradient-to-b from-transparent via-accent/10 to-transparent"></div>
     <motion.div
-      className="h-full w-full"
+      className="absolute top-0 h-[40%] w-full"
       style={{
-        background: "linear-gradient(to bottom, transparent, rgba(211,161,126,0.8), transparent)"
+        background: "linear-gradient(to bottom, transparent, rgba(211,161,126,0.8), transparent)",
+        willChange: "transform"
       }}
       animate={{ 
-        scaleY: [0.3, 1, 0.3], 
-        y: ["0%", "30%", "0%"]
+        y: ["0%", "150%", "0%"]
       }}
       transition={{ 
-        duration: 15, 
+        duration: 20, 
         repeat: Infinity, 
         ease: "easeInOut" 
       }}
@@ -2635,32 +3188,33 @@ const Home: React.FC = () => {
   </div>
 
   <div className="absolute top-0 right-0 w-[1px] h-full z-10">
+    <div className="h-full w-full bg-gradient-to-b from-transparent via-accent/10 to-transparent"></div>
     <motion.div
-      className="h-full w-full"
+      className="absolute top-[60%] h-[40%] w-full"
       style={{
-        background: "linear-gradient(to bottom, transparent, rgba(211,161,126,0.8), transparent)"
+        background: "linear-gradient(to bottom, transparent, rgba(211,161,126,0.8), transparent)",
+        willChange: "transform"
       }}
       animate={{ 
-        scaleY: [0.3, 1, 0.3], 
-        y: ["30%", "0%", "30%"]
+        y: ["0%", "-150%", "0%"]
       }}
       transition={{ 
-        duration: 15, 
+        duration: 20, 
         repeat: Infinity, 
         ease: "easeInOut" 
       }}
     />
   </div>
 
-  {/* Conteúdo principal com layout aprimorado */}
+  {/* Main content container with optimized layout */}
   <div className="container mx-auto px-6 md:px-24 relative z-30">
-    {/* Cabeçalho da seção com animações sofisticadas */}
-    <div className="text-center max-w-4xl mx-auto mb-40">
+    {/* Section header with enhanced reveal animations */}
+    <div className="text-center max-w-4xl mx-auto mb-32 md:mb-40">
       <motion.div
         className="text-accent/90 uppercase tracking-[0.35em] text-xs font-light mb-6 relative inline-flex"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-10%" }}
         transition={{ duration: 0.8 }}
       >
         <span>{language === 'pt' ? 'Metodologia' : 'Metodología'}</span>
@@ -2668,7 +3222,7 @@ const Home: React.FC = () => {
           className="absolute bottom-0 left-0 h-[1px] bg-accent/40"
           initial={{ width: 0 }}
           whileInView={{ width: '100%' }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-10%" }}
           transition={{ delay: 0.5, duration: 1.2 }}
         />
       </motion.div>
@@ -2678,25 +3232,31 @@ const Home: React.FC = () => {
           className="text-6xl md:text-7xl font-serif font-light text-white mb-8"
           initial={{ y: 80 }}
           whileInView={{ y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-10%" }}
           transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
         >
           <span className="block">{language === 'pt' ? 'Nosso Processo' : 'Nuestro Proceso'}</span>
           <span className="relative inline-block mt-2">
-            <motion.span
-              initial={{ filter: "blur(0px)" }}
-              animate={{ filter: ["blur(0px)", "blur(2px)", "blur(0px)"] }}
-              transition={{ duration: 8, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-              className="bg-gradient-to-r from-white/95 via-accent/90 to-white/95 text-transparent bg-clip-text"
-            >
-              {language === 'pt' ? 'Criativo' : 'Creativo'}
-            </motion.span>
+            {!prefersReducedMotion ? (
+              <motion.span
+                initial={{ filter: "blur(0px)" }}
+                animate={{ filter: ["blur(0px)", "blur(2px)", "blur(0px)"] }}
+                transition={{ duration: 8, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+                className="bg-gradient-to-r from-white/95 via-accent/90 to-white/95 text-transparent bg-clip-text"
+              >
+                {language === 'pt' ? 'Criativo' : 'Creativo'}
+              </motion.span>
+            ) : (
+              <span className="text-accent">
+                {language === 'pt' ? 'Criativo' : 'Creativo'}
+              </span>
+            )}
             
             <motion.div
               className="absolute -bottom-4 left-0 h-[2px] w-4/5 bg-gradient-to-r from-accent via-accent/50 to-transparent"
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-10%" }}
               transition={{ duration: 1.2, delay: 0.4 }}
               style={{ transformOrigin: "left" }}
             />
@@ -2708,7 +3268,7 @@ const Home: React.FC = () => {
         className="text-white/70 text-lg md:text-xl max-w-2xl mx-auto font-sans leading-relaxed"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-10%" }}
         transition={{ duration: 1, delay: 0.3 }}
       >
         {language === 'pt'
@@ -2717,12 +3277,12 @@ const Home: React.FC = () => {
       </motion.p>
     </div>
 
-    {/* Timeline 3D com etapas do processo */}
+    {/* Performance-optimized timeline */}
     <div className="relative">
-      {/* Linha do tempo central (visível apenas em mobile) */}
+      {/* Mobile timeline indicator - static with minimal animations */}
       <div className="absolute left-[27px] top-10 bottom-10 w-[2px] bg-gradient-to-b from-transparent via-accent/30 to-transparent block md:hidden"></div>
       
-      {/* Etapas do processo em layout 3D alternado */}
+      {/* Process steps with performance-optimized effects */}
       {[
         {
           number: '01',
@@ -2755,33 +3315,35 @@ const Home: React.FC = () => {
       ].map((step, index) => (
         <motion.div
           key={index}
-          className={`relative mb-40 md:mb-64 last:mb-20 ${index % 2 === 0 ? 'md:ml-0' : 'md:mr-0'}`}
+          className={`relative mb-32 md:mb-56 last:mb-16 ${index % 2 === 0 ? 'md:ml-0' : 'md:mr-0'}`}
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1.2, delay: 0.2 * index }}
+          viewport={{ once: true, margin: "-15%" }}
+          transition={{ duration: 1, delay: 0.1 * index }}
         >
-          {/* Conector espacial 3D (apenas desktop) */}
-          <div className="hidden md:block absolute z-10 top-1/2 left-1/2 w-[400px] h-[2px]">
-            <motion.div 
-              className="w-full h-full"
-              style={{
-                background: activeProcessStep === index 
-                  ? "linear-gradient(to right, rgba(211,161,126,0.8), transparent)" 
-                  : "linear-gradient(to right, rgba(255,255,255,0.2), transparent)",
-                transformOrigin: index % 2 === 0 ? "center right" : "center left",
-                transform: `translateY(-50%) rotate(${index % 2 === 0 ? '30deg' : '-30deg'})`
-              }}
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            />
-          </div>
+          {/* Performance-optimized connector line */}
+          {index < 3 && (
+            <div className="hidden md:block absolute z-10 top-1/2 left-1/2 w-[400px] h-[2px]">
+              <motion.div 
+                className="w-full h-full origin-center"
+                style={{
+                  background: activeProcessStep === index 
+                    ? "linear-gradient(to right, rgba(211,161,126,0.8), transparent)" 
+                    : "linear-gradient(to right, rgba(255,255,255,0.2), transparent)",
+                  transform: `translateY(-50%) rotate(${index % 2 === 0 ? '30deg' : '-30deg'})`,
+                  transformOrigin: index % 2 === 0 ? "center right" : "center left",
+                }}
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true, margin: "-15%" }}
+                transition={{ duration: 0.8 }}
+              />
+            </div>
+          )}
 
-          {/* Layout de cartão 3D com conteúdo e imagem */}
+          {/* Optimized layout for cards */}
           <div className={`flex flex-col md:flex-row ${index % 2 === 0 ? 'md:ml-auto' : 'md:mr-auto md:flex-row-reverse'} md:w-[85%]`}>
-            {/* Numeração e ícone lateral (mobile) */}
+            {/* Mobile heading (optimized) */}
             <div className="flex md:hidden items-center mb-6">
               <motion.div
                 className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-serif ${activeProcessStep === index ? 'bg-accent text-black' : 'bg-white/10 text-white/90'} transition-all duration-500 mr-5`}
@@ -2797,59 +3359,48 @@ const Home: React.FC = () => {
               </h3>
             </div>
 
-            {/* Cartão de conteúdo premium com efeito vidro */}
+            {/* Premium card with performance optimizations */}
             <motion.div 
               className={`relative bg-black/20 backdrop-blur-sm border ${activeProcessStep === index ? 'border-accent/20' : 'border-white/5'} 
-                rounded-xl p-8 md:p-10 overflow-hidden md:w-[550px] transition-all duration-500 group`
+                rounded-xl p-8 md:p-10 overflow-hidden md:w-[550px] transition-colors duration-500 group transform-gpu`
               }
               whileHover={{ 
-                y: -10,
+                y: -8,
                 transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
               }}
             >
-              {/* Efeitos de luz dinâmicos */}
-              <motion.div
-                className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-accent/5 blur-[80px] z-0"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.2, 0.4, 0.2]
-                }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              {/* Optimized ambient lighting effect */}
+              <div 
+                className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-accent/5 blur-[80px] z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
               />
 
-              {/* Número da etapa (desktop) */}
+              {/* Optimized step number for desktop */}
               <div className="hidden md:block">
                 <motion.div
-                  className={`absolute ${index % 2 === 0 ? '-left-5' : '-right-5'} -top-5 w-16 h-16 rounded-full flex items-center justify-center text-xl font-serif ${activeProcessStep === index ? 'bg-accent text-black' : 'bg-white/10 text-white/90'} transition-all duration-500 shadow-xl z-20`}
+                  className={`absolute ${index % 2 === 0 ? '-left-5' : '-right-5'} -top-5 w-16 h-16 rounded-full flex items-center justify-center text-xl font-serif ${activeProcessStep === index ? 'bg-accent text-black' : 'bg-white/10 text-white/90'} transition-colors duration-500 shadow-xl z-20`}
                   initial={{ scale: 0 }}
                   whileInView={{ scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.4 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.3 }}
                 >
                   {step.number}
                 </motion.div>
               </div>
 
-              {/* Ícone animado */}
+              {/* Optimized icon */}
               <div className="mb-8 relative z-10">
-                <motion.div 
+                <div
                   className={`h-20 w-20 rounded-full ${activeProcessStep === index ? 'bg-accent/20' : 'bg-white/5'} 
-                    flex items-center justify-center transition-all duration-500 group-hover:shadow-lg relative overflow-hidden`
+                    flex items-center justify-center transition-all duration-500 relative overflow-hidden`
                   }
-                  animate={activeProcessStep === index ? 
-                    { boxShadow: ["0 0 0 rgba(211,161,126,0.3)", "0 0 30px rgba(211,161,126,0.5)", "0 0 0 rgba(211,161,126,0.3)"] } : {}
-                  }
-                  transition={{ duration: 3, repeat: Infinity }}
                 >
-                  {/* Efeito de ondulação ao passar o mouse */}
-                  <motion.div 
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100"
-                    initial={{ scale: 0 }}
-                    whileHover={{ scale: 3, opacity: 0.3 }}
-                    transition={{ duration: 0.7 }}
+                  {/* Optimized ripple effect */}
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                     style={{ 
                       background: "radial-gradient(circle, rgba(211,161,126,0.3) 0%, transparent 70%)",
-                      borderRadius: "50%" 
+                      borderRadius: "50%",
+                      transform: "scale(0)",
                     }}
                   />
 
@@ -2862,7 +3413,7 @@ const Home: React.FC = () => {
                     strokeWidth="1.5" 
                     strokeLinecap="round" 
                     strokeLinejoin="round"
-                    className="relative z-10"
+                    className="relative z-10 transition-colors duration-300"
                   >
                     {step.icon === 'chat-bubble' && (
                       <>
@@ -2892,10 +3443,10 @@ const Home: React.FC = () => {
                       </>
                     )}
                   </svg>
-                </motion.div>
+                </div>
               </div>
 
-              {/* Título e descrição */}
+              {/* Optimized content */}
               <div className="relative z-10">
                 <h3 className={`text-2xl md:text-3xl mb-6 font-serif font-light hidden md:block ${activeProcessStep === index ? 'text-accent' : 'text-white'} transition-colors duration-500`}>
                   {step.title[language === 'pt' ? 'pt' : 'es']}
@@ -2906,28 +3457,20 @@ const Home: React.FC = () => {
                 </p>
               </div>
 
-              {/* Indicador de estado ativo */}
+              {/* Optimized active indicator - reduced animations */}
               {activeProcessStep === index && (
                 <>
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.5 }}
-                    style={{ transformOrigin: 'left' }}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-accent origin-left scale-x-100 transition-transform duration-500"
                   />
                   
-                  <motion.div
-                    className="absolute top-0 left-0 right-0 h-[2px] bg-accent"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    style={{ transformOrigin: 'right' }}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-[2px] bg-accent origin-right scale-x-100 transition-transform duration-500 delay-100"
                   />
                 </>
               )}
 
-              {/* Padrão de fundo sutil */}
+              {/* Static pattern background */}
               <div 
                 className="absolute inset-0 opacity-5 pointer-events-none z-0" 
                 style={{
@@ -2937,112 +3480,85 @@ const Home: React.FC = () => {
               />
             </motion.div>
 
-            {/* Imagem ilustrativa com efeitos premium */}
-            <div className={`hidden md:block md:w-[450px] ${index % 2 === 0 ? 'md:mr-12' : 'md:ml-12'} relative perspective-800`}>
+            {/* Optimized image card with reduced 3D effects */}
+            <div className={`hidden md:block md:w-[450px] ${index % 2 === 0 ? 'md:mr-12' : 'md:ml-12'} relative`}>
               <motion.div
-                className="relative h-full transform-gpu shadow-2xl"
-                style={{ transformStyle: 'preserve-3d' }}
-                initial={{ opacity: 0, rotateY: index % 2 === 0 ? 15 : -15, rotateX: 5 }}
-                whileInView={{ opacity: 1, rotateY: 0, rotateX: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className="relative h-full shadow-2xl transform-gpu"
+                initial={{ opacity: 0, rotateY: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, rotateY: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-15%" }}
+                transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{
                   scale: 1.02,
-                  rotateY: index % 2 === 0 ? -2 : 2,
                   transition: { duration: 0.5 }
                 }}
+                style={{ willChange: "transform, opacity" }}
               >
-                {/* Camada de imagem com efeito de revelação */}
+                {/* Optimized image reveal */}
                 <motion.div 
                   className="w-full h-full overflow-hidden rounded-lg border border-white/10"
                   initial={{ clipPath: 'inset(0 0 100% 0)' }}
                   whileInView={{ clipPath: 'inset(0 0 0% 0)' }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1.5, delay: 0.3 + index * 0.1, ease: [0.25, 1, 0.5, 1] }}
+                  viewport={{ once: true, margin: "-15%" }}
+                  transition={{ duration: 1.2, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
                 >
                   <img
                     src={step.image}
                     alt={step.title[language === 'pt' ? 'pt' : 'es']}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                   
-                  {/* Vinheta e efeitos de luz */}
+                  {/* Optimized image overlays */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-70"></div>
                   <div className="absolute inset-0 bg-accent/10 mix-blend-overlay"></div>
                   
-                  {/* Indicador de etapa ativa */}
+                  {/* Simplified active indicator */}
                   {activeProcessStep === index && (
-                    <motion.div 
+                    <div 
                       className="absolute inset-0 border-2 border-accent/40 rounded-lg"
-                      animate={{ boxShadow: ["inset 0 0 0 rgba(211,161,126,0)", "inset 0 0 40px rgba(211,161,126,0.3)", "inset 0 0 0 rgba(211,161,126,0)"] }}
-                      transition={{ duration: 3, repeat: Infinity }}
                     />
                   )}
                 </motion.div>
                 
-                {/* Elementos decorativos 3D */}
-                <motion.div 
-                  className="absolute -bottom-4 -left-4 w-20 h-20 border border-accent/30 rounded-md"
-                  initial={{ opacity: 0, x: -10, y: 10 }}
-                  whileInView={{ opacity: 0.4, x: 0, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.6 + index * 0.1 }}
-                  style={{ 
-                    transform: 'translateZ(-30px)', 
-                    transformStyle: 'preserve-3d',
-                    boxShadow: activeProcessStep === index ? '0 0 20px rgba(211,161,126,0.2)' : 'none'
-                  }}
+                {/* Minimal decorative elements */}
+                <div 
+                  className="absolute -bottom-4 -left-4 w-20 h-20 border border-accent/30 rounded-md opacity-0 group-hover:opacity-40 transition-opacity duration-500"
                 />
                 
-                <motion.div 
-                  className="absolute -top-3 -right-3 w-12 h-12 rounded-full border border-accent/20"
-                  initial={{ opacity: 0, x: 10, y: -10 }}
-                  whileInView={{ opacity: activeProcessStep === index ? 0.6 : 0.3, x: 0, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.7 + index * 0.1 }}
-                  style={{ 
-                    transform: 'translateZ(-20px)', 
-                    transformStyle: 'preserve-3d'
-                  }}
+                <div
+                  className="absolute -top-3 -right-3 w-12 h-12 rounded-full border border-accent/20 opacity-0 group-hover:opacity-30 transition-opacity duration-500"
                 />
               </motion.div>
               
-              {/* Reflexo sutil abaixo da imagem */}
-              <motion.div
-                className="absolute -bottom-10 left-10 right-10 h-20 rounded-3xl opacity-30 blur-xl"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: activeProcessStep === index ? 0.4 : 0.15 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1 }}
+              {/* Static reflection */}
+              <div
+                className={`absolute -bottom-10 left-10 right-10 h-16 rounded-3xl opacity-${activeProcessStep === index ? '20' : '10'} blur-xl bg-gradient-to-b from-accent/30 to-transparent transition-opacity duration-500`}
                 style={{
-                  background: `linear-gradient(to bottom, ${activeProcessStep === index ? 'rgba(211,161,126,0.2)' : 'rgba(255,255,255,0.05)'}, transparent)`,
-                  transform: 'rotateX(75deg) translateZ(-50px)',
+                  transform: 'rotateX(75deg) translateZ(-10px)',
                   transformOrigin: 'bottom'
                 }}
               />
             </div>
           </div>
           
-          {/* Indicador de passo em progresso (mobile) */}
+          {/* Mobile active indicator - optimized */}
           {activeProcessStep === index && (
-            <motion.div
+            <div
               className="absolute left-[27px] top-7 z-20 w-5 h-5 rounded-full bg-accent border-4 border-[#0C0A09] md:hidden"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             />
           )}
         </motion.div>
       ))}
     </div>
     
-    {/* Navegação interativa entre etapas */}
+    {/* Optimized navigation steps */}
     <motion.div 
       className="flex justify-center mt-20"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8, delay: 0.6 }}
+      viewport={{ once: true, margin: "-15%" }}
+      transition={{ duration: 0.8 }}
     >
       <div className="inline-flex bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-2">
         {[0, 1, 2, 3].map(step => (
@@ -3051,7 +3567,7 @@ const Home: React.FC = () => {
             className={`relative px-6 py-3 mx-1 rounded-lg text-sm ${activeProcessStep === step ? 'text-black' : 'text-white/60 hover:text-white/90'} transition duration-300`}
             onClick={() => setActiveProcessStep(step)}
           >
-            {/* Indicador de botão ativo com animação de preenchimento */}
+            {/* Simplified button indicator */}
             {activeProcessStep === step && (
               <motion.div
                 className="absolute inset-0 bg-accent rounded-lg"
@@ -3068,13 +3584,13 @@ const Home: React.FC = () => {
       </div>
     </motion.div>
     
-    {/* Call to action premium */}
+    {/* Optimized CTA button */}
     <motion.div
       className="mt-24 text-center"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 1, delay: 0.8 }}
+      viewport={{ once: true, margin: "-15%" }}
+      transition={{ duration: 1 }}
     >
       <Link
         to="/processo"
@@ -3083,7 +3599,7 @@ const Home: React.FC = () => {
         onMouseLeave={() => handleCtaHover(false)}
       >
         <motion.div
-          className="relative z-10 bg-transparent border-2 border-accent px-10 py-4 rounded-sm overflow-hidden"
+          className="relative z-10 bg-transparent border-2 border-accent px-10 py-4 rounded-sm overflow-hidden transform-gpu"
           whileHover={{
             scale: 1.05,
             transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
@@ -3093,23 +3609,24 @@ const Home: React.FC = () => {
             {language === 'pt' ? 'Explore nosso processo em detalhes' : 'Explore nuestro proceso en detalles'}
           </span>
 
-          {/* Efeito de preenchimento elegante */}
+          {/* Optimized fill effect */}
           <motion.div
             className="absolute inset-0 bg-accent z-10"
             initial={{ scaleX: 0 }}
             whileHover={{ scaleX: 1 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            style={{ transformOrigin: 'left' }}
+            style={{ transformOrigin: 'left', willChange: "transform" }}
           />
         </motion.div>
 
-        {/* Ícone animado */}
+        {/* Optimized icon animation */}
         <motion.div
           className="ml-3 relative z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          animate={{
+          animate={!prefersReducedMotion ? {
             x: [0, 5, 0],
             transition: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-          }}
+          } : {}}
+          style={{ willChange: "transform" }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <path d="M5 12h14"></path>
@@ -3119,78 +3636,312 @@ const Home: React.FC = () => {
       </Link>
     </motion.div>
   </div>
+
+  {/* Performance optimizations CSS */}
+  <style>{`
+    .transform-gpu {
+      transform: translateZ(0);
+      will-change: transform;
+      backface-visibility: hidden;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      .animate-subtle {
+        animation: none !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  `}</style>
 </motion.section>
       
-    {/* Seção Nossa História com Design Imersivo */}
+{/* Premium Testimonials Section - Performance Optimized */}
 <motion.section
-  ref={aboutRef}
-  className="py-48 md:py-80 overflow-hidden relative"
+  className="py-32 md:py-60 overflow-hidden relative isolate"
   initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
+  whileInView={{ opacity: 1 }}
+  viewport={{ once: true }}
+  transition={{ duration: 1.2 }}
 >
-  {/* Camadas de background com efeito paralaxe profundo */}
-  <div className="absolute inset-0 z-0">
-    {/* Fundo base com desfoque cinético */}
-    <motion.div
-      className="absolute inset-0 bg-black"
-      style={{ 
-        y: useTransform(smoothAboutProgress, [0, 1], ['-10%', '10%']),
-        scale: useTransform(smoothAboutProgress, [0, 1], [1.1, 1])
+  {/* Simplified static background for better performance */}
+  <div className="absolute inset-0 -z-10">
+    <div className="absolute inset-0 bg-[#0A0806]"></div>
+    
+    {/* Static gradient instead of animated */}
+    <div 
+      className="absolute inset-0 opacity-30"
+      style={{
+        background: "radial-gradient(ellipse at 30% 40%, rgba(211,161,126,0.25), rgba(10,8,6,0) 60%)"
       }}
-    >
-      <div className="absolute inset-0 bg-black/60 mix-blend-soft-light z-10"></div>
+    />
+    
+    {/* Reduced number of particles, only shown on desktop and non-reduced motion */}
+    {!prefersReducedMotion && !isMobile && (
+      <div className="absolute inset-0 opacity-80 mix-blend-screen pointer-events-none">
+        {Array.from({length: 6}).map((_, i) => (
+          <motion.div
+            key={`glow-particle-${i}`}
+            className="absolute rounded-full"
+            initial={{
+              x: `${Math.random() * 100}%`,
+              y: `${Math.random() * 100}%`,
+              opacity: 0.2,
+              scale: 0.2
+            }}
+            animate={{
+              opacity: [0.2, 0.4, 0.2],
+              scale: [0.2, 0.3, 0.2],
+            }}
+            transition={{
+              duration: 8 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+            style={{
+              width: `${3 + Math.random() * 3}px`,
+              height: `${3 + Math.random() * 3}px`,
+              background: 'radial-gradient(circle, rgba(211,161,126,1), rgba(211,161,126,0))',
+              boxShadow: '0 0 10px rgba(211,161,126,0.6)'
+            }}
+          />
+        ))}
+      </div>
+    )}
+    
+    {/* Static texture */}
+    <div 
+      className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none" 
+      style={{ backgroundImage: 'url(/images/noise-texture.png)' }}
+    ></div>
+  </div>
+
+  {/* Content container */}
+  <div className="container mx-auto px-6 md:px-16 relative z-10">
+    {/* Header with fixed visibility */}
+    <div className="max-w-4xl mx-auto mb-24 md:mb-32 relative">
+      {/* Fixed: Changed to visible text color (white instead of accent/90) */}
       <motion.div
-        className="absolute inset-0 z-20"
-        animate={{ 
-          filter: ["blur(0px)", "blur(15px)", "blur(0px)"]
-        }}
-        transition={{ 
-          duration: 20, 
-          repeat: Infinity, 
-          ease: "easeInOut" 
-        }}
+        className="uppercase tracking-[0.45em] text-xs font-light mb-8 relative inline-flex text-white"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
       >
-        <img
-          src="/images/atelier-background.jpg"
-          alt="Atelier background"
-          className="w-full h-full object-cover"
+        <span className="text-accent">{language === 'pt' ? '04 — ' : '04 — '}</span>
+        <span>{language === 'pt' ? 'Reflexos de Excelência' : 'Reflejos de Excelencia'}</span>
+        <motion.span 
+          className="absolute bottom-[-4px] left-0 h-[1px] bg-accent/40"
+          initial={{ width: 0 }}
+          whileInView={{ width: '100%' }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5, duration: 1, ease: "easeOut" }}
         />
       </motion.div>
-    </motion.div>
+      
+      <h2 className="text-5xl md:text-7xl font-serif font-light text-white/95 leading-[1.1]">
+        <motion.span
+          initial={{ y: 60, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          {language === 'pt' ? 'Narrativas ' : 'Narrativas '}
+          <span className="text-accent">
+            {language === 'pt' ? 'autênticas' : 'auténticas'}
+          </span>
+        </motion.span>
+      </h2>
+      
+      {/* Simplified description with single animation instead of character-by-character */}
+      <motion.p
+        className="text-white/70 text-lg md:text-xl max-w-2xl mt-10 leading-relaxed"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.3 }}
+      >
+        {language === 'pt'
+          ? 'Conheça a experiência de clientes cuja visão foi transformada em realidade através de nosso design exclusivo e artesanato excepcional.'
+          : 'Conozca la experiencia de clientes cuya visión se transformó en realidad a través de nuestro diseño exclusivo y artesanía excepcional.'}
+      </motion.p>
+    </div>
+
+    {/* Performance optimized testimonial carousel */}
+    <div className="relative mb-24">
+      {/* Removed 3D perspective for better performance */}
+      <motion.div
+        className="relative"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 1, ease: "easeOut" }}
+      >
+        {/* Simplified carousel with fewer animations */}
+        <div className="flex flex-nowrap gap-8 md:gap-10 overflow-x-auto hide-scrollbar pb-16 snap-x snap-mandatory">
+          {testimonials.map((testimonial, index) => (
+            <motion.div
+              key={`testimonial-${index}`}
+              className="min-w-[min(400px,90vw)] md:min-w-[500px] snap-start group relative"
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ 
+                duration: 0.8, 
+                delay: 0.1 * index,
+                ease: "easeOut"
+              }}
+              whileHover={{ 
+                y: -10,
+                transition: { duration: 0.4 } 
+              }}
+            >
+              {/* Simplified card with fewer layers and effects */}
+              <div className="relative bg-black/30 backdrop-blur-md rounded-xl overflow-hidden transition-all duration-500 border border-white/10 group-hover:border-accent/30">
+                {/* Content area with fewer nested elements */}
+                <div className="relative z-10 p-8 md:p-10">
+                  {/* Quote mark */}
+                  <div className="absolute -top-6 -left-3 text-7xl font-serif text-accent/10 select-none">
+                    "
+                  </div>
+                  
+                  {/* Testimonial text - simplified animations */}
+                  <div className="mb-12 min-h-[160px] relative">
+                    <p className="text-white/90 text-lg font-serif italic leading-relaxed">
+                      {testimonial.quote[language === 'pt' ? 'pt' : 'es']}
+                    </p>
+                  </div>
+                  
+                  {/* Simple separator */}
+                  <div className="h-[1px] w-16 bg-accent/40 my-6" />
+                  
+                  {/* Client information */}
+                  <div className="flex items-center">
+                    {/* Simplified avatar */}
+                    <div className="relative mr-6">
+                      <div className="w-16 h-16 rounded-full overflow-hidden ring-1 ring-white/10 group-hover:ring-accent/30 transition-all duration-500">
+                        <img 
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      
+                      {/* Badge */}
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-accent flex items-center justify-center">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* Client info */}
+                    <div>
+                      <h4 className="text-white text-lg font-serif mb-1">
+                        {testimonial.name}
+                      </h4>
+                      <div className="text-white/50 text-sm flex items-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mr-1.5">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        {testimonial.title}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        
+        {/* Simplified navigation indicators */}
+        <div className="flex justify-center mt-6">
+          <div className="inline-flex items-center gap-2 py-2 px-3 bg-black/20 rounded-full">
+            {testimonials.map((_, index) => (
+              <button
+                key={index}
+                className={`w-2.5 h-2.5 rounded-full ${
+                  index === 0 ? 'bg-accent' : 'bg-white/20'
+                } transition-all duration-300`}
+                aria-label={`View testimonial ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </div>
     
-    {/* Sobreposição de texturas fluidas */}
-    <motion.div
-      className="absolute inset-0 opacity-20 mix-blend-overlay"
-      style={{ 
-        backgroundImage: 'url(/images/texture-pattern.png)', 
-        y: useTransform(smoothAboutProgress, [0, 1], ['0%', '10%']),
+    {/* Simplified CTA */}
+    <div className="text-center">
+      <Link
+        to="/depoimentos"
+        className="group relative inline-flex items-center overflow-hidden rounded-sm"
+        onMouseEnter={() => setCursorVariant?.('link')}
+        onMouseLeave={() => setCursorVariant?.('default')}
+      >
+        <div className="relative z-10 bg-transparent border border-accent px-10 py-4 text-white">
+          <span className="relative z-10 group-hover:text-black transition-colors duration-300">
+            {language === 'pt' ? 'Ver todos os depoimentos' : 'Ver todos los testimonios'}
+          </span>
+          
+          {/* Simplified fill effect */}
+          <div 
+            className="absolute inset-0 bg-accent z-0 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"
+          />
+        </div>
+        
+        <div className="absolute right-8 opacity-0 group-hover:opacity-100 z-20 transition-opacity duration-300">
+          <ArrowRight size={16} className="text-black" />
+        </div>
+      </Link>
+    </div>
+  </div>
+
+  {/* Remove unnecessary styles to improve performance */}
+  <style>{`
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  `}</style>
+</motion.section>
+{/* Seção de Depoimentos Cinemática Premium */}
+<motion.section
+  className="py-40 md:py-80 overflow-hidden relative isolate"
+  initial={{ opacity: 0 }}
+  whileInView={{ opacity: 1 }}
+  viewport={{ once: true }}
+  transition={{ duration: 1.2 }}
+>
+  {/* Background de camadas atmosféricas otimizadas para desempenho */}
+  <div className="absolute inset-0 -z-10 overflow-hidden">
+    {/* Base gradient com melhor performance */}
+    <div className="absolute inset-0 bg-[#0A0806]"></div>
+    
+    {/* Névoa dinâmica otimizada */}
+    <motion.div 
+      className="absolute inset-0 opacity-30"
+      animate={!prefersReducedMotion ? { 
+        filter: ["blur(40px)", "blur(60px)", "blur(40px)"],
+        opacity: [0.3, 0.5, 0.3]
+      } : {}}
+      transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        background: "radial-gradient(ellipse at 30% 40%, rgba(211,161,126,0.25), rgba(10,8,6,0) 60%)",
+        willChange: "filter, opacity"
       }}
     />
     
-    {/* Máscara gradiente líquida animada */}
-    <motion.div
-      className="absolute inset-0"
-      animate={{ 
-        background: [
-          "radial-gradient(circle at 30% 40%, rgba(20,18,15,0.3), rgba(10,8,6,0.9))",
-          "radial-gradient(circle at 70% 60%, rgba(20,18,15,0.3), rgba(10,8,6,0.9))",
-          "radial-gradient(circle at 30% 40%, rgba(20,18,15,0.3), rgba(10,8,6,0.9))"
-        ]
-      }}
-      transition={{ 
-        duration: 20, 
-        repeat: Infinity, 
-        ease: "easeInOut" 
-      }}
-    />
-    
-    {/* Sistema de partículas douradas */}
+    {/* Sistema de partículas premium com carregamento condicional */}
     {!prefersReducedMotion && !isMobile && (
-      <div className="absolute inset-0 z-10 overflow-hidden">
-        {Array.from({length: 20}).map((_, i) => (
+      <div className="absolute inset-0 opacity-80 mix-blend-screen pointer-events-none">
+        {Array.from({length: 12}).map((_, i) => (
           <motion.div
-            key={`particle-${i}`}
+            key={`glow-particle-${i}`}
             className="absolute rounded-full"
             initial={{
               x: `${Math.random() * 100}%`,
@@ -3199,875 +3950,421 @@ const Home: React.FC = () => {
               scale: 0
             }}
             animate={{
-              opacity: [0, 0.6, 0],
-              scale: [0, 1, 0],
-              filter: ["blur(4px)", "blur(2px)", "blur(4px)"]
+              opacity: [0, 0.4 * Math.random() + 0.1, 0],
+              scale: [0, Math.random() * 0.8 + 0.3, 0],
             }}
             transition={{
               duration: 8 + Math.random() * 12,
-              ease: "easeInOut",
               repeat: Infinity,
-              delay: Math.random() * 10,
+              delay: Math.random() * 5,
             }}
             style={{
-              width: `${2 + Math.random() * 4}px`,
-              height: `${2 + Math.random() * 4}px`,
-              background: 'radial-gradient(circle, rgba(211,161,126,1) 0%, rgba(211,161,126,0) 70%)',
+              width: `${3 + Math.random() * 6}px`,
+              height: `${3 + Math.random() * 6}px`,
+              background: 'radial-gradient(circle, rgba(211,161,126,1), rgba(211,161,126,0))',
+              boxShadow: '0 0 15px rgba(211,161,126,0.6)',
+              willChange: "transform, opacity"
             }}
           />
         ))}
       </div>
     )}
     
-    {/* Elementos geométricos flutuantes */}
-    <div className="absolute inset-0 z-0 pointer-events-none">
-      <motion.div
-        className="absolute top-[20%] right-[10%] w-60 h-60 border border-accent/10 rounded-full"
-        initial={{ scale: 0.8, opacity: 0 }}
-        whileInView={{ scale: 1, opacity: 0.15 }}
-        viewport={{ once: true }}
-        transition={{ duration: 2 }}
-        style={{
-          y: useTransform(smoothAboutProgress, [0, 1], ['0%', '20%']),
-        }}
-      />
-      <motion.div
-        className="absolute bottom-[10%] left-[5%] w-80 h-80 border border-accent/20 rounded-full"
-        initial={{ scale: 0.8, opacity: 0 }}
-        whileInView={{ scale: 1, opacity: 0.1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 2, delay: 0.3 }}
-        style={{
-          y: useTransform(smoothAboutProgress, [0, 1], ['20%', '0%']),
-        }}
-      />
-    </div>
-  </div>
-
-  {/* Conteúdo principal com efeito 3D */}
-  <div className="container mx-auto px-6 md:px-12 relative z-20 h-full">
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-16 lg:gap-y-0 lg:gap-x-12 items-center h-full">
-      {/* Coluna de imagem cinemática com camadas 3D */}
-      <motion.div
-        className="col-span-1 lg:col-span-6 h-full relative perspective-1000"
-        initial={{ opacity: 0, x: -50 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {/* Frame principal da imagem com camadas */}
-        <div className="relative h-full w-full preserve-3d transform-gpu shadow-[0_35px_60px_-15px_rgba(0,0,0,0.8)]">
-          {/* Camada posterior decorativa */}
-          <motion.div
-            className="absolute -top-8 -left-8 w-full h-full border-2 border-accent/20"
-            initial={{ opacity: 0, x: -20, y: -20 }}
-            whileInView={{ opacity: 1, x: 0, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.5, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            style={{
-              transform: 'translateZ(-20px)', 
-              filter: 'blur(1px)',
-              transformStyle: 'preserve-3d'
-            }}
-          />
-
-          {/* Container de imagem principal com efeitos */}
-          <motion.div
-            className="relative z-10 w-full h-full overflow-hidden"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.5 }}
-            style={{ transformStyle: 'preserve-3d' }}
-          >
-            {/* Imagem com animação de revelação */}
-            <motion.div 
-              className="absolute inset-0"
-              initial={{ height: '100%' }}
-              whileInView={{ height: '0%' }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.5, delay: 0.2, ease: [0.83, 0, 0.17, 1] }}
-              style={{ 
-                background: '#0A0806',
-                transformOrigin: 'top'
-              }}
-            />
-            
-            {/* Máscara de revelação visualmente impressionante */}
-            <motion.div
-              initial={{ clipPath: 'inset(0 0 100% 0)' }}
-              whileInView={{ clipPath: 'inset(0 0 0% 0)' }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full h-full"
-            >
-              <motion.img
-                src="/images/craftsman-working.jpg"
-                alt="Craftsman at work"
-                className="w-full h-full object-cover"
-                initial={{ scale: 1.2, filter: 'saturate(0) brightness(0.8)' }}
-                whileInView={{ scale: 1, filter: 'saturate(1) brightness(1)' }}
-                viewport={{ once: true }}
-                transition={{ duration: 3, ease: [0.22, 1, 0.36, 1] }}
-              />
-            </motion.div>
-            
-            {/* Overlay de textura sutil */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent mix-blend-overlay"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, delay: 1 }}
-            />
-            
-            {/* Vinheta artística */}
-            <div className="absolute inset-0 bg-radial-vignette pointer-events-none"></div>
-          </motion.div>
-
-          {/* Selo flutuante premium */}
-          <motion.div
-            className="absolute -bottom-10 -right-10 w-28 h-28 bg-accent/10 backdrop-blur-md flex items-center justify-center z-20 shadow-xl"
-            initial={{ opacity: 0, scale: 0.8, rotate: 15 }}
-            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-            style={{ transform: 'translateZ(30px)' }}
-            whileHover={{ 
-              scale: 1.1, 
-              boxShadow: '0 0 30px rgba(211, 161, 126, 0.3)',
-              transition: { duration: 0.5 }
-            }}
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              className="w-full h-full flex items-center justify-center relative"
-            >
-              <svg viewBox="0 0 100 100" width="100%" height="100%">
-                <path
-                  d="M 50 0 A 50 50 0 1 1 49.9 0"
-                  fill="none"
-                  stroke="rgba(211, 161, 126, 0.8)"
-                  strokeWidth="0.5"
-                />
-                <text
-                  x="50%"
-                  y="50%"
-                  fontSize="7"
-                  fill="rgba(211, 161, 126, 0.9)"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  style={{ fontFamily: 'serif', letterSpacing: '1px' }}
-                >
-                  <textPath href="#textPath">
-                    DESDE 1997 • DESDE 1997 • DESDE 1997 •
-                  </textPath>
-                </text>
-                <path
-                  id="textPath"
-                  d="M 50 15 A 35 35 0 1 1 49.9 15"
-                  fill="none"
-                  strokeWidth="0"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <motion.span 
-                  className="text-accent font-serif text-xl"
-                  animate={{ 
-                    textShadow: [
-                      "0 0 0px rgba(211,161,126,0)", 
-                      "0 0 10px rgba(211,161,126,0.7)", 
-                      "0 0 0px rgba(211,161,126,0)"
-                    ]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  {language === 'pt' ? '26' : '26'}
-                </motion.span>
-              </div>
-            </motion.div>
-          </motion.div>
-          
-          {/* Elemento decorativo frontal flutuante */}
-          <motion.div 
-            className="absolute -top-4 -right-4 w-12 h-12 border border-accent"
-            initial={{ opacity: 0, x: 20, y: 20 }}
-            whileInView={{ opacity: 1, x: 0, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.2, delay: 0.8 }}
-            style={{ transform: 'translateZ(40px)' }}
-          />
-        </div>
-      </motion.div>
-
-      {/* Coluna de conteúdo textual com camadas de vidro */}
-      <motion.div
-        className="col-span-1 lg:col-span-6"
-        initial={{ opacity: 0, x: 50 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 1.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {/* Card de conteúdo premium com glassmorphism aprimorado */}
-        <div className="relative transform-gpu">
-          {/* Efeito de luz abstrato */}
-          <motion.div
-            className="absolute -left-20 -top-20 w-40 h-40 rounded-full bg-accent/20 blur-[100px] mix-blend-screen"
-            animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3]
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-          
-          {/* Card principal com efeito de vidro premium */}
-          <div className="bg-black/40 backdrop-filter backdrop-blur-2xl relative z-10 p-12 lg:p-16 border border-white/10 rounded-xl shadow-[0_35px_70px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
-            {/* Efeito interno de brilho */}
-            <motion.div 
-              className="absolute inset-0 opacity-20 bg-gradient-to-tr from-transparent via-accent/30 to-transparent z-0"
-              animate={{ 
-                backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"]
-              }}
-              transition={{ duration: 8, repeat: Infinity }}
-              style={{ backgroundSize: "200% 200%" }}
-            />
-
-            {/* Numeração elegante da seção */}
-            <motion.div
-              className="text-accent/80 uppercase tracking-[0.5em] text-xs font-light mb-10"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {language === 'pt' ? '03 — Nossa História' : '03 — Nuestra Historia'}
-            </motion.div>
-
-            {/* Título principal com animação de revelação por palavra */}
-            <h2 className="text-4xl md:text-6xl xl:text-7xl font-serif leading-tight mb-10 text-white relative">
-              <div className="overflow-hidden">
-                <motion.div
-                  initial={{ y: 100 }}
-                  whileInView={{ y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {language === 'pt' ? 'Tradição e' : 'Tradición y'}
-                </motion.div>
-              </div>
-              <div className="overflow-hidden">
-                <motion.div
-                  initial={{ y: 100 }}
-                  whileInView={{ y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1.5, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <span className="relative">
-                    {language === 'pt' ? 'artesanato' : 'artesanía'}
-                    {/* Linha decorativa animada sob o título */}
-                    <motion.div 
-                      className="absolute -bottom-4 left-0 h-[2px] bg-gradient-to-r from-accent via-accent/50 to-transparent"
-                      initial={{ width: 0 }}
-                      whileInView={{ width: '90%' }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1.2, delay: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                    />
-                  </span>
-                </motion.div>
-              </div>
-            </h2>
-
-            {/* Descrição principal com animação de revelação por parágrafo */}
-            <motion.div
-              className="relative mb-14 overflow-hidden"
-              initial={{ opacity: 0, height: 0 }}
-              whileInView={{ opacity: 1, height: 'auto' }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <p className="text-white/80 text-xl leading-relaxed mb-7 font-light">
-                {language === 'pt'
-                  ? 'Por mais de duas décadas, aperfeiçoamos a arte de criar mobiliário que harmoniza métodos tradicionais com design contemporâneo.'
-                  : 'Por más de dos décadas, hemos perfeccionado el arte de crear mobiliario que armoniza métodos tradicionales con diseño contemporáneo.'}
-              </p>
-              
-              <p className="text-white/70 leading-relaxed">
-                {language === 'pt'
-                  ? 'Cada peça que sai do nosso ateliê traz consigo nossa filosofia: objetos que não apenas ocupam espaços, mas contam histórias, evocam emoções e transformam ambientes com sua presença singular.'
-                  : 'Cada pieza que sale de nuestro taller trae consigo nuestra filosofía: objetos que no solo ocupan espacios, sino que cuentan historias, evocan emociones y transforman ambientes con su presencia singular.'}
-              </p>
-            </motion.div>
-
-            {/* Lista de valores com ícones animados */}
-            <motion.div
-              className="grid grid-cols-2 gap-8 mb-16"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, delay: 1.3, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {[
-                {
-                  icon: (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
-                    </svg>
-                  ),
-                  title: language === 'pt' ? 'Materiais Nobres' : 'Materiales Nobles'
-                },
-                {
-                  icon: (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 8v8m-4-4h8" />
-                    </svg>
-                  ),
-                  title: language === 'pt' ? 'Design Original' : 'Diseño Original'
-                },
-                {
-                  icon: (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-                    </svg>
-                  ),
-                  title: language === 'pt' ? 'Artesanato Superior' : 'Artesanía Superior'
-                },
-                {
-                  icon: (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                  ),
-                  title: language === 'pt' ? 'Durabilidade' : 'Durabilidad'
-                }
-              ].map((item, idx) => (
-                <motion.div 
-                  key={idx}
-                  className="flex items-start space-x-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 1.5 + (idx * 0.1) }}
-                  whileHover={{ 
-                    x: 5, 
-                    transition: { duration: 0.3 } 
-                  }}
-                >
-                  <motion.div 
-                    className="mt-1 text-accent w-8 h-8 flex items-center justify-center rounded-full bg-accent/10"
-                    whileHover={{ 
-                      scale: 1.1,
-                      backgroundColor: "rgba(211,161,126,0.2)" 
-                    }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {item.icon}
-                  </motion.div>
-                  <span className="text-white text-base">{item.title}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* CTA com efeitos visuais avançados */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 1.8 }}
-              className="relative"
-            >
-              <Link
-                to="/sobre"
-                className="group inline-flex items-center justify-center overflow-hidden relative"
-                onMouseEnter={() => handleCtaHover(true)}
-                onMouseLeave={() => handleCtaHover(false)}
-              >
-                <motion.div
-                  className="relative z-10 bg-transparent border-2 border-accent px-10 py-4 overflow-hidden rounded-sm"
-                  whileHover={{
-                    scale: 1.03,
-                    transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
-                  }}
-                >
-                  <span className="relative z-20 text-white group-hover:text-black transition-colors duration-500">
-                    {language === 'pt' ? 'Conheça nossa história completa' : 'Conozca nuestra historia completa'}
-                  </span>
-
-                  {/* Efeito de preenchimento */}
-                  <motion.div
-                    className="absolute inset-0 bg-accent z-10"
-                    initial={{ scaleX: 0 }}
-                    whileHover={{ scaleX: 1 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    style={{ transformOrigin: 'left' }}
-                  />
-
-                  {/* Destaque de brilho */}
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 z-0"
-                    initial={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)", backgroundSize: "200% 100%", backgroundPosition: "100% 0%" }}
-                    whileHover={{
-                      backgroundPosition: "0% 0%",
-                      transition: { duration: 1, ease: [0.22, 1, 0.36, 1] }
-                    }}
-                  />
-                </motion.div>
-
-                {/* Ícone com animação avançada */}
-                <div className="absolute right-8 opacity-0 group-hover:opacity-100 z-20 transition-opacity duration-300">
-                  <motion.div
-                    animate={{ x: [0, 5, 0], scale: [1, 1.2, 1] }}
-                    transition={{ 
-                      repeat: Infinity, 
-                      duration: 2,
-                      ease: [0.22, 1, 0.36, 1] 
-                    }}
-                  >
-                    <ArrowRight size={16} className="text-black" />
-                  </motion.div>
-                </div>
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  </div>
-
-  {/* Decoração lateral com linhas de luz animadas */}
-  <div className="absolute left-0 inset-y-0 w-px h-full z-10">
-    <motion.div
-      className="h-full w-full"
-      style={{
-        background: "linear-gradient(to bottom, transparent, rgba(211,161,126,0.8), transparent)",
-        scaleY: useTransform(smoothAboutProgress, [0, 0.5, 1], [0, 1, 0]),
-        opacity: useTransform(smoothAboutProgress, [0, 0.5, 1], [0, 1, 0]),
-      }}
-    />
-  </div>
-  
-  <div className="absolute right-0 inset-y-0 w-px h-full z-10">
-    <motion.div
-      className="h-full w-full"
-      style={{
-        background: "linear-gradient(to bottom, transparent, rgba(211,161,126,0.8), transparent)",
-        scaleY: useTransform(smoothAboutProgress, [0, 0.5, 1], [0, 1, 0]),
-        opacity: useTransform(smoothAboutProgress, [0, 0.5, 1], [0, 1, 0]),
-      }}
-    />
-  </div>
-
-  {/* Estilos necessários para adicionar ao CSS global */}
-  <style>{`
-    .bg-radial-vignette {
-      background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 100%);
-    }
-    
-    .preserve-3d {
-      transform-style: preserve-3d;
-    }
-    
-    .perspective-1000 {
-      perspective: 1000px;
-    }
-    
-    .perspective-3000 {
-      perspective: 3000px;
-    }
-  `}</style>
-</motion.section>
-
-      {/* Seção de Depoimentos Imersiva */}
-<motion.section
-  className="py-32 md:py-60 overflow-hidden relative"
-  initial={{ opacity: 0 }}
-  whileInView={{ opacity: 1 }}
-  viewport={{ once: true }}
-  transition={{ duration: 1.2 }}
->
-  {/* Background surreal com camadas de vidro e gradientes em movimento */}
-  <div className="absolute inset-0 -z-10 overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-br from-[#0B0905] via-[#171412] to-[#0F0C09]"></div>
-    
-    {/* Névoa animada de fundo */}
-    <motion.div 
-      className="absolute inset-0 opacity-40"
-      animate={{ 
-        filter: ["blur(30px)", "blur(50px)", "blur(30px)"],
-        opacity: [0.4, 0.6, 0.4]
-      }}
-      transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      style={{
-        background: "radial-gradient(circle at 30% 50%, rgba(211,161,126,0.3), rgba(20,18,15,0.1) 60%)"
-      }}
-    />
-    
-    {/* Esferas flutuantes tridimensionais */}
-    <div className="absolute inset-0 overflow-hidden">
-      {Array.from({length: 8}).map((_, i) => (
-        <motion.div
-          key={`sphere-${i}`}
-          className="absolute rounded-full blur-md"
-          initial={{
-            x: `${Math.random() * 100}%`,
-            y: `${Math.random() * 100}%`,
-            scale: Math.random() * 0.8 + 0.2,
-            opacity: Math.random() * 0.3 + 0.1
-          }}
-          animate={{
-            x: [`${Math.random() * 100}%`, `${Math.random() * 100}%`],
-            y: [`${Math.random() * 100}%`, `${Math.random() * 100}%`],
-            opacity: [0.1, 0.3, 0.1],
-            scale: [
-              Math.random() * 0.8 + 0.2, 
-              Math.random() * 1.2 + 0.6, 
-              Math.random() * 0.8 + 0.2
-            ],
-          }}
-          transition={{
-            duration: 20 + Math.random() * 30,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-          style={{
-            width: `${50 + Math.random() * 200}px`,
-            height: `${50 + Math.random() * 200}px`,
-            background: `radial-gradient(circle, rgba(211,161,126,${0.2 + Math.random() * 0.3}) 0%, rgba(211,161,126,0) 70%)`,
-          }}
-        />
-      ))}
+    {/* Grade geométrica de proporção áurea otimizada */}
+    <div className="absolute inset-0 opacity-[0.03]">
+      <div className="absolute top-[38.2%] left-0 right-0 h-[1px] bg-accent/30"></div>
+      <div className="absolute top-[61.8%] left-0 right-0 h-[1px] bg-accent/20"></div>
+      <div className="absolute left-[38.2%] top-0 bottom-0 w-[1px] bg-accent/30"></div>
+      <div className="absolute left-[61.8%] top-0 bottom-0 w-[1px] bg-accent/20"></div>
     </div>
     
-    {/* Malha tridimensional futurística */}
-    <div className="absolute inset-0 opacity-10">
-      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(211,161,126,0.5)" strokeWidth="0.5" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
-    </div>
+    {/* Textura otimizada */}
+    <div 
+      className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none" 
+      style={{ backgroundImage: 'url(/images/noise-texture.png)' }}
+    ></div>
   </div>
 
-  {/* Conteúdo principal da seção */}
-  <div className="container mx-auto px-6 md:px-12 relative z-10">
-    {/* Cabeçalho da seção com animação de entrada em camadas */}
-    <div className="max-w-xl mb-24 md:mb-32 relative">
+  {/* Conteúdo principal com design avançado */}
+  <div className="container mx-auto px-6 md:px-16 relative z-10">
+    {/* Cabeçalho premium com efeitos de revelação em camadas */}
+    <div className="max-w-4xl mx-auto mb-32 md:mb-40 relative">
       <motion.div
-        className="text-accent uppercase tracking-[0.35em] text-xs font-light mb-8"
-        initial={{ opacity: 0, x: -50 }}
-        whileInView={{ opacity: 1, x: 0 }}
+        className="text-accent/90 uppercase tracking-[0.45em] text-xs font-light mb-8 relative inline-flex"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 1.2 }}
       >
-        {language === 'pt' ? '04 — Reflexos de Excelência' : '04 — Reflejos de Excelencia'}
+        <span>{language === 'pt' ? '04 — Reflexos de Excelência' : '04 — Reflejos de Excelencia'}</span>
+        <motion.span 
+          className="absolute bottom-[-4px] left-0 h-[1px] bg-accent/40"
+          initial={{ width: 0 }}
+          whileInView={{ width: '100%' }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        />
       </motion.div>
       
-      <div className="overflow-hidden relative">
-        <motion.h2
-          className="text-5xl md:text-7xl xl:text-8xl font-serif font-light text-white mb-6"
-          initial={{ y: 150 }}
-          whileInView={{ y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-        >
+      <h2 className="text-5xl md:text-7xl xl:text-8xl font-serif font-light text-white/95 leading-[1.1]">
+        <div className="overflow-hidden">
           <motion.span
-            animate={{ 
-              color: ["#ffffff", "#D3A17E", "#ffffff"],
-              textShadow: [
-                "0 0 15px rgba(211,161,126,0)", 
-                "0 0 25px rgba(211,161,126,0.5)", 
-                "0 0 15px rgba(211,161,126,0)"
-              ]
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="inline-block"
+            initial={{ y: 120 }}
+            whileInView={{ y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            {language === 'pt' ? 'Narrativas' : 'Narrativas'}
-          </motion.span>{" "}
-          <br />
-          {language === 'pt' ? 'autênticas' : 'auténticas'}
-        </motion.h2>
-
-        {/* Linha animada que se expande */}
-        <motion.div
-          className="absolute -bottom-2 left-0 h-[1px] bg-gradient-to-r from-accent via-accent/50 to-transparent"
-          initial={{ width: 0 }}
-          whileInView={{ width: "70%" }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        />
-      </div>
+            <motion.span
+              animate={!prefersReducedMotion ? { 
+                textShadow: [
+                  "0 0 0px rgba(211,161,126,0)", 
+                  "0 0 25px rgba(211,161,126,0.5)", 
+                  "0 0 0px rgba(211,161,126,0)"
+                ]
+              } : {}}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              className={`bg-clip-text text-transparent ${prefersReducedMotion ? "text-white" : "bg-gradient-to-r from-white via-accent to-white"}`}
+            >
+              {language === 'pt' ? 'Narrativas ' : 'Narrativas '}
+            </motion.span>
+          </motion.span>
+        </div>
+        <div className="overflow-hidden mt-2">
+          <motion.span
+            className="inline-block"
+            initial={{ y: 120 }}
+            whileInView={{ y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {language === 'pt' ? 'autênticas' : 'auténticas'}
+          </motion.span>
+        </div>
+      </h2>
+      
+      {/* Descrição premium com animação refinada */}
+      <motion.p
+        className="text-white/70 text-lg md:text-xl max-w-2xl mt-10 leading-relaxed"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1, delay: 0.8 }}
+      >
+        {language === 'pt'
+          ? 'Conheça a experiência de clientes cuja visão foi transformada em realidade através de nosso design exclusivo e artesanato excepcional.'
+          : 'Conozca la experiencia de clientes cuya visión se transformó en realidad a través de nuestro diseño exclusivo y artesanía excepcional.'}
+      </motion.p>
     </div>
 
-    {/* Carrossel de depoimentos com efeito 3D profundo */}
-    <div className="perspective-3000">
+    {/* Carrossel de depoimentos premium transformado */}
+    <div className="relative perspective-[2000px] mb-28 md:mb-40">
+      {/* Controlador de posicionamento 3D */}
       <motion.div
         className="relative"
-        initial={{ rotateX: 15, y: 100, opacity: 0 }}
-        whileInView={{ rotateX: 0, y: 0, opacity: 1 }}
-        viewport={{ once: true }}
+        initial={{ opacity: 0, y: 60, rotateX: 10 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Container de cartões em carrossel horizontal */}
-        <div className="flex flex-nowrap space-x-8 overflow-x-auto hide-scrollbar pb-12 snap-x snap-mandatory">
+        {/* Carrossel de alta performance */}
+        <div className="flex flex-nowrap gap-10 md:gap-14 overflow-x-auto hide-scrollbar pb-20 snap-x snap-mandatory">
           {testimonials.map((testimonial, index) => (
             <motion.div
-              key={index}
-              className="min-w-[350px] md:min-w-[500px] snap-start relative group"
-              initial={{ opacity: 0, scale: 0.9, x: 50 }}
-              whileInView={{ opacity: 1, scale: 1, x: 0 }}
+              key={`testimonial-${index}`}
+              className="min-w-[min(400px,90vw)] md:min-w-[520px] snap-start group relative"
+              initial={{ opacity: 0, scale: 0.9, x: 50, rotateY: 15 }}
+              whileInView={{ opacity: 1, scale: 1, x: 0, rotateY: 0 }}
               viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 1.2, delay: 0.2 * index }}
+              transition={{ 
+                duration: 1.2, 
+                delay: 0.2 * index,
+                ease: [0.22, 1, 0.36, 1]
+              }}
               whileHover={{ 
-                y: -15, 
-                transition: { duration: 0.5 } 
+                y: -15,
+                z: 20,
+                transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } 
               }}
             >
-              {/* Cartão com depoimento e efeito de vidro premium */}
-              <div className="relative rounded-lg overflow-hidden transform-gpu transition-all duration-700">
-                {/* Fundo em vidro com reflexo dinâmico */}
-                <div className="absolute inset-0 bg-white/[0.01] backdrop-blur-md border border-white/5 rounded-lg z-0 overflow-hidden">
-                  <motion.div 
-                    className="absolute inset-0 opacity-20"
-                    style={{
-                      background: "linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent)",
-                      backgroundSize: "200% 200%"
-                    }}
-                    animate={{
-                      backgroundPosition: ["0% 0%", "100% 100%"]
-                    }}
-                    transition={{ 
-                      duration: 3,
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      repeatType: "reverse"
-                    }}
-                  />
+              {/* Card de depoimento com glassmorphism cinematográfico */}
+              <div className="relative bg-gradient-to-br from-white/[0.03] to-white/[0.01] backdrop-blur-md rounded-2xl overflow-hidden transform-gpu transition-all duration-700 shadow-[0_15px_50px_-15px_rgba(0,0,0,0.3)]">
+                {/* Bordas luminosas premium */}
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-20">
+                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-accent/50 via-transparent to-accent/50"></div>
+                  <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-accent/50 via-transparent to-transparent"></div>
+                  <div className="absolute right-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-transparent to-accent/50"></div>
                 </div>
+                
+                {/* Efeito interior de iluminação */}
+                <motion.div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 z-0 transition-opacity duration-700"
+                  animate={!prefersReducedMotion ? {
+                    background: [
+                      "radial-gradient(circle at 30% 30%, rgba(211,161,126,0.08), transparent 60%)",
+                      "radial-gradient(circle at 70% 70%, rgba(211,161,126,0.08), transparent 60%)",
+                      "radial-gradient(circle at 30% 30%, rgba(211,161,126,0.08), transparent 60%)"
+                    ]
+                  } : {}}
+                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                />
+                
+                {/* Efeito de brilho deslizante */}
+                <motion.div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 z-0 transition-opacity duration-700"
+                  style={{
+                    background: "linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent)",
+                    backgroundSize: "200% 200%"
+                  }}
+                  animate={!prefersReducedMotion ? {
+                    backgroundPosition: ["0% 0%", "100% 100%"]
+                  } : {}}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
 
                 {/* Conteúdo do cartão */}
                 <div className="relative z-10 p-10 md:p-12">
-                  {/* Ícone de aspas cinético */}
+                  {/* Aspas flutuantes premium */}
                   <motion.div 
-                    className="absolute -top-4 -left-4 text-8xl font-serif text-accent/10 select-none"
-                    animate={{ 
-                      rotate: [-2, 2, -2],
-                      scale: [1, 1.05, 1]
-                    }}
-                    transition={{ 
-                      duration: 8, 
-                      repeat: Infinity, 
-                      ease: "easeInOut" 
-                    }}
+                    className="absolute -top-6 -left-3 text-7xl md:text-8xl font-serif text-accent/10 select-none"
+                    animate={!prefersReducedMotion ? { 
+                      scale: [1, 1.03, 1],
+                      opacity: [0.1, 0.15, 0.1]
+                    } : {}}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                   >
                     "
                   </motion.div>
                   
-                  {/* Texto do depoimento com efeito de revelação por palavras */}
-                  <p className="text-white/90 text-lg md:text-xl mb-10 font-serif italic leading-relaxed">
-                    {testimonial.quote[language].split(' ').map((word, i) => (
-                      <motion.span
-                        key={i} 
-                        className="inline-block mr-1"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
+                  {/* Texto com efeito de revelação otimizado */}
+                  <motion.div
+                    className="mb-14 min-h-[180px] relative"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.5 }}
+                  >
+                    <p className="text-white/90 text-lg md:text-xl font-serif italic leading-relaxed">
+                      {/* Revelação de texto mais eficiente - por frases em vez de palavras */}
+                      {testimonial.quote[language === 'pt' ? 'pt' : 'es']
+                        .split('. ')
+                        .map((sentence, i) => (
+                          <motion.span
+                            key={i} 
+                            className="inline"
+                            initial={{ opacity: 0, y: 15, filter: "blur(5px)" }}
+                            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                            viewport={{ once: true }}
+                            transition={{ 
+                              duration: 0.8, 
+                              delay: 0.6 + (i * 0.15),
+                              ease: [0.22, 1, 0.36, 1]
+                            }}
+                          >
+                            {sentence}{i < testimonial.quote[language === 'pt' ? 'pt' : 'es'].split('. ').length - 1 ? '. ' : ''}
+                          </motion.span>
+                        ))}
+                    </p>
+                  </motion.div>
+                  
+                  {/* Linha separadora elegante */}
+                  <motion.div
+                    className="h-[1px] w-16 bg-accent/40 my-8"
+                    initial={{ width: 0 }}
+                    whileInView={{ width: 64 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.9 + (index * 0.1) }}
+                  />
+                  
+                  {/* Área de cliente com design elevado */}
+                  <motion.div 
+                    className="flex items-center"
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 1 }}
+                  >
+                    {/* Avatar em destaque */}
+                    <div className="relative mr-6">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden ring-2 ring-white/10 group-hover:ring-accent/30 transition-all duration-700">
+                        <div className="relative w-full h-full">
+                          <motion.img 
+                            src={testimonial.image}
+                            alt={testimonial.name}
+                            className="w-full h-full object-cover"
+                            initial={{ scale: 1.2 }}
+                            whileInView={{ scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1.5 }}
+                          />
+                          
+                          {/* Overlay de brilho sutil */}
+                          <motion.div 
+                            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                            style={{ 
+                              background: "linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent)",
+                              backgroundSize: "200% 200%"
+                            }}
+                            animate={!prefersReducedMotion ? {
+                              backgroundPosition: ["0% 0%", "100% 100%"]
+                            } : {}}
+                            transition={{ duration: 3, repeat: Infinity }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Badge de cliente verificado */}
+                      <motion.div
+                        className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-accent shadow-lg shadow-accent/30 flex items-center justify-center"
+                        initial={{ scale: 0 }}
+                        whileInView={{ scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ 
-                          duration: 0.6, 
-                          delay: 0.5 + (i * 0.02),
-                          ease: [0.22, 1, 0.36, 1]
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 20,
+                          delay: 1.1 + (index * 0.1)
                         }}
                       >
-                        {word}
-                      </motion.span>
-                    ))}
-                  </p>
-                  
-                  {/* Informações do cliente com efeitos elegantes */}
-                  <div className="flex items-center mt-8">
-                    {/* Moldura para foto com efeito de brilho */}
-                    <div className="relative mr-6">
-                      <motion.div 
-                        className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden ring-2 ring-accent/20"
-                        whileHover={{ 
-                          scale: 1.05,
-                          boxShadow: "0 0 20px rgba(211,161,126,0.4)" 
-                        }}
-                      >
-                        <img 
-                          src={testimonial.image} 
-                          alt={testimonial.name}
-                          className="w-full h-full object-cover" 
-                        />
-                        
-                        {/* Brilho sofisticado sobre a imagem */}
-                        <motion.div 
-                          className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent"
-                          animate={{
-                            backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
-                          }}
-                          transition={{ 
-                            duration: 3,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                          style={{ backgroundSize: "200% 200%" }}
-                        />
-                      </motion.div>
-                      
-                      {/* Indicador de status premium */}
-                      <motion.div
-                        className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center"
-                        animate={{ 
-                          boxShadow: [
-                            "0 0 0 rgba(211,161,126,0.2)",
-                            "0 0 10px rgba(211,161,126,0.6)",
-                            "0 0 0 rgba(211,161,126,0.2)"
-                          ]
-                        }}
-                        transition={{ 
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                      >
-                        <span className="text-black text-xs">✓</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
                       </motion.div>
                     </div>
                     
-                    {/* Nome e localização */}
+                    {/* Informações do cliente */}
                     <div>
-                      <motion.h4
-                        className="text-white text-xl font-serif mb-1"
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.8 }}
-                      >
+                      <h4 className="text-white text-xl md:text-2xl font-serif mb-1">
                         {testimonial.name}
-                      </motion.h4>
-                      <motion.div
-                        className="text-white/50 text-sm flex items-center"
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.9 }}
-                      >
+                      </h4>
+                      <div className="text-white/50 text-sm flex items-center">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mr-1.5">
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                           <circle cx="12" cy="10" r="3"></circle>
                         </svg>
                         {testimonial.title}
-                      </motion.div>
+                      </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
-                
-                {/* Efeitos de borda premium */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30"></div>
-                <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-accent/30 via-transparent to-transparent"></div>
-                <div className="absolute top-0 right-0 h-full w-1 bg-gradient-to-b from-transparent via-transparent to-accent/30"></div>
               </div>
-
-              {/* Reflexo 3D sob o cartão */}
+              
+              {/* Reflexo 3D cinemático */}
               <motion.div
-                className="absolute -bottom-10 left-4 right-4 h-20 rounded-lg opacity-0 group-hover:opacity-30 blur-md transition-opacity duration-700"
+                className="absolute -bottom-12 left-6 right-6 h-24 rounded-2xl opacity-0 group-hover:opacity-20 blur-md transition-opacity duration-700"
                 style={{
                   background: "linear-gradient(to bottom, rgba(211,161,126,0.3), transparent)",
-                  transform: "rotateX(60deg) scaleY(0.5)"
+                  transform: "rotateX(75deg) scaleY(0.5)",
+                  transformOrigin: "bottom",
+                  willChange: "opacity"
                 }}
               />
             </motion.div>
           ))}
         </div>
         
-        {/* Indicadores de scroll horizontal */}
-        <div className="flex justify-center mt-12">
+        {/* Indicadores de navegação premium */}
+        <div className="flex justify-center mt-8">
           <motion.div
-            className="flex space-x-3"
+            className="inline-flex items-center gap-2 py-2 px-4 bg-black/20 backdrop-blur-sm rounded-full border border-white/5"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 1 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
           >
             {testimonials.map((_, index) => (
               <motion.button
                 key={index}
-                className={`w-12 h-1 rounded-full ${index === 0 ? 'bg-accent' : 'bg-white/20'}`}
-                whileHover={{ scale: 1.2, backgroundColor: 'rgba(211,161,126,0.8)' }}
-                transition={{ duration: 0.3 }}
-              />
+                className={`relative h-2.5 transition-all duration-300 ease-out ${
+                  index === 0 ? 'w-10 bg-accent' : 'w-2.5 bg-white/20 hover:bg-white/40'
+                } rounded-full`}
+                whileHover={{ 
+                  scale: 1.2,
+                  backgroundColor: index === 0 ? 'rgba(211,161,126,1)' : 'rgba(255,255,255,0.3)'
+                }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                {index === 0 && (
+                  <motion.div 
+                    className="absolute inset-0 rounded-full"
+                    animate={{ 
+                      boxShadow: ["0 0 0 rgba(211,161,126,0.3)", "0 0 8px rgba(211,161,126,0.6)", "0 0 0 rgba(211,161,126,0.3)"]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
+              </motion.button>
             ))}
           </motion.div>
         </div>
       </motion.div>
     </div>
     
-    {/* Chamada à ação flutuante */}
+    {/* CTA premium com efeito líquido */}
     <motion.div
-      className="mt-24 text-center"
-      initial={{ opacity: 0, y: 40 }}
+      className="text-center"
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 1, delay: 1.2 }}
+      transition={{ duration: 0.8, delay: 0.5 }}
     >
       <Link
         to="/depoimentos"
-        className="inline-flex items-center group relative overflow-hidden px-12 py-5"
+        className="group relative inline-flex items-center overflow-hidden"
+        onMouseEnter={() => setCursorVariant && setCursorVariant('link')}
+        onMouseLeave={() => setCursorVariant && setCursorVariant('default')}
       >
-        <motion.span
-          className="relative z-10 text-white group-hover:text-black transition-colors duration-500 font-medium text-lg"
-          animate={{ textShadow: ["0 0 10px rgba(255,255,255,0)", "0 0 20px rgba(255,255,255,0.2)", "0 0 10px rgba(255,255,255,0)"] }}
-          transition={{ duration: 3, repeat: Infinity }}
+        <motion.div
+          className="relative z-10 bg-transparent border border-accent/80 px-12 py-4 text-white font-sans font-light tracking-wider overflow-hidden rounded-sm"
+          whileHover={{ scale: 1.03 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
-          {language === 'pt' ? 'Ver todos os depoimentos' : 'Ver todos los testimonios'}
-        </motion.span>
-        
-        {/* Fundo animado do botão */}
-        <motion.div
-          className="absolute inset-0 bg-accent/0 border border-accent/50 rounded-lg z-0"
-          initial={{ scale: 1 }}
-          whileHover={{ 
-            scale: 1.05,
-            backgroundColor: "rgba(211,161,126,1)",
-            boxShadow: "0 0 30px rgba(211,161,126,0.5)",
-            transition: { duration: 0.4 }
-          }}
-        />
-        
-        {/* Efeito de onda líquida no hover */}
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-1 bg-accent/50 rounded-b-lg origin-left"
-          whileHover={{ 
-            scaleX: [1, 0.7, 0.9, 1],
-            scaleY: [1, 2, 3, 1],
-            opacity: [0.5, 0.8, 0.5],
-            transition: { duration: 2, repeat: Infinity }
-          }}
-        />
-        
-        {/* Ícone com animação avançada */}
-        <motion.div
-          className="ml-3 relative z-10"
-          animate={{ 
-            x: [0, 5, 0],
-            transition: { 
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut" 
-            }
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent group-hover:text-black transition-colors duration-500">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
+          <span className="relative z-10 group-hover:text-black transition-colors duration-500">
+            {language === 'pt' ? 'Ver todos os depoimentos' : 'Ver todos los testimonios'}
+          </span>
+          
+          {/* Fundo de preenchimento premium */}
+          <motion.div
+            className="absolute inset-0 bg-accent z-0"
+            initial={{ scaleX: 0 }}
+            whileHover={{ scaleX: 1 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            style={{ transformOrigin: 'left', willChange: "transform" }}
+          />
         </motion.div>
+        
+        {/* Ícone animado */}
+        <div className="absolute right-8 opacity-0 group-hover:opacity-100 z-20 transition-opacity duration-300">
+          <motion.div
+            animate={!prefersReducedMotion ? {
+              x: [0, 5, 0],
+              transition: { repeat: Infinity, duration: 2, ease: [0.22, 1, 0.36, 1] }
+            } : {}}
+          >
+            <ArrowRight size={16} className="text-black" />
+          </motion.div>
+        </div>
       </Link>
     </motion.div>
   </div>
+
+  {/* Estilos necessários */}
+  <style>{`
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    .perspective-\\[2000px\\] {
+      perspective: 2000px;
+    }
+  `}</style>
 </motion.section>
         {/* Premium Contact Section */}
         <motion.section
