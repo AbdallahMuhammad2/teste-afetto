@@ -117,6 +117,7 @@ const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef, setCurs
   useEffect(() => {
     setSelectedProject(null);
     setIsPreviewOpen(false);
+    // setActiveProject(3); // Removed or commented out as it is undefined
     
     if (activeFilter === 'all') {
       setProjects(allProjects);

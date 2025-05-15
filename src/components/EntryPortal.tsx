@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useAnimation, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import { ArrowRight, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 import LanguageContext from '../context/LanguageContext';
-import useMousePosition from '../hooks/useMousePosition';
 
 type EntryPortalProps = {
   onSelect: (type: 'b2c' | 'b2b') => void;
@@ -1152,9 +1151,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
           className={`relative px-4 py-2 overflow-hidden ${language === 'es' ? 'text-[#D3A17E]' : 'text-white/40 hover:text-white/80'} transition-colors duration-500`}
           onMouseEnter={playHoverSound}
         >
-          <span className="relative z-10 text-xs uppercase tracking-[0.3em] pl-[0.3em]">
-            Español
-          </span>
+        
           {language === 'es' && (
             <motion.div 
               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-[#D3A17E]/30" 
