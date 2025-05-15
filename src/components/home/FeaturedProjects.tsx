@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   AnimatePresence, motion, useScroll, useTransform, useMotionValue, 
@@ -47,15 +47,17 @@ interface FeaturedProjectsProps {
   setCursorVariant: (variant: string) => void;
 }
 
-const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef, setCursorVariant }) => {
+const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef }) => {
   // State
   const { language } = useContext(LanguageContext) as { language: 'pt' | 'es' };
   const [activeFilter, setActiveFilter] = useState<string>('all');
-  const allProjects: ProjectDetails[] = projectData.map(project => ({
-    ...project,
-    title: { pt: project.title, es: project.title },
-    description: { pt: project.description.pt, es: project.description.es },
-  }));
+  const allProjects = useMemo(() => {
+    return projectData.map(project => ({
+      ...project,
+      title: { pt: project.title, es: project.title },
+      description: { pt: project.description.pt, es: project.description.es },
+    }));
+  }, [projectData]);
   const [projects, setProjects] = useState<ProjectDetails[]>(allProjects);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [hoveredProject, setHoveredProject] = useState<number | null>(null);
@@ -139,7 +141,6 @@ const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ galleryRef, setCurs
   // Handle project hover
   const handleProjectHover = (id: number | null, isHovering: boolean) => {
     setHoveredProject(id);
-    setCursorVariant(isHovering ? 'project' : 'default');
     
     if (id !== null) {
       setHoverStates(prev => ({
