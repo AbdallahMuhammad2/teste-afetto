@@ -231,10 +231,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         es: 'ACCEDER PORTAL B2B'
       }
     },
-    audio: {
-      pt: 'Experiência de áudio',
-      es: 'Experiencia de audio'
-    }
+    
   };
 
   // Animation variants with cinematic timing
@@ -351,33 +348,33 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 z-50 overflow-hidden bg-black select-none"
+      className="fixed inset-0 z-50 overflow-hidden bg-black select-none pt-8"
     >
       {/* Custom cursor with magnetic effect */}
       {showCursor && (
+      <motion.div 
+        className="fixed top-0 left-0 z-[100] pointer-events-none mix-blend-difference"
+        style={{ 
+        x: cursorX,
+        y: cursorY,
+        }}
+      >
         <motion.div 
-          className="fixed top-0 left-0 z-[100] pointer-events-none mix-blend-difference"
-          style={{ 
-            x: cursorX,
-            y: cursorY,
-          }}
+        className="flex items-center justify-center"
+        variants={cursorVariants}
+        animate={cursorVariant}
+        transition={{ 
+          duration: 0.3, 
+          ease: [0.16, 1, 0.3, 1],
+          opacity: { duration: 0.2 } 
+        }}
         >
-          <motion.div 
-            className="flex items-center justify-center"
-            variants={cursorVariants}
-            animate={cursorVariant}
-            transition={{ 
-              duration: 0.3, 
-              ease: [0.16, 1, 0.3, 1],
-              opacity: { duration: 0.2 } 
-            }}
-          >
-            <motion.div
-              className="absolute rounded-full bg-white"
-              animate={{ 
-                width: cursorVariant === 'default' ? 24 : cursorVariant === 'text' ? 80 : 60,
-                height: cursorVariant === 'default' ? 24 : cursorVariant === 'text' ? 80 : 60,
-              }}
+        <motion.div
+          className="absolute rounded-full bg-white"
+          animate={{ 
+          width: cursorVariant === 'default' ? 24 : cursorVariant === 'text' ? 80 : 60,
+          height: cursorVariant === 'default' ? 24 : cursorVariant === 'text' ? 80 : 60,
+          }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             />
             
@@ -1124,9 +1121,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
           className={`relative px-4 py-2 overflow-hidden ${language === 'pt' ? 'text-[#D3A17E]' : 'text-white/40 hover:text-white/80'} transition-colors duration-500`}
           onMouseEnter={playHoverSound}
         >
-          <span className="relative z-10 text-xs uppercase tracking-[0.3em] pl-[0.3em]">
-            Português
-          </span>
+          
           {language === 'pt' && (
             <motion.div 
               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[1px] bg-[#D3A17E]/30" 
@@ -1170,31 +1165,7 @@ const EntryPortal: React.FC<EntryPortalProps> = ({ onSelect }) => {
         </Link>
       </motion.div>
 
-      {/* Audio toggle button */}
-      <motion.button
-        className="absolute top-8 left-12 z-30 flex items-center space-x-2 text-white/60 hover:text-[#D3A17E] transition-colors duration-300 text-xs tracking-wider"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: loadingStage >= 6 ? 1 : 0 }}
-        transition={{ duration: 0.6, delay: 3 }}
-        onClick={toggleAudio}
-        onMouseEnter={() => {
-          setCursorVariant('button');
-          playHoverSound();
-        }}
-        onMouseLeave={() => setCursorVariant('default')}
-      >
-        {audioEnabled ? (
-          <>
-            <Volume2 size={14} />
-            <span className="uppercase tracking-[0.2em]">{translations.audio[language]}</span>
-          </>
-        ) : (
-          <>
-            <VolumeX size={14} />
-            <span className="uppercase tracking-[0.2em]">{translations.audio[language]}</span>
-          </>
-        )}
-      </motion.button>
+      
 
       {/* Enhanced signature with elegant animation */}
       <motion.div 
