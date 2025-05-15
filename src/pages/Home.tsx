@@ -411,7 +411,22 @@ const Home: React.FC = () => {
   const contactRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const projectsScrollRef = useRef<HTMLDivElement>(null);
+// Adicione após as outras declarações de estado
+const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+// Fechar menu mobile ao mudar a página ou fazer scroll
+useEffect(() => {
+  const handleScroll = () => {
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  };
+  
+  window.addEventListener('scroll', handleScroll);
+  return () => {
+    window.removeEventListener('scroll', handleScroll);
+  };
+}, [mobileMenuOpen]);
   // Enhanced state management for interactions
   const [activeProject, setActiveProject] = useState<number | null>(null);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
@@ -431,14 +446,6 @@ const optimizeScroll = {
   }
 };
 
-// Then modify your existing scroll hooks to use these optimized settings
-
-
-// Same for other scroll progress hooks...
-
-// Optimize your useSpring configurations 
-
-  // Materials data
   const [allMaterials] = useState<AllMaterials>({
     woods: [
       {
@@ -821,31 +828,29 @@ interface LenisOptions {
   touchMultiplier?: number;
   syncTouch?: boolean;
   infinite?: boolean;
-}
-// Update your Lenis options with these optimized settings
+}// Substitua a configuração atual do Lenis por esta versão mais leve
 const lenisOptions = {
-  duration: 0.8,           // Reduced from 1.2 for faster response with mouse wheel
+  duration: 0.6,           // Mais rápido para responsividade
   easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
   orientation: 'vertical',
   smoothWheel: true,
-  wheelMultiplier: 1.2,    // Increased from 0.6 for better mouse wheel responsiveness
-  smoothTouch: false,      
-  lerp: 0.025,             // Reduced to make mouse wheel feel more direct
-  touchMultiplier: 1.5,
-  syncTouch: true,
+  wheelMultiplier: 1.0,    // Valor mais equilibrado
+  smoothTouch: false,      // Desativar em dispositivos touch para melhor desempenho
+  lerp: 0.05,              // Reduzido para scroll mais direto e responsivo
+  touchMultiplier: 2.0,    // Aumentado para melhor resposta em touch
+  syncTouch: false,        // Desativar para evitar interferências
   infinite: false,
   gestureOrientation: 'vertical',
-  normalizeWheel: true,    // Added to normalize wheel input across devices
-  wheelEventsTarget: window, // For better wheel event consistency
 };
 
 // Initialize Lenis with the updated options
 const lenis = useLenis(
   ({ scroll }) => {
-    // Optional callback
+    // Opcional: callbacks leves aqui, se necessário
   },
-  [] // Dependencies for the callback; empty if none. Options are set via <ReactLenis>.
+  []
 );
+
 
   // Advanced scroll tracking for sophisticated parallax effects
   const { scrollY } = useScroll();
@@ -1211,93 +1216,160 @@ useEffect(() => {
         )}
       </AnimatePresence>
 
-      {/* Premium Header Navigation */}
-      <motion.header
-        className="fixed top-0 left-0 right-0 h-[90px] z-50 flex items-center px-8 transition-all duration-500"
-        initial={{ y: -100 }}
-        animate={{
-          y: 0,
-          backgroundColor: lastScrollY > 40 ? "rgba(18, 18, 20, 0.85)" : "transparent",
-          backdropFilter: lastScrollY > 40 ? "blur(20px)" : "none",
-          boxShadow: lastScrollY > 40 ? "0 10px 30px -10px rgba(0,0,0,0.3)" : "none",
-          borderBottom: lastScrollY > 40 ? "1px solid rgba(var(--color-accent-rgb), 0.15)" : "none",
-        }}
-        style={{
-          transform: scrollDirection === "up" || lastScrollY < 100 ? "translateY(0)" : "translateY(-100%)",
-        }}
-        transition={{
-          duration: 0.4,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-      >
-        <div className="container mx-auto flex justify-between items-center">
-          {/* Logo with hover animation */}
-          <Link to="/" className="text-white flex items-center group relative z-10">
-            <motion.div
-              initial={{ filter: "drop-shadow(0 0 0 rgba(211, 161, 126, 0))" }}
-              whileHover={{ filter: "drop-shadow(0 0 8px rgba(211, 161, 126, 0.6))" }}
-              transition={{ duration: 0.5 }}
-              className="relative overflow-hidden flex items-center"
-            >
-              <motion.svg
-                width="120"
-                height="24"
-                viewBox="0 0 120 24"
-                className="text-white group-hover:text-accent transition-colors duration-500"
-                initial={{ opacity: 0.9 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-              >
-                <path
-                  d="M10 4L18 12L10 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <motion.path
-                  d="M30 6H50"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 1.5, delay: 0.2 }}
-                />
-              </motion.svg>
-              <motion.span
-                className="ml-3 font-serif tracking-wider text-lg group-hover:text-accent transition-colors duration-500"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-              >
-                afetto
-              </motion.span>
-            </motion.div>
-          </Link>
+      // Substitua o componente de header atual
 
-          {/* Premium CTA Button with layered effects */}
-          <Link
-            to="/agendar"
-            className="hidden md:flex items-center text-white border border-white/20 px-5 py-2.5 transition-all duration-500 group relative overflow-hidden rounded-sm"
-            onMouseEnter={() => handleCtaHover(true)}
-            onMouseLeave={() => handleCtaHover(false)}
-          >
-            <span className="relative z-10 font-light tracking-wider">
+{/* Premium Header Navigation - Versão Otimizada */}
+<motion.header
+  className="fixed top-0 left-0 right-0 h-[70px] z-50 flex items-center px-6 md:px-8 transition-all duration-300"
+  initial={{ y: -100 }}
+  animate={{
+    y: 0,
+    backgroundColor: lastScrollY > 20 ? "rgba(18, 18, 20, 0.85)" : "transparent",
+    backdropFilter: lastScrollY > 20 ? "blur(10px)" : "none",
+    boxShadow: lastScrollY > 20 ? "0 5px 20px -5px rgba(0,0,0,0.2)" : "none",
+    borderBottom: lastScrollY > 20 ? "1px solid rgba(211, 161, 126, 0.1)" : "none",
+  }}
+  transition={{
+    duration: 0.3,
+    ease: "easeOut",
+  }}
+>
+  <div className="container mx-auto flex justify-between items-center">
+    {/* Logo com hover animation simplificado */}
+    <Link to="/" className="text-white flex items-center group relative z-10">
+      <motion.div
+        className="relative overflow-hidden flex items-center"
+        whileHover={{ scale: 1.02 }}
+        transition={{ duration: 0.3 }}
+      >
+        <svg
+          width="120"
+          height="24"
+          viewBox="0 0 120 24"
+          className="text-white group-hover:text-accent transition-colors duration-300"
+        >
+          <path
+            d="M10 4L18 12L10 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M30 6H50"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="ml-3 font-serif tracking-wider text-lg group-hover:text-accent transition-colors duration-300">
+          afetto
+        </span>
+      </motion.div>
+    </Link>
+
+    {/* Menu de navegação - Desktop */}
+    <nav className="hidden md:flex items-center space-x-8">
+      {[
+        { name: language === 'pt' ? 'Início' : 'Inicio', path: '/' },
+        { name: language === 'pt' ? 'Projetos' : 'Proyectos', path: '/projetos' },
+        { name: language === 'pt' ? 'Materiais' : 'Materiales', path: '/materiais' },
+        { name: language === 'pt' ? 'Sobre' : 'Sobre', path: '/sobre' },
+      ].map((item) => (
+        <Link
+          key={item.path}
+          to={item.path}
+          className="text-white/80 hover:text-accent text-sm font-light tracking-wide transition-colors duration-300 relative group"
+        >
+          {item.name}
+          <span className="absolute bottom-[-3px] left-0 w-0 h-[1px] bg-accent group-hover:w-full transition-all duration-300 ease-out" />
+        </Link>
+      ))}
+    </nav>
+
+    {/* Botão CTA - Desktop */}
+    <Link
+      to="/agendar"
+      className="hidden md:flex items-center text-white border border-white/20 px-5 py-2 transition-all duration-300 group relative overflow-hidden rounded-sm hover:border-accent/20"
+    >
+      <span className="relative z-10 font-light tracking-wider">
+        {language === "pt" ? "Agendar Visita" : "Book a Visit"}
+      </span>
+      <motion.div
+        className="absolute inset-0 bg-accent/30 z-0 opacity-0 group-hover:opacity-100"
+        initial={{ x: "-100%" }}
+        whileHover={{ x: "0%" }}
+        transition={{ duration: 0.3 }}
+      />
+    </Link>
+
+    {/* Botão de menu mobile */}
+    <button 
+      className="md:hidden text-white p-2"
+      onClick={() => {
+        // Toggle mobile menu state
+        setMobileMenuOpen && setMobileMenuOpen(!mobileMenuOpen);
+      }}
+      aria-label="Menu"
+    >
+      {mobileMenuOpen ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      ) : (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="4" y1="8" x2="20" y2="8"></line>
+          <line x1="4" y1="16" x2="20" y2="16"></line>
+        </svg>
+      )}
+    </button>
+  </div>
+
+  {/* Menu Mobile */}
+  <AnimatePresence>
+    {mobileMenuOpen && (
+      <motion.div
+        className="absolute top-full left-0 right-0 bg-[#181617]/95 backdrop-blur-md border-t border-white/10 shadow-lg md:hidden z-40"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className="container mx-auto py-5 px-6">
+          <nav className="flex flex-col space-y-4">
+            {[
+              { name: language === 'pt' ? 'Início' : 'Inicio', path: '/' },
+              { name: language === 'pt' ? 'Projetos' : 'Proyectos', path: '/projetos' },
+              { name: language === 'pt' ? 'Materiais' : 'Materiales', path: '/materiais' },
+              { name: language === 'pt' ? 'Sobre' : 'Sobre', path: '/sobre' },
+              { name: language === 'pt' ? 'Contato' : 'Contacto', path: '/contato' }
+            ].map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="text-white py-2 border-b border-white/10 flex justify-between items-center"
+                onClick={() => setMobileMenuOpen && setMobileMenuOpen(false)}
+              >
+                <span>{item.name}</span>
+                <ChevronRight size={16} className="text-accent" />
+              </Link>
+            ))}
+            <Link
+              to="/agendar"
+              className="bg-accent/20 text-accent py-3 mt-2 rounded flex items-center justify-center font-medium"
+              onClick={() => setMobileMenuOpen && setMobileMenuOpen(false)}
+            >
               {language === "pt" ? "Agendar Visita" : "Book a Visit"}
-            </span>
-            {/* Multi-layered hover effects */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-accent/50 to-accent/30 z-0 opacity-0"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "0%", opacity: 1 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </Link>
+            </Link>
+          </nav>
         </div>
-      </motion.header>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</motion.header>
       <motion.section
   ref={heroRef}
   className="relative h-[100vh] min-h-[800px] overflow-hidden"
@@ -1310,13 +1382,15 @@ useEffect(() => {
   <ErrorBoundary fallback={
     <div className="absolute inset-0 bg-gradient-to-r from-[#0A0806]/95 via-[#171412]/80 to-[#0B0905]/90 flex items-center justify-center">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.5 }}
-        className="relative"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 1.5 }}
+      className="relative"
       >
-        <div className="absolute -inset-20 bg-accent/5 blur-[80px] rounded-full"></div>
-        <div className="text-white/80 font-serif text-5xl relative">Objetos com significado</div>
+      <div className="absolute -inset-20 bg-accent/5 blur-[80px] rounded-full"></div>
+      <div className="text-white/80 font-serif text-5xl relative">
+        <span>Objetos</span> <span>com significado</span>
+      </div>
       </motion.div>
     </div>
   }>
@@ -1657,7 +1731,7 @@ useEffect(() => {
         className="font-sans font-light text-accent tracking-[0.4em] uppercase text-sm mb-10 relative"
       >
         <span className="relative">
-          {language === 'pt' ? 'Ateliê de Design & Artesanato' : 'Atelier de Diseño & Artesanía'}
+          {language === 'pt' ? 'Não é modulado. Não é planejado. É customizado.' : 'Atelier de Diseño & Artesanía'}
           <motion.div className="absolute -bottom-3 left-0 w-full h-[1px] overflow-hidden">
             <motion.div
               className="w-full h-full bg-accent/60"
@@ -1719,29 +1793,29 @@ useEffect(() => {
               }}
               className="first-line-title"
             >
-              <span className="inline-block relative">
-                {language === 'pt' ? 'Objetos ' : 'Objetos '}
-                <motion.div
-                  className="absolute -inset-2 rounded-full blur-md -z-10 opacity-0"
-                  animate={!prefersReducedMotion ? { 
-                    opacity: [0, 0.15, 0],
-                    background: [
-                      "radial-gradient(circle, rgba(211,161,126,0.3), transparent 70%)",
-                      "radial-gradient(circle, rgba(211,161,126,0.5), transparent 70%)",
-                      "radial-gradient(circle, rgba(211,161,126,0.3), transparent 70%)"
-                    ]
-                  } : {}}
-                  transition={{ duration: 4, repeat: Infinity, repeatType: "mirror" }}
-                />
-              </span>
-              <span className="inline-block">{language === 'pt' ? 'com' : 'con'}</span>
+
+<span className="inline-block relative">
+  {language === 'pt' ? 'Objetos ' : 'Objetos '}
+  <motion.div
+    className="absolute -inset-2 rounded-full blur-md -z-10 opacity-0"
+    animate={!prefersReducedMotion ? { 
+      opacity: [0, 0.15, 0],
+      background: [
+        "radial-gradient(circle, rgba(211,161,126,0.3), transparent 70%)",
+        "radial-gradient(circle, rgba(211,161,126,0.5), transparent 70%)",
+        "radial-gradient(circle, rgba(211,161,126,0.3), transparent 70%)"
+      ]
+    } : {}}
+    transition={{ duration: 4, repeat: Infinity, repeatType: "mirror" }}
+  />
+</span>
+<span className="ml-4 inline-block">{language === 'pt' ? ' com' : ' con'}</span>
             </motion.div>
             
             {/* Animated mask reveal effect */}
             <motion.div
               className="absolute inset-0 bg-gradient-to-b from-black to-transparent"
               initial={{ y: "0%" }}
-              animate={{ y: "-100%" }}
               transition={{ 
                 duration: 1.6, 
                 delay: 0.9, 
@@ -2162,66 +2236,38 @@ useEffect(() => {
     .preserve-3d {
       transform-style: preserve-3d;
     }
-     /* === BALANCED SMOOTH SCROLLING === */
-html {
-  scroll-behavior: auto; /* Ensure consistency across browsers */
-}
-
-html.lenis {
-  height: auto;
-}
-
-/* Enable smooth scrolling with optimized values */
-.lenis.lenis-smooth {
-  /* Carefully tuned values for fluid scrolling */
-  --lenis-lerp: 0.075; /* Sweet spot between smooth and responsive */
-  --lenis-smooth-factor: 0.5;
-  scroll-behavior: auto !important; /* Let Lenis control scrolling behavior */
-  overflow: visible !important;
-}
-
-/* Fluid touch experience */
-.lenis.lenis-smooth.lenis-scrolling {
-  scroll-behavior: auto !important;
-}
-
-/* Wait for interactions before enabling effects */
-.lenis.lenis-stopped {
-  transition-duration: 0.4s;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Selective performance optimizations during fast scrolling only */
-.lenis-scrolling .animated-bg,
-.lenis-scrolling .parallax-element,
-.lenis-scrolling .blur-element {
-  will-change: transform;
-  transition: none !important;
-}
-
-/* Maintain animation on important elements */
-.lenis-scrolling .critical-animation {
-  animation-play-state: running !important;
-  transition: all 0.3s ease !important;
-}
-
-/* Remove the styles that completely disable animations during scroll */
-/* We'll be more selective about what gets disabled */
-
-/* Mobile and reduced motion optimization */
-@media (max-width: 768px), (prefers-reduced-motion) {
-  html.lenis {
-    --lenis-lerp: 0.05; /* Slight smoothing on mobile */
-    --lenis-smooth-factor: 0.3;
+   /* === SIMPLIFIED SMOOTH SCROLLING === */
+  html {
+    scroll-behavior: auto;
   }
-}
 
-/* Core stabilizers without breaking smoothness */
-body, main, section {
-  contain: paint;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-} 
+  html.lenis {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    --lenis-lerp: 0.05;
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-scrolling {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-stopped {
+    transition-duration: 0.2s;
+  }
+
+  /* Otimização mínima apenas para elementos críticos */
+  .lenis-scrolling .critical-animation {
+    transition: transform 0.3s ease !important;
+  }
+
+  @media (max-width: 768px), (prefers-reduced-motion) {
+    html.lenis {
+      --lenis-lerp: 0.03;
+    }
+  }
   `}</style>
 </motion.section>
           {/* Featured Projects Section */}
@@ -2326,7 +2372,7 @@ body, main, section {
         transition={{ duration: 8, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
         className="bg-gradient-to-r from-white/95 via-accent/90 to-white/95 text-transparent bg-clip-text"
       >
-        {language === 'pt' ? 'Materiais Nobres' : 'Materiales Nobles'}
+        {language === 'pt' ? 'Materiais ' : 'Materiales Nobles'}
       </motion.span>
       
       <motion.div

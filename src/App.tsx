@@ -42,14 +42,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <ReactLenis root options={{ 
-      lerp: 0.07, // Lower value for smoother scrolling
-      duration: 1.2, 
-      smoothWheel: true,
-      orientation: "vertical",
-      // smoothTouch: false, // This option is not available in LenisOptions
-      infinite: false // Ensure this is false
-    }}>
+      
+ 
       <AnimatePresence mode="wait">
         {userType === null ? (
           <EntryPortal onSelect={handleUserTypeSelect} />
@@ -75,7 +69,6 @@ const App: React.FC = () => {
           </Routes>
         )}
       </AnimatePresence>
-    </ReactLenis>
   );
 };
 
